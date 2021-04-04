@@ -1,0 +1,3 @@
+https://en.wikipedia.org/wiki/Numerical_integration
+
+using Fubini's therem

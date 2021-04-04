@@ -1,0 +1,6 @@
+.vs/MS_Test/v16/ipch
+*.db
+*.db-shm
+*.db-wal
+*.opendb
+x64/
