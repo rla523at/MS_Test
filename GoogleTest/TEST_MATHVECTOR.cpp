@@ -1,6 +1,6 @@
 #pragma once
 #include "gtest/gtest.h"
-#include "../MS_Test/INC/MathVector.h"
+#include "../MS_Test/SRC/MathVector.cpp"
 
 GTEST_TEST(CONSTRUCTOR, INITIALIZE_LIST) {
 	{
@@ -126,3 +126,17 @@ GTEST_TEST(OPERATOR, EQUAL) {
 	}
 }
 
+GTEST_TEST(OPERATOR, ADDITION_ASSIGNMENT) {
+	{
+		MathVector v1 = { 0.1 };
+		MathVector v2 = { 0.1,0.4 };
+		MathVector ref = { 0.2,0.4};
+		EXPECT_ANY_THROW(v1 += v2);
+	}
+	{
+		MathVector v1 = { 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 };
+		MathVector ref = { 0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0 };
+		v1 += v1;
+		EXPECT_EQ(v1, ref);
+	}	
+}

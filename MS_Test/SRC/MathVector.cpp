@@ -4,7 +4,7 @@ MathVector& MathVector::operator+=(const MathVector& y) { //x = x + y
 	MathVector& x = *this;
 
 	if (x.size() != y.size())
-		throw std::length_error("two vector have different length");
+		throw "two vector have different length";
 
 	const MKL_INT n = static_cast<int>(x.size());
 	vdAdd(n, x.data(), y.data(), x.data());
@@ -16,7 +16,7 @@ MathVector& MathVector::operator-=(const MathVector& y) { //x = x - y
 	MathVector& x = *this;
 
 	if (x.size() != y.size())
-		throw std::length_error("two vector have different length");
+		throw "two vector have different length";
 
 	const MKL_INT n = static_cast<int>(x.size());
 	vdSub(n, x.data(), y.data(), x.data());
@@ -39,7 +39,7 @@ MathVector& MathVector::operator*=(const MathVector& y) { //x_i *= y_i value by 
 	MathVector& x = *this;
 
 	if (x.size() != y.size())
-		throw std::length_error("two vector have different length");
+		throw "two vector have different length";
 
 	const MKL_INT n = static_cast<int>(x.size());
 	vdMul(n, x.data(), y.data(), x.data());
@@ -81,7 +81,7 @@ MathVector MathVector::abs(void) const {
 
 double MathVector::inner_product(const MathVector& other) const {
 	if (this->size() != other.size())
-		throw std::length_error("two vector have different length");
+		throw "two vector have different length";
 
 	const MKL_INT n = static_cast<int>(this->size());
 	const MKL_INT incx = 1;

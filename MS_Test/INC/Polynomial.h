@@ -13,54 +13,29 @@ private:
 	std::vector<size_t> exponent_set_;
 
 public:
-	Monomial(void) {
-		this->exponent_set_.push_back(0);
-	};
-
-	template<typename T>
-	Monomial(const T argument) { // Monomial(0) => x (x_0) / Monomial(2) => z (x_2)
-		const auto variable_index = static_cast<size_t>(argument);
-		this->exponent_set_.resize(variable_index + 1);
-		this->exponent_set_.back() = 1;
-	};
-
-	template<typename ...Args>
-	Monomial(const Args... arguments)
-		: exponent_set_{ static_cast<size_t>(arguments)... } {};
-
-	Monomial(std::initializer_list<size_t> list)
-		: exponent_set_{ list } {}; // Monomial{0} => 1 / Monomial{2} = x^2
-
-	Monomial(std::vector<size_t>&& exponent_set)
-		: exponent_set_(std::move(exponent_set)) {};
-
+	explicit Monomial(void);		
+	explicit Monomial(const size_t variable_index);					// Monomial(0) => x_0	/ Monomial(2) => x_2
+	explicit Monomial(const std::initializer_list<size_t> list);	// Monomial{0} => 1		/ Monomial{2} => x^2
+	Monomial(std::vector<size_t>&& exponent_set);
 
 	Monomial operator*(const Monomial& other) const;
-
 	double operator()(const MathVector& variable_vector) const;
-
 	bool operator<(const Monomial& other) const;
-
+	bool operator==(const Monomial& other) const;
 
 	size_t exponent(size_t variable_index) const;
-
 	bool is_Constant(void) const;
-
-	size_t num_variable(void) const {
-		return this->exponent_set_.size();
-	};
-
+	size_t num_variable(void) const;
 	size_t order(void) const;
-
 	void reduce_Order(const size_t variable_index);
-
 	std::string to_String(void) const;
+
+	//for performance test
+	double call_operator1(const MathVector& variable_vector) const;
+	double call_operator2(const MathVector& variable_vector) const;
 };
 
-
-inline std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial) {
-	return ostream << monomial.to_String();
-}
+std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
 
 
 class Polynomial
@@ -82,9 +57,9 @@ public:
 		: monomial_to_coefficient_{ {monomial, coefficient} } {};
 
 	template <typename coeffcient_container, typename monomial_container>
-	explicit Polynomial(const coeffcient_container& coefficient_set, const monomial_container& monomial_set) {
+	Polynomial(const coeffcient_container& coefficient_set, const monomial_container& monomial_set) {
 		if (coefficient_set.size() != monomial_set.size())
-			FATAL_SIZE_ERROR;
+			throw "coefficients and monomials do not 1:1 match";
 
 		for (size_t i = 0; i < coefficient_set.size(); ++i)
 			this->insert(coefficient_set[i], monomial_set[i]);

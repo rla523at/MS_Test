@@ -1,5 +1,21 @@
 #include "../INC/Polynomial.h"
 
+Monomial::Monomial(void) {
+	this->exponent_set_.push_back(0);
+};
+
+Monomial::Monomial(const size_t variable_index) { 
+	this->exponent_set_.resize(variable_index + 1);
+	this->exponent_set_.back() = 1;
+};
+
+Monomial::Monomial(const std::initializer_list<size_t> list)
+	: exponent_set_{ list } {};
+
+Monomial::Monomial(std::vector<size_t>&& exponent_set)
+	: exponent_set_(std::move(exponent_set)) {};
+
+
 Monomial Monomial::operator*(const Monomial& other) const {
 	const auto num_variable_this = this->num_variable();
 	const auto num_variable_other = other.num_variable();
@@ -14,6 +30,41 @@ Monomial Monomial::operator*(const Monomial& other) const {
 }
 
 double Monomial::operator()(const MathVector& variable_vector) const {
+	if (this->is_Constant()) {
+		if (!variable_vector.empty())
+			throw "number of variable is not matched";
+		else
+			return 1.0;
+	}  		
+
+	if (this->num_variable() != variable_vector.size())
+		throw "number of variable is not matched";
+
+	double result = 1.0;
+	for (size_t i = 0; i < this->num_variable(); ++i)
+		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+
+	return result;
+}
+
+double Monomial::call_operator1(const MathVector& variable_vector) const {
+	if (this->num_variable() != variable_vector.size())
+		throw "number of variable is not matched";
+
+	double result = 1.0;
+	for (size_t i = 0; i < this->num_variable(); ++i) {
+		if (this->exponent_set_[i] == 0 || variable_vector[i] == 0)
+			continue;
+		else
+			result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+	}
+	return result;
+}
+
+double Monomial::call_operator2(const MathVector& variable_vector) const {
+	if (this->num_variable() != variable_vector.size())
+		throw "number of variable is not matched";
+
 	double result = 1.0;
 	for (size_t i = 0; i < this->num_variable(); ++i)
 		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
@@ -39,11 +90,18 @@ bool Monomial::operator<(const Monomial& other) const {
 	return this_order < other_order;
 }
 
-size_t Monomial::exponent(size_t variable_index) const {
-	if (this->num_variable() <= variable_index)
-		return 0;
+bool Monomial::operator==(const Monomial& other) const {
+	if (this->exponent_set_ == other.exponent_set_)
+		return true;
 	else
-		return this->exponent_set_[variable_index];
+		return false;
+}
+
+size_t Monomial::exponent(size_t variable_index) const {
+	if (this->num_variable() <= variable_index || this->is_Constant())
+		throw std::out_of_range("variable index exceed range");
+		
+	return this->exponent_set_[variable_index];
 }
 
 bool Monomial::is_Constant(void) const {
@@ -54,7 +112,15 @@ bool Monomial::is_Constant(void) const {
 	return true;
 }
 
+size_t Monomial::num_variable(void) const {
+	return this->exponent_set_.size();
+};
+
+
 size_t Monomial::order(void) const {
+	if (this->is_Constant())
+		return 0;
+
 	size_t order = 0;
 	for (const auto exponent : this->exponent_set_)
 		order += exponent;
@@ -88,12 +154,15 @@ std::string Monomial::to_String(void) const {
 		if (this->exponent_set_[i] == 0)
 			continue;
 		else
-			str += "(x" + Editor::to_String(i) + ")^(" + Editor::to_String(this->exponent_set_[i]) + ")";
+			str += "(x" + std::to_string(i) + ")^(" + std::to_string(this->exponent_set_[i]) + ")";
 	}
 
 	return str;
 }
 
+std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial) {
+	return ostream << monomial.to_String();
+}
 
 Polynomial& Polynomial::operator*=(const double scalar) {
 	if (this->is_Zero())
@@ -246,20 +315,17 @@ std::string Polynomial::to_String(void) const {
 	const auto end_iter = this->monomial_to_coefficient_.rend();
 	for (auto iter = start_iter; iter != end_iter; ++iter) {
 		const auto& [monomial, coefficient] = *iter;
-		str += Editor::to_String(coefficient) + "\t";
+		str += std::to_string(coefficient) + "\t";
 	}
-	StringEditor::erase_back(str, 1);
+	//StringEditor::erase_back(str, 1);
 	str += " } { ";
 	for (auto iter = start_iter; iter != end_iter; ++iter) {
 		const auto& [monomial, coefficient] = *iter;
-		str += Editor::to_String(monomial) + ", ";
+		str += monomial.to_String() + ", ";
 	}
-	StringEditor::erase_back(str, 2);
+	//StringEditor::erase_back(str, 2);
 	str += " }";
-
 	
-	
-
 	return str;
 }
 

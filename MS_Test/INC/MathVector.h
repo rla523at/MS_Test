@@ -10,13 +10,10 @@ class MathVector : public std::vector<double>
 {
 public:
 	template <typename ... Vals>
-	MathVector(Vals&&... values) 
-		:std::vector<double>(std::forward<Vals>(values)...) {}; 
-	MathVector(std::initializer_list<double> list)
-		:std::vector<double>(list) {};
+	MathVector(Vals&&... values) :std::vector<double>(std::forward<Vals>(values)...) {};
+	MathVector(std::initializer_list<double> list) :std::vector<double>(list) {};
 	MathVector(const double) = delete;
 	
-
 	MathVector& operator+=(const MathVector& y);
 	MathVector& operator-=(const MathVector& y);
 	MathVector& operator*=(const double scalar);
@@ -25,7 +22,6 @@ public:
 	MathVector operator-(const MathVector& y) const;
 	MathVector operator*(const double scalar) const;
 	MathVector operator*(const MathVector& y) const;
-
 
 	MathVector& abs(void);
 	MathVector abs(void) const;	

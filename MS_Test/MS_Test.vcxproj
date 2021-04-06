@@ -20,9 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="INC\MathVector.h" />
+    <ClInclude Include="INC\Polynomial.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="SRC\main.cpp" />
     <ClCompile Include="SRC\MathVector.cpp" />
+    <ClCompile Include="SRC\Polynomial.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -2,8 +2,21 @@
 //#include "../INC/TestFigure.h"
 //#include "../INC/TestPolynomial.h"
 
+#include "../INC/MathVector.h"
+#include "../INC/Polynomial.h"
+
 int main(void)
 {
+	Monomial m1;
+	Monomial m2{ 0 };
+
+
+	MathVector v1 = { 0.1 };
+	MathVector v2 = { 0.1,0.4 };
+	MathVector ref = { 0.2,0.4 };
+	v1 += v2;
+
+
 	//TestCallOperator();
 
 
