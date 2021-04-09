@@ -1,58 +1,67 @@
 #include "../INC/Polynomial.h"
 
-Monomial::Monomial(void) {
-	this->exponent_set_.push_back(0);
-};
-
 Monomial::Monomial(const size_t variable_index) { 
 	this->exponent_set_.resize(variable_index + 1);
 	this->exponent_set_.back() = 1;
 };
 
 Monomial::Monomial(const std::initializer_list<size_t> list)
-	: exponent_set_{ list } {};
+	: exponent_set_{ list } {
+	if (this->check_constant())
+		this->exponent_set_.clear();
+};
 
 Monomial::Monomial(std::vector<size_t>&& exponent_set)
-	: exponent_set_(std::move(exponent_set)) {};
+	: exponent_set_(std::move(exponent_set)) {
+	if (this->check_constant())
+		this->exponent_set_.clear();
+};
 
+Monomial& Monomial::operator*=(const Monomial& other) {
+	const auto this_size = this->exponent_set_.size();
+	const auto other_size = other.exponent_set_.size();
 
-Monomial Monomial::operator*(const Monomial& other) const {
-	const auto num_variable_this = this->num_variable();
-	const auto num_variable_other = other.num_variable();
+	if (this_size <= other_size) 
+		this->exponent_set_.resize(other_size);
 
-	std::vector<size_t> exponent_set(std::max(num_variable_this, num_variable_other));
-	for (size_t i = 0; i < num_variable_this; ++i)
-		exponent_set[i] += this->exponent_set_[i];
-	for (size_t i = 0; i < num_variable_other; ++i)
-		exponent_set[i] += other.exponent_set_[i];
+	for (size_t i = 0; i < other_size; ++i)
+		this->exponent_set_[i] += other.exponent_set_[i];
 
-	return std::move(exponent_set);
+	return *this;
 }
 
-double Monomial::operator()(const MathVector& variable_vector) const {
-	if (this->is_Constant()) {
-		if (!variable_vector.empty())
-			throw "number of variable is not matched";
-		else
-			return 1.0;
-	}  		
+Monomial Monomial::operator*(const Monomial& other) const {
+	Monomial result = *this;
+	return result *= other;
+}
 
-	if (this->num_variable() != variable_vector.size())
-		throw "number of variable is not matched";
+double Monomial::operator()(void) const {
+	if (!this->is_constant())
+		throw "variable monomial need variable values";
+	else
+		return 1.0;
+}
+
+double Monomial::operator()(const MathVector& variable_value_vector) const {
+	if (this->is_constant()) 
+			throw "constnat monomial does not need variable values";
+
+	if (this->exponent_set_.size() != variable_value_vector.size())
+		throw "variables are not matched";
 
 	double result = 1.0;
-	for (size_t i = 0; i < this->num_variable(); ++i)
-		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
+		result *= std::pow(variable_value_vector[i], this->exponent_set_[i]);
 
 	return result;
 }
 
 double Monomial::call_operator1(const MathVector& variable_vector) const {
-	if (this->num_variable() != variable_vector.size())
-		throw "number of variable is not matched";
+	if (this->exponent_set_.size() != variable_vector.size())
+		throw "variables are not matched";
 
 	double result = 1.0;
-	for (size_t i = 0; i < this->num_variable(); ++i) {
+	for (size_t i = 0; i < this->exponent_set_.size(); ++i) {
 		if (this->exponent_set_[i] == 0 || variable_vector[i] == 0)
 			continue;
 		else
@@ -62,11 +71,11 @@ double Monomial::call_operator1(const MathVector& variable_vector) const {
 }
 
 double Monomial::call_operator2(const MathVector& variable_vector) const {
-	if (this->num_variable() != variable_vector.size())
-		throw "number of variable is not matched";
+	if (this->exponent_set_.size() != variable_vector.size())
+		throw "variables are not matched";
 
 	double result = 1.0;
-	for (size_t i = 0; i < this->num_variable(); ++i)
+	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
 		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
 
 	return result;
@@ -77,8 +86,8 @@ bool Monomial::operator<(const Monomial& other) const {
 	const auto other_order = other.order();
 
 	if (this_order == other_order) {
-		auto min_num_variable = std::min(this->num_variable(), other.num_variable());
-		for (size_t i = 0; i < min_num_variable; ++i) {
+		const auto min_set_size = std::min(this->exponent_set_.size(), other.exponent_set_.size());
+		for (size_t i = 0; i < min_set_size; ++i) {
 			if (this->exponent_set_[i] == other.exponent_set_[i])
 				continue;
 
@@ -98,27 +107,28 @@ bool Monomial::operator==(const Monomial& other) const {
 }
 
 size_t Monomial::exponent(size_t variable_index) const {
-	if (this->num_variable() <= variable_index || this->is_Constant())
+	if (this->exponent_set_.size() <= variable_index)
 		throw std::out_of_range("variable index exceed range");
-		
+	else if (this->is_constant())
+		throw "constant monomial does not have exponent";
+
 	return this->exponent_set_[variable_index];
 }
 
-bool Monomial::is_Constant(void) const {
-	for (const auto exponent : this->exponent_set_) {
-		if (exponent != 0)
-			return false;
-	}
-	return true;
+bool Monomial::is_constant(void) const {
+	return this->exponent_set_.empty();
 }
 
-size_t Monomial::num_variable(void) const {
-	return this->exponent_set_.size();
-};
+//size_t Monomial::num_variable(void) const {
+//	const size_t zero = 0;
+//	const auto num_zero = std::count(this->exponent_set_.begin(), this->exponent_set_.end(), zero);
+//
+//	return this->exponent_set_.size() - num_zero;
+//};
 
 
 size_t Monomial::order(void) const {
-	if (this->is_Constant())
+	if (this->is_constant())
 		return 0;
 
 	size_t order = 0;
@@ -127,41 +137,51 @@ size_t Monomial::order(void) const {
 	return order;
 }
 
-void Monomial::reduce_Order(const size_t variable_index) {
-	if (this->exponent(variable_index) == 0)
-		*this = Monomial();
+Monomial& Monomial::reduce_order(const size_t variable_index) {
+	if (this->is_constant())
+		throw "constant can not reduce order";
+	
+	if (this->exponent_set_[variable_index] == 0)
+		throw "exponent can not be negative";
 	else
 		this->exponent_set_[variable_index]--;
+
+	if (this->check_constant())
+		this->exponent_set_.clear();
+	
+	return *this;
 }
 
-std::string Monomial::to_String(void) const {
+Monomial Monomial::reduce_order(const size_t variable_index) const {
+	Monomial result = *this;
+	return result.reduce_order(variable_index);
+}
+
+std::string Monomial::to_string(void) const {	
+	if (this->is_constant()) 
+		return "(1)";
+
 	std::string str;
-	if (this->is_Constant()) {
-		str += "(1)";
-		return str;
-	}
-
-	//str += "(";
-	//for (size_t i = 0; i < this->num_variable(); ++i) {
-	//	if (this->exponent_set_[i] == 0)
-	//		continue;
-	//	else
-	//		str += " (x" + Editor::to_String(i) + ")^(" + Editor::to_String(this->exponent_set_[i]) + ") ";
-	//}
-	//str += ")";
-
-	for (size_t i = 0; i < this->num_variable(); ++i) {
+	for (size_t i = 0; i < this->exponent_set_.size(); ++i) {
 		if (this->exponent_set_[i] == 0)
 			continue;
 		else
-			str += "(x" + std::to_string(i) + ")^(" + std::to_string(this->exponent_set_[i]) + ")";
+			str += "(x" + std::to_string(i) + ")^" + std::to_string(this->exponent_set_[i]);
 	}
 
 	return str;
 }
 
+bool Monomial::check_constant(void) const {
+	for (const auto& exponent : this->exponent_set_) {
+		if (exponent != 0)
+			return false;
+	}
+	return true;
+}
+
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial) {
-	return ostream << monomial.to_String();
+	return ostream << monomial.to_string();
 }
 
 Polynomial& Polynomial::operator*=(const double scalar) {
@@ -321,7 +341,7 @@ std::string Polynomial::to_String(void) const {
 	str += " } { ";
 	for (auto iter = start_iter; iter != end_iter; ++iter) {
 		const auto& [monomial, coefficient] = *iter;
-		str += monomial.to_String() + ", ";
+		str += monomial.to_string() + ", ";
 	}
 	//StringEditor::erase_back(str, 2);
 	str += " }";
@@ -332,35 +352,35 @@ std::string Polynomial::to_String(void) const {
 
 namespace Math {
 	Polynomial translate(const Monomial& monomial, const MathVector& translation_vector) {
-		if (monomial.is_Constant())
-			return Polynomial(monomial);
+		//if (monomial.is_constant())
+		//	return Polynomial(monomial);
 
-		Polynomial result(1.0);
-		for (size_t i = 0; i < monomial.num_variable(); ++i) {
-			const auto exponent = monomial.exponent(i);
+		//Polynomial result(1.0);
+		//for (size_t i = 0; i < monomial.num_variable(); ++i) {
+		//	const auto exponent = monomial.exponent(i);
 
-			if (exponent == 0)
-				continue;
+		//	if (exponent == 0)
+		//		continue;
 
-			std::array<double, 2> coefficient_set = { 1, -translation_vector[i] };
-			std::array<Monomial, 2> monomial_set = { Monomial(i),Monomial() };
-			Polynomial translated_Xi(coefficient_set, monomial_set);
+		//	std::array<double, 2> coefficient_set = { 1, -translation_vector[i] };
+		//	std::array<Monomial, 2> monomial_set = { Monomial(i),Monomial() };
+		//	Polynomial translated_Xi(coefficient_set, monomial_set);
 
-			for (size_t i = 0; i < exponent; ++i)
-				result *= translated_Xi;
-		}
+		//	for (size_t i = 0; i < exponent; ++i)
+		//		result *= translated_Xi;
+		//}
 
-		return result;
+		//return result;
 	}
 
 	Polynomial differentiate(const Monomial& monomial, const size_t differential_variable_index) {
-		if (monomial.is_Constant())
+		if (monomial.is_constant())
 			return Polynomial();
 
 		auto result_monomial = monomial;
 
 		const auto coefficient = static_cast<double>(monomial.exponent(differential_variable_index));
-		result_monomial.reduce_Order(differential_variable_index);
+		result_monomial.reduce_order(differential_variable_index);
 
 		return Polynomial(coefficient, result_monomial);
 	}

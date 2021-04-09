@@ -13,26 +13,32 @@ private:
 	std::vector<size_t> exponent_set_;
 
 public:
-	explicit Monomial(void);		
+	explicit Monomial(void) {};
 	explicit Monomial(const size_t variable_index);					// Monomial(0) => x_0	/ Monomial(2) => x_2
 	explicit Monomial(const std::initializer_list<size_t> list);	// Monomial{0} => 1		/ Monomial{2} => x^2
 	Monomial(std::vector<size_t>&& exponent_set);
 
+	Monomial& operator*=(const Monomial& other);
 	Monomial operator*(const Monomial& other) const;
+	double operator()(void) const;
 	double operator()(const MathVector& variable_vector) const;
 	bool operator<(const Monomial& other) const;
 	bool operator==(const Monomial& other) const;
 
 	size_t exponent(size_t variable_index) const;
-	bool is_Constant(void) const;
-	size_t num_variable(void) const;
+	bool is_constant(void) const;
+	//size_t num_variable(void) const;	//seem useless
 	size_t order(void) const;
-	void reduce_Order(const size_t variable_index);
-	std::string to_String(void) const;
+	Monomial& reduce_order(const size_t variable_index);
+	Monomial reduce_order(const size_t variable_index) const;
+	std::string to_string(void) const;
 
 	//for performance test
 	double call_operator1(const MathVector& variable_vector) const;
 	double call_operator2(const MathVector& variable_vector) const;
+
+private:
+	bool check_constant(void) const;
 };
 
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
