@@ -1,10 +1,27 @@
 
 #include "../INC/MathVector.h"
+#include <iostream>
+class A
+{
+public:
+	A() { 
+		std::cout<<"construct\n"; 
+	};
+	A(const A& other) {
+		std::cout<<"copy\n"; 
+	};
+	A(A&& other) {
+		std::cout<<"move\n"; 
+	};
+};
 
 int main(void)
 {
-	MathVector v1 = { 0.1 };
-	MathVector v2 = { 0.1,0.4 };
-	MathVector ref = { 0.2,0.4 };
-	v1 += v2;
+	std::vector<A> set;
+	set.emplace_back();
+	set.push_back(A());
+
+	auto a = A();
+
+	std::cout << set.size();
 }

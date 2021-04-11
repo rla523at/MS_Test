@@ -183,6 +183,37 @@ bool Monomial::check_constant(void) const {
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial) {
 	return ostream << monomial.to_string();
 }
+
+
+Polynomial::Polynomial(void) {
+	this->coefficient_set_.push_back(0.0);
+	this->monomial_set_.emplace_back();
+}
+
+Polynomial::Polynomial(const double coefficient) {
+	this->coefficient_set_.push_back(coefficient);
+	this->monomial_set_.emplace_back();
+}
+
+Polynomial::Polynomial(const Monomial& monomial) {
+	this->coefficient_set_.push_back(1.0);
+	this->monomial_set_.push_back(monomial);
+}
+
+Polynomial::Polynomial(const double coefficient, const Monomial& monomial) {
+	this->coefficient_set_.push_back(coefficient);
+	this->monomial_set_.push_back(monomial);
+}
+
+
+bool Polynomial::operator==(const Polynomial& other) const {
+	return this->coefficient_set_ == other.coefficient_set_ && this->monomial_set_ == other.monomial_set_;
+}
+
+bool Polynomial::operator!=(const Polynomial& other) const {
+	return !((*this) == other);
+}
+
 //
 //Polynomial& Polynomial::operator*=(const double scalar) {
 //	if (this->is_Zero())

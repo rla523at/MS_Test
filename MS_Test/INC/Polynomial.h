@@ -44,6 +44,26 @@ private:
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
 
 
+
+
+class Polynomial
+{
+private:
+	std::vector<double> coefficient_set_;
+	std::vector<Monomial> monomial_set_;
+
+public:
+	explicit Polynomial(void);
+	explicit Polynomial(const double coefficient);
+	explicit Polynomial(const Monomial& monomial);
+	explicit Polynomial(const double coefficient, const Monomial& monomial);
+	
+
+	bool operator==(const Polynomial& other) const;
+	bool operator!=(const Polynomial& other) const;
+
+};
+
 //class Polynomial
 //{
 //private:

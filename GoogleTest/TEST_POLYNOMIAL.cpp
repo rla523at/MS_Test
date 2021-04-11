@@ -268,10 +268,26 @@ GTEST_TEST(MONOMIAL, FUNCTION_CALL) {
 		EXPECT_ANY_THROW(m1(v4));
 		EXPECT_EQ(m1(), ref);
 	}
-	{
+}
 
+GTEST_TEST(POLYNOMIAL, CONSTRUCTOR) {
+	{
+		Polynomial p1;
+		Polynomial p2(0.0);
+		Polynomial p3(1.0);
+
+		Monomial m1;
+		Polynomial p4(m1);
+
+		EXPECT_EQ(p1, p2);
+		EXPECT_NE(p1, p3); 
+		EXPECT_NE(p2, p3);
+		EXPECT_FALSE(p1 == p3);		
+		EXPECT_EQ(p3, p4);
 	}
 }
+
+
 //
 //GTEST_TEST(MONOMIAL, PERFORMANCE_CALL_OPERATOR1_1) {
 //	Monomial m1{ 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };

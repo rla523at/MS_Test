@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TEST_MATHVECTOR.cpp" />
     <ClCompile Include="TEST_POLYNOMIAL.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
