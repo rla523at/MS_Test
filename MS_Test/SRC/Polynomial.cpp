@@ -1,5 +1,9 @@
 #include "../INC/Polynomial.h"
 
+Monomial::Monomial(void) {
+	this->is_constant_ = true;
+}
+
 Monomial::Monomial(const size_t variable_index) { 
 	this->exponent_set_.resize(variable_index + 1);
 	this->exponent_set_.back() = 1;
@@ -7,14 +11,18 @@ Monomial::Monomial(const size_t variable_index) {
 
 Monomial::Monomial(const std::initializer_list<size_t> list)
 	: exponent_set_{ list } {
-	if (this->check_constant())
+	if (this->check_constant()) {
 		this->exponent_set_.clear();
+		this->is_constant_ = true;
+	}
 };
 
 Monomial::Monomial(std::vector<size_t>&& exponent_set)
 	: exponent_set_(std::move(exponent_set)) {
-	if (this->check_constant())
+	if (this->check_constant()) {
 		this->exponent_set_.clear();
+		this->is_constant_ = true;
+	}
 };
 
 Monomial& Monomial::operator*=(const Monomial& other) {
@@ -27,6 +35,9 @@ Monomial& Monomial::operator*=(const Monomial& other) {
 	for (size_t i = 0; i < other_size; ++i)
 		this->exponent_set_[i] += other.exponent_set_[i];
 
+	if (!this->check_constant())
+		this->is_constant_ = false;
+
 	return *this;
 }
 
@@ -36,18 +47,18 @@ Monomial Monomial::operator*(const Monomial& other) const {
 }
 
 double Monomial::operator()(void) const {
-	if (!this->is_constant())
+	if (!this->is_constant_)
 		throw "variable monomial need variable values";
 	else
 		return 1.0;
 }
 
 double Monomial::operator()(const MathVector& variable_value_vector) const {
-	if (this->is_constant()) 
-			throw "constnat monomial does not need variable values";
+	if (this->exponent_set_.size() > variable_value_vector.size())
+		throw "given variables are not enough";
 
-	if (this->exponent_set_.size() != variable_value_vector.size())
-		throw "variables are not matched";
+	if (this->is_constant_)
+		return 1.0;
 
 	double result = 1.0;
 	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
@@ -56,30 +67,30 @@ double Monomial::operator()(const MathVector& variable_value_vector) const {
 	return result;
 }
 
-double Monomial::call_operator1(const MathVector& variable_vector) const {
-	if (this->exponent_set_.size() != variable_vector.size())
-		throw "variables are not matched";
-
-	double result = 1.0;
-	for (size_t i = 0; i < this->exponent_set_.size(); ++i) {
-		if (this->exponent_set_[i] == 0 || variable_vector[i] == 0)
-			continue;
-		else
-			result *= std::pow(variable_vector[i], this->exponent_set_[i]);
-	}
-	return result;
-}
-
-double Monomial::call_operator2(const MathVector& variable_vector) const {
-	if (this->exponent_set_.size() != variable_vector.size())
-		throw "variables are not matched";
-
-	double result = 1.0;
-	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
-		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
-
-	return result;
-}
+//double Monomial::call_operator1(const MathVector& variable_vector) const {
+//	if (this->exponent_set_.size() != variable_vector.size())
+//		throw "variables are not matched";
+//
+//	double result = 1.0;
+//	for (size_t i = 0; i < this->exponent_set_.size(); ++i) {
+//		if (this->exponent_set_[i] == 0 || variable_vector[i] == 0)
+//			continue;
+//		else
+//			result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+//	}
+//	return result;
+//}
+//
+//double Monomial::call_operator2(const MathVector& variable_vector) const {
+//	if (this->exponent_set_.size() != variable_vector.size())
+//		throw "variables are not matched";
+//
+//	double result = 1.0;
+//	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
+//		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+//
+//	return result;
+//}
 
 bool Monomial::operator<(const Monomial& other) const {
 	const auto this_order = this->order();
@@ -109,15 +120,15 @@ bool Monomial::operator==(const Monomial& other) const {
 size_t Monomial::exponent(size_t variable_index) const {
 	if (this->exponent_set_.size() <= variable_index)
 		throw std::out_of_range("variable index exceed range");
-	else if (this->is_constant())
+	else if (this->is_constant_)
 		throw "constant monomial does not have exponent";
 
 	return this->exponent_set_[variable_index];
 }
 
-bool Monomial::is_constant(void) const {
-	return this->exponent_set_.empty();
-}
+//bool Monomial::is_constant(void) const {
+//	return this->exponent_set_.empty();
+//}
 
 //size_t Monomial::num_variable(void) const {
 //	const size_t zero = 0;
@@ -128,7 +139,7 @@ bool Monomial::is_constant(void) const {
 
 
 size_t Monomial::order(void) const {
-	if (this->is_constant())
+	if (this->is_constant_)
 		return 0;
 
 	size_t order = 0;
@@ -138,7 +149,7 @@ size_t Monomial::order(void) const {
 }
 
 Monomial& Monomial::reduce_order(const size_t variable_index) {
-	if (this->is_constant())
+	if (this->is_constant_)
 		throw "constant can not reduce order";
 	
 	if (this->exponent_set_[variable_index] == 0)
@@ -146,8 +157,10 @@ Monomial& Monomial::reduce_order(const size_t variable_index) {
 	else
 		this->exponent_set_[variable_index]--;
 
-	if (this->check_constant())
+	if (this->check_constant()) {
 		this->exponent_set_.clear();
+		this->is_constant_ = true;
+	}
 	
 	return *this;
 }
@@ -158,7 +171,7 @@ Monomial Monomial::reduce_order(const size_t variable_index) const {
 }
 
 std::string Monomial::to_string(void) const {	
-	if (this->is_constant()) 
+	if (this->is_constant_) 
 		return "(1)";
 
 	std::string str;
@@ -185,34 +198,338 @@ std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial) {
 }
 
 
+
+
+
+
+
+
+
+
+
+//Monomial3D::Monomial3D(std::initializer_list<size_t> list) {
+//	if (list.size() > this->exponent_set_.size())
+//		throw("Too many input");
+//	
+//	std::move(list.begin(), list.end(), exponent_set_.begin());
+//	
+//	if (this->check_constant())
+//		this->is_constant_ = true;
+//};
+//
+//double Monomial3D::operator()(const MathVector& variable_vector) const {
+//	if (variable_vector.size() != this->exponent_set_.size())
+//		throw("variable is not matched");
+//
+//	double result = 1.0;
+//	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
+//		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+//
+//	return result;
+//}
+//
+//double Monomial3D::call_operator1(const MathVector& variable_vector) const {
+//	if (variable_vector.size() != this->exponent_set_.size())
+//		throw("variable is not matched");
+//
+//	double result = 1.0;
+//	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
+//		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+//
+//	return result;
+//}
+//
+//double Monomial3D::call_operator2(const MathVector& variable_vector) const {
+//	if (variable_vector.size() != this->exponent_set_.size())
+//		throw("variable is not matched");
+//
+//	if (this->is_constant_)
+//		return 1.0;
+//
+//	double result = 1.0;
+//	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
+//		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+//
+//	return result;
+//}
+//
+//
+//bool Monomial3D::check_constant(void) const {
+//	for (const auto& exponent : this->exponent_set_) {
+//		if (exponent != 0)
+//			return false;
+//	}
+//	return true;
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Polynomial::Polynomial(void) {
-	this->coefficient_set_.push_back(0.0);
+	this->coefficient_vector_.push_back(0.0);
 	this->monomial_set_.emplace_back();
 }
 
 Polynomial::Polynomial(const double coefficient) {
-	this->coefficient_set_.push_back(coefficient);
+	this->coefficient_vector_.push_back(coefficient);
 	this->monomial_set_.emplace_back();
 }
 
 Polynomial::Polynomial(const Monomial& monomial) {
-	this->coefficient_set_.push_back(1.0);
+	this->coefficient_vector_.push_back(1.0);
 	this->monomial_set_.push_back(monomial);
 }
 
 Polynomial::Polynomial(const double coefficient, const Monomial& monomial) {
-	this->coefficient_set_.push_back(coefficient);
+	this->coefficient_vector_.push_back(coefficient);
 	this->monomial_set_.push_back(monomial);
 }
 
+Polynomial::Polynomial(const std::vector<double>& coefficient_set, const std::vector<Monomial>& monomial_set) {
+	this->coefficient_vector_ = coefficient_set;
+	this->monomial_set_ = monomial_set;
+}
+
+Polynomial& Polynomial::operator+=(const Polynomial& other) {
+	if (this->is_simple_polynomial() && other.is_simple_polynomial())
+		this->addition(other);
+	else
+		this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
+	return *this;
+}
+
+Polynomial& Polynomial::operator-=(const Polynomial& other) {
+	auto temp = other * -1.0;
+	return *this += temp;
+}
+
+Polynomial& Polynomial::operator*=(const double scalar) {
+	this->scalar_multiplication(scalar);
+	for (auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
+		if (binary_operator == BinaryOperator::addition)
+			polynomial.scalar_multiplication(scalar);
+	}
+	return *this;
+}
+
+Polynomial& Polynomial::operator*=(const Polynomial& other) {
+	this->calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
+	return *this;
+}
+
+Polynomial Polynomial::operator+(const Polynomial& other) const {
+	Polynomial result = *this;
+	return result += other;
+}
+
+Polynomial Polynomial::operator-(const Polynomial& other) const {
+	Polynomial result = *this;
+	return result -= other;
+}
+
+Polynomial Polynomial::operator*(const double scalar) const {
+	Polynomial result(*this);
+	return result *= scalar;
+}
+
+
+Polynomial Polynomial::operator*(const Polynomial& other) const {
+	Polynomial result(*this);
+	return result *= other;
+}
+
+double Polynomial::operator()(const MathVector& variable_vector) const {
+	if (this->is_simple_polynomial())
+		return this->calculate(variable_vector);
+	else {
+		auto result = this->calculate(variable_vector);
+		for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
+			switch (binary_operator) {
+			case  BinaryOperator::addition:
+				result += polynomial(variable_vector);
+				break;
+			case BinaryOperator::multiplication:
+				result *= polynomial(variable_vector);
+				break;
+			}
+		}
+		return result;
+	}
+}
 
 bool Polynomial::operator==(const Polynomial& other) const {
-	return this->coefficient_set_ == other.coefficient_set_ && this->monomial_set_ == other.monomial_set_;
+	if (this->is_simple_polynomial() && other.is_simple_polynomial())
+		return this->is_same_polynomial(other);
+	else if (this->is_simple_polynomial() && !other.is_simple_polynomial()) {
+		const auto extended_poly = other.extend();
+		return this->is_same_polynomial(extended_poly);
+	}
+	else if (!this->is_simple_polynomial() && other.is_simple_polynomial()) {
+		const auto extended_poly = this->extend();
+		return extended_poly.is_same_polynomial(other);
+	}
+	else {
+		const auto extended_this_poly = this->extend();
+		const auto extended_other_poly = other.extend();
+		return extended_this_poly.is_same_polynomial(extended_other_poly);
+	}		
 }
 
 bool Polynomial::operator!=(const Polynomial& other) const {
 	return !((*this) == other);
 }
+
+double Polynomial::calculate(const MathVector& variable_vector) const {
+	const auto num_term = this->coefficient_vector_.size();
+
+	MathVector monomial_value_vector;
+	monomial_value_vector.reserve(num_term);
+
+	for (size_t i = 0; i < num_term; ++i)
+		monomial_value_vector.push_back(this->monomial_set_[i](variable_vector));
+
+	return this->coefficient_vector_.inner_product(monomial_value_vector);
+}
+
+void Polynomial::addition(const Polynomial& other) {
+	const auto num_term = other.coefficient_vector_.size();
+	for (size_t i = 0; i < num_term; ++i)
+		this->insert(other.coefficient_vector_[i], other.monomial_set_[i]);
+}
+
+void Polynomial::scalar_multiplication(const double scalar) {
+	if (scalar == 0)
+		*this = Polynomial();
+
+	for (auto& coefficient : this->coefficient_vector_)
+		coefficient *= scalar;
+}
+
+void Polynomial::multiplication(const Polynomial& other) {
+	const auto num_this_term = this->coefficient_vector_.size();
+	const auto num_oter_term = other.coefficient_vector_.size();
+
+	Polynomial result;
+	for (size_t i = 0; i < num_this_term; ++i) {
+		const auto& this_coefficient = this->coefficient_vector_[i];
+		const auto& this_monomial = this->monomial_set_[i];
+		for (size_t j = 0; j < num_this_term; ++j) {
+			const auto& other_coefficient = other.coefficient_vector_[j];
+			const auto& other_monomial = other.monomial_set_[j];
+
+			const auto result_coefficient = this_coefficient * other_coefficient;
+			const auto result_monomial = this_monomial * other_monomial;
+			result.insert(result_coefficient, result_monomial);
+		}
+	}
+	*this = std::move(result);
+}
+
+bool Polynomial::is_simple_polynomial(void) const {
+	return this->calculated_polynomial_set_.empty();
+}
+
+bool Polynomial::is_same_polynomial(const Polynomial& other) const {
+	std::map<Monomial, double> ordered_this_polynomial;
+	
+	const auto num_this_term = this->coefficient_vector_.size();
+	ordered_this_polynomial.try_emplace()
+
+	return this->coefficient_vector_ == other.coefficient_vector_ && this->monomial_set_ == other.monomial_set_;
+}
+
+std::string Polynomial::to_string(void) const {
+	if (this->is_simple_polynomial()) 			
+		return this->to_poly_string();
+	else {
+		auto str = this->to_poly_string();
+
+		for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
+			switch (binary_operator) {
+			case  BinaryOperator::addition:
+				str += " + ";
+				break;
+			case BinaryOperator::multiplication:
+				str += " X ";
+				break;
+			}
+			str += polynomial.to_string() + "]";
+		}
+		str.pop_back();
+		return str;
+	}	
+}
+
+std::string Polynomial::to_poly_string(void) const {
+	std::string str;
+	str += "[";
+
+	const auto num_term = this->coefficient_vector_.size();
+	for (size_t i = 0; i < num_term; ++i)
+		str += std::to_string(coefficient_vector_[i]) + monomial_set_[i].to_string() + " + ";
+
+	str.erase(str.end() - 3, str.end());
+	str += "]";
+	return str;
+}
+
+std::ostream& operator<<(std::ostream& ostream, const Polynomial& monomial) {
+	return ostream << monomial.to_string();
+}
+
+Polynomial Polynomial::extend(void) const {
+	Polynomial result(this->coefficient_vector_,this->monomial_set_);
+
+	for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
+		if (binary_operator == BinaryOperator::addition)
+			result.addition(polynomial);
+		else
+			result.multiplication(polynomial);
+	}
+
+	return result;
+}
+
+void Polynomial::insert(const double coefficient, const Monomial& monomial) {
+	if (coefficient == 0.0)
+		return;
+
+	const auto monomial_iter = std::find(this->monomial_set_.begin(), this->monomial_set_.end(), monomial);
+	if (monomial_iter == this->monomial_set_.end()) {
+		this->monomial_set_.push_back(monomial);
+		this->coefficient_vector_.push_back(coefficient);
+	}
+	else {
+		const auto coefficient_iter = coefficient_vector_.begin() + (monomial_iter - monomial_set_.begin());
+		*coefficient_iter += coefficient;
+		if (*coefficient_iter == 0) {
+			if (this->coefficient_vector_.size() == 1) {
+				*this = Polynomial();
+				return;
+			}
+			this->monomial_set_.erase(monomial_iter);
+			this->coefficient_vector_.erase(coefficient_iter);
+		}
+	}
+}
+
+
+
+
 
 //
 //Polynomial& Polynomial::operator*=(const double scalar) {

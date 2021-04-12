@@ -11,11 +11,12 @@ class Monomial
 {
 private:
 	std::vector<size_t> exponent_set_;
+	bool is_constant_ = false;
 
 public:
-	explicit Monomial(void) {};
-	explicit Monomial(const size_t variable_index);					// Monomial(0) => x_0	/ Monomial(2) => x_2
-	explicit Monomial(const std::initializer_list<size_t> list);	// Monomial{0} => 1		/ Monomial{2} => x^2
+	explicit Monomial(void);
+	explicit Monomial(const size_t variable_index);			// Monomial(0) => x_0	/ Monomial(2) => x_2
+	Monomial(const std::initializer_list<size_t> list);		// Monomial{0} => 1		/ Monomial{2} => x^2 , without explicit m = {1,2,3} work!
 	Monomial(std::vector<size_t>&& exponent_set);
 
 	Monomial& operator*=(const Monomial& other);
@@ -26,16 +27,16 @@ public:
 	bool operator==(const Monomial& other) const;
 
 	size_t exponent(size_t variable_index) const;
-	bool is_constant(void) const;
+	//bool is_constant(void) const;		//seem useless
 	//size_t num_variable(void) const;	//seem useless
 	size_t order(void) const;
 	Monomial& reduce_order(const size_t variable_index);
 	Monomial reduce_order(const size_t variable_index) const;
 	std::string to_string(void) const;
 
-	//for performance test
-	double call_operator1(const MathVector& variable_vector) const;
-	double call_operator2(const MathVector& variable_vector) const;
+	////for performance test
+	//double call_operator1(const MathVector& variable_vector) const;
+	//double call_operator2(const MathVector& variable_vector) const;
 
 private:
 	bool check_constant(void) const;
@@ -43,26 +44,76 @@ private:
 
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
 
-
-
+//class Monomial3D
+//{
+//private:
+//	std::array<size_t, 3> exponent_set_ = { 0,0,0 };
+//	bool is_constant_ = false;
+//
+//public:
+//	explicit Monomial3D(void) {};
+//	Monomial3D(const std::initializer_list<size_t> list);	
+//
+//	double operator()(const MathVector& variable_vector) const;
+//	double call_operator1(const MathVector& variable_vector) const;
+//	double call_operator2(const MathVector& variable_vector) const;
+//
+//private:
+//	bool check_constant(void) const;
+//};
 
 class Polynomial
 {
+	enum class BinaryOperator{
+		addition,
+		multiplication
+	};
+
+	using CalculatedPolynomial = std::pair<BinaryOperator, Polynomial>;
+
 private:
-	std::vector<double> coefficient_set_;
+	MathVector coefficient_vector_;
 	std::vector<Monomial> monomial_set_;
+	std::vector<CalculatedPolynomial> calculated_polynomial_set_;
 
 public:
 	explicit Polynomial(void);
 	explicit Polynomial(const double coefficient);
 	explicit Polynomial(const Monomial& monomial);
 	explicit Polynomial(const double coefficient, const Monomial& monomial);
+	Polynomial(const std::vector<double>& coefficient_set, const std::vector<Monomial>& monomial_set);
 	
-
+	Polynomial& operator+=(const Polynomial& other);
+	Polynomial& operator-=(const Polynomial& other);
+	Polynomial& operator*=(const double scalar);
+	Polynomial& operator*=(const Polynomial& other);
+	Polynomial operator+(const Polynomial& other) const;
+	Polynomial operator-(const Polynomial& other) const;
+	Polynomial operator*(const double scalar) const;
+	Polynomial operator*(const Polynomial& other) const;	
+	double operator()(const MathVector& variable_vector) const;
 	bool operator==(const Polynomial& other) const;
 	bool operator!=(const Polynomial& other) const;
 
+	std::string to_string(void) const;
+
+private:
+	double calculate(const MathVector& variable_vector) const;
+
+	void addition(const Polynomial& other);
+	void scalar_multiplication(const double scalar);
+	void multiplication(const Polynomial& other);
+
+	Polynomial extend(void) const;
+	void insert(const double coefficient, const Monomial& monomial);
+	bool is_simple_polynomial(void) const;
+	bool is_same_polynomial(const Polynomial& other) const;
+
+	std::string to_poly_string(void) const;
 };
+
+std::ostream& operator<<(std::ostream& ostream, const Polynomial& monomial);
+
 
 //class Polynomial
 //{
@@ -197,32 +248,32 @@ public:
 //	};
 //
 //
-//	Polynomial& operator+=(const Polynomial& other) {
-//		if (this->is_Simple_Poly() && other.is_Simple_Poly())
-//			this->plus(other);
-//		else
-//			this->BOPoly_set_.emplace_back(BinaryOperator::plus, other);
-//		return *this;
-//	}
-//
-//	Polynomial& operator-=(const Polynomial& other) {
-//		auto temp = other * -1.0;
-//		return *this += temp;
-//	}
-//
-//	Polynomial& operator*=(const double& scalar) {
-//		this->multiply(scalar);		
-//		for (auto& [BO, poly] : BOPoly_set_) {
-//			if (BO == BinaryOperator::plus)
-//				poly.multiply(scalar);
-//		}
-//		return *this;
-//	}
-//
-//	Polynomial& operator*=(const Polynomial& other) {
-//		this->BOPoly_set_.emplace_back(BinaryOperator::multiply, other);
-//		return *this;
-//	}
+	//Polynomial& operator+=(const Polynomial& other) {
+	//	if (this->is_Simple_Poly() && other.is_Simple_Poly())
+	//		this->plus(other);
+	//	else
+	//		this->BOPoly_set_.emplace_back(BinaryOperator::plus, other);
+	//	return *this;
+	//}
+
+	//Polynomial& operator-=(const Polynomial& other) {
+	//	auto temp = other * -1.0;
+	//	return *this += temp;
+	//}
+
+	//Polynomial& operator*=(const double& scalar) {
+	//	this->multiply(scalar);		
+	//	for (auto& [BO, poly] : BOPoly_set_) {
+	//		if (BO == BinaryOperator::plus)
+	//			poly.multiply(scalar);
+	//	}
+	//	return *this;
+	//}
+
+	//Polynomial& operator*=(const Polynomial& other) {
+	//	this->BOPoly_set_.emplace_back(BinaryOperator::multiply, other);
+	//	return *this;
+	//}
 //
 //	Polynomial operator+(const Polynomial& other) const {
 //		Polynomial result(*this);
@@ -239,29 +290,29 @@ public:
 //		return result *= other;
 //	}
 //
-//	Polynomial operator*(const double scalar) const {
-//		Polynomial result(*this);
-//		return result *= scalar;
-//	}
-//
-//	double operator()(const MathVector& variable_vector) const {
-//		if (this->is_Simple_Poly())
-//			return this->calculate(variable_vector);
-//		else {
-//			auto result = this->calculate(variable_vector);
-//			for (const auto& [BO, polynomial] : this->BOPoly_set_) {
-//				switch (BO) {
-//				case  BinaryOperator::plus:
-//					result += polynomial(variable_vector);
-//					break;
-//				case BinaryOperator::multiply:
-//					result *= polynomial(variable_vector);
-//					break;
-//				}
-//			}
-//			return result;
-//		}
-//	}
+	//Polynomial operator*(const double scalar) const {
+	//	Polynomial result(*this);
+	//	return result *= scalar;
+	//}
+
+	//double operator()(const MathVector& variable_vector) const {
+	//	if (this->is_Simple_Poly())
+	//		return this->calculate(variable_vector);
+	//	else {
+	//		auto result = this->calculate(variable_vector);
+	//		for (const auto& [BO, polynomial] : this->BOPoly_set_) {
+	//			switch (BO) {
+	//			case  BinaryOperator::plus:
+	//				result += polynomial(variable_vector);
+	//				break;
+	//			case BinaryOperator::multiply:
+	//				result *= polynomial(variable_vector);
+	//				break;
+	//			}
+	//		}
+	//		return result;
+	//	}
+	//}
 //
 //	std::string to_Extended_String(void) const {
 //		auto extended_poly = this->extend();
@@ -405,55 +456,55 @@ public:
 //		}
 //	}
 //
-//	void insert(const double coefficient, Monomial&& monomial) {
-//		if (coefficient == 0)
-//			return;
+	//void insert(const double coefficient, Monomial&& monomial) {
+	//	if (coefficient == 0)
+	//		return;
+
+	//	auto iter = this->monomial_to_coefficient_.find(monomial);
+	//	if (iter == this->monomial_to_coefficient_.end())
+	//		this->monomial_to_coefficient_.emplace(std::move(monomial), coefficient);
+	//	else {
+	//		iter->second += coefficient;
+	//		if (iter->second == 0)
+	//			this->monomial_to_coefficient_.erase(iter);
+	//	}
+	//}
+
+	//void plus(const Polynomial& other) {
+	//	for (const auto& [other_monomial, other_coefficient] : other.monomial_to_coefficient_)
+	//		this->insert(other_coefficient, other_monomial);
+	//}
+
+	//void multiply(const double scalar) {
+	//	for (auto& [monomial, coefficient] : this->monomial_to_coefficient_)
+	//		coefficient *= scalar;
+	//}
+
+	//void multiply(const Polynomial& other) {
+	//	Polynomial result;
+	//	for (const auto& [this_monomial, this_coefficient] : this->monomial_to_coefficient_)
+	//		for (const auto& [other_monomial, other_coefficient] : other.monomial_to_coefficient_) {
+	//			const auto result_coefficient = this_coefficient * other_coefficient;
+	//			auto result_monomial = this_monomial * other_monomial;
+	//			result.insert(result_coefficient, std::move(result_monomial));
+	//		}
+	//	*this = std::move(result);
+	//}
 //
-//		auto iter = this->monomial_to_coefficient_.find(monomial);
-//		if (iter == this->monomial_to_coefficient_.end())
-//			this->monomial_to_coefficient_.emplace(std::move(monomial), coefficient);
-//		else {
-//			iter->second += coefficient;
-//			if (iter->second == 0)
-//				this->monomial_to_coefficient_.erase(iter);
-//		}
-//	}
 //
-//	void plus(const Polynomial& other) {
-//		for (const auto& [other_monomial, other_coefficient] : other.monomial_to_coefficient_)
-//			this->insert(other_coefficient, other_monomial);
-//	}
-//
-//	void multiply(const double scalar) {
-//		for (auto& [monomial, coefficient] : this->monomial_to_coefficient_)
-//			coefficient *= scalar;
-//	}
-//
-//	void multiply(const Polynomial& other) {
-//		Polynomial result;
-//		for (const auto& [this_monomial, this_coefficient] : this->monomial_to_coefficient_)
-//			for (const auto& [other_monomial, other_coefficient] : other.monomial_to_coefficient_) {
-//				const auto result_coefficient = this_coefficient * other_coefficient;
-//				auto result_monomial = this_monomial * other_monomial;
-//				result.insert(result_coefficient, std::move(result_monomial));
-//			}
-//		*this = std::move(result);
-//	}
-//
-//
-//	std::string to_Poly_String(void) const {
-//		std::string str;
-//		str += "[";
-//		const auto start_iter = this->monomial_to_coefficient_.rbegin();
-//		const auto end_iter = this->monomial_to_coefficient_.rend();
-//		for (auto iter = start_iter; iter != end_iter; ++iter) {
-//			const auto& [monomial, coefficient] = *iter;
-//			str += Editor::to_String(coefficient) + Editor::to_String(monomial) + "\t";
-//		}
-//		StringEditor::erase_back(str, 1);
-//		str += "]";
-//		return str;
-//	}
+	//std::string to_Poly_String(void) const {
+	//	std::string str;
+	//	str += "[";
+	//	const auto start_iter = this->monomial_to_coefficient_.rbegin();
+	//	const auto end_iter = this->monomial_to_coefficient_.rend();
+	//	for (auto iter = start_iter; iter != end_iter; ++iter) {
+	//		const auto& [monomial, coefficient] = *iter;
+	//		str += Editor::to_String(coefficient) + Editor::to_String(monomial) + "\t";
+	//	}
+	//	StringEditor::erase_back(str, 1);
+	//	str += "]";
+	//	return str;
+	//}
 //
 //	//Polynomial differentiate(const size_t differential_variable) const;
 //
