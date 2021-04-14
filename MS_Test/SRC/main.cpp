@@ -1,5 +1,7 @@
 
 #include "../INC/MathVector.h"
+#include "../INC/Polynomial.h"
+
 
 #include <iostream>
 #include <array>
@@ -36,7 +38,9 @@ public:
 #include <string>
 int main(void)
 {
-	std::string str = "abcdef";
-	str.erase(str.end() - 3, str.end());
-	std::cout << str;
+	Monomial m1;
+	Monomial m2 = { 1,2,3 };
+	m1 = m2;
+
+	std::cout << "Debug";
 }
