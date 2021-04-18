@@ -1,6 +1,26 @@
 #pragma once
 #include "gtest/gtest.h"
-#include "../MS_Test/INC/Polynomial.h"
+#include "../MS_Test/SRC/MathVector.cpp"	//For inner_product in Polynomial::operator() 
+#include "../MS_Test/SRC/Polynomial.cpp"
+
+GTEST_TEST(MONOMIAL, CONSTRUCTOR) {
+	{
+		Monomial m1;
+		Monomial m2{ 0 };
+		EXPECT_EQ(m1, m2);
+	}
+	{
+		Monomial m1(0);
+		Monomial m2{ 1 };
+		EXPECT_EQ(m1, m2);
+	}
+	{
+		Monomial m1{ 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
+		std::vector<size_t> exponent_set = { 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
+		Monomial m2(std::move(exponent_set));
+		EXPECT_EQ(m1, m2);
+	}
+}
 
 GTEST_TEST(MONOMIAL, EXPONENT) {
 	{
@@ -9,16 +29,12 @@ GTEST_TEST(MONOMIAL, EXPONENT) {
 		EXPECT_ANY_THROW(m1.exponent(variable_index));
 	}
 	{
-		Monomial m(0); 
+		Monomial m1(0);
+		Monomial m2{ 1 };
 		size_t variable_index = 0;
 		const size_t ref = 1;
-		EXPECT_EQ(m.exponent(variable_index), ref); 
-	}
-	{
-		Monomial m = { 1 };
-		size_t variable_index = 0;
-		const size_t ref = 1; 
-		EXPECT_EQ(m.exponent(variable_index), ref);
+		EXPECT_EQ(m1.exponent(variable_index), ref);
+		EXPECT_EQ(m2.exponent(variable_index), ref);
 	}
 	{
 		Monomial m1{ 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
@@ -32,13 +48,41 @@ GTEST_TEST(MONOMIAL, EXPONENT) {
 	}
 }
 
+//GTEST_TEST(MONOMIAL, IS_CONSTANT) {
+//	Monomial m1;
+//	Monomial m2(0);
+//	Monomial m3{ 0 };
+//	Monomial m4{ 0,0,0,0,0,0,0,0,0 };
+//
+//	EXPECT_TRUE(m1.is_constant());
+//	EXPECT_FALSE(m2.is_constant());
+//	EXPECT_TRUE(m3.is_constant());
+//	EXPECT_TRUE(m4.is_constant()); 
+//} 
+
+//GTEST_TEST(MONOMIAL, NUM_VARIABLE) {
+//	Monomial m1;
+//	Monomial m2(0);
+//	Monomial m3{ 0 };
+//	Monomial m4{ 0,0,0,0,0,0,0,0,0 };
+//	Monomial m5(128);
+//	Monomial m6{ 1,2,3,4,5 };
+//
+//	EXPECT_EQ(m1.num_variable(), 0);
+//	EXPECT_EQ(m2.num_variable(), 1);
+//	EXPECT_EQ(m3.num_variable(), 0);
+//	EXPECT_EQ(m4.num_variable(), 0);
+//	EXPECT_EQ(m5.num_variable(), 1);
+//	EXPECT_EQ(m6.num_variable(), 5);
+//}
+
 GTEST_TEST(MONOMIAL, ORDER) {
 	Monomial m1;
 	Monomial m2(0);
-	Monomial m3 = { 0 };
-	Monomial m4 = { 0,0,0,0,0,0,0,0,0 };
+	Monomial m3{ 0 };
+	Monomial m4{ 0,0,0,0,0,0,0,0,0 };
 	Monomial m5(128);
-	Monomial m6 = { 1,2,3,4,5 };
+	Monomial m6{ 1,2,3,4,5 };
 
 	EXPECT_EQ(m1.order(), 0);
 	EXPECT_EQ(m2.order(), 1);
@@ -52,8 +96,8 @@ GTEST_TEST(MONOMIAL, REDUCE_ORDER) {
 	{
 		Monomial m1;
 		Monomial m2(0);
-		Monomial m3 = { 0 };
-		Monomial m4 = { 0,0,0,0,0,0,0,0,0 };
+		Monomial m3{ 0 };
+		Monomial m4{ 0,0,0,0,0,0,0,0,0 };
 
 		EXPECT_ANY_THROW(m1.reduce_order(0));
 		
@@ -130,16 +174,6 @@ GTEST_TEST(MONOMIAL, TO_STRING) {
 	{
 		Monomial m;
 		EXPECT_EQ(m.to_string(), "(1)");
-	}
-}
-
-GTEST_TEST(MONOMIAL, ASSIGN) {
-	{
-		Monomial m1;
-		Monomial m2 = { 1,2,3 };
-		m1 = m2;
-		 
-		EXPECT_EQ(m1, m2);
 	}
 }
 
@@ -259,35 +293,6 @@ GTEST_TEST(MONOMIAL, FUNCTION_CALL) {
 		EXPECT_DOUBLE_EQ(m(v), ref);
 	}
 }
-
-
-//GTEST_TEST(MONOMIAL, IS_CONSTANT) {
-//	Monomial m1;
-//	Monomial m2(0);
-//	Monomial m3{ 0 };
-//	Monomial m4{ 0,0,0,0,0,0,0,0,0 };
-//
-//	EXPECT_TRUE(m1.is_constant());
-//	EXPECT_FALSE(m2.is_constant());
-//	EXPECT_TRUE(m3.is_constant());
-//	EXPECT_TRUE(m4.is_constant()); 
-//} 
-
-//GTEST_TEST(MONOMIAL, NUM_VARIABLE) {
-//	Monomial m1;
-//	Monomial m2(0);
-//	Monomial m3{ 0 };
-//	Monomial m4{ 0,0,0,0,0,0,0,0,0 };
-//	Monomial m5(128);
-//	Monomial m6{ 1,2,3,4,5 };
-//
-//	EXPECT_EQ(m1.num_variable(), 0);
-//	EXPECT_EQ(m2.num_variable(), 1);
-//	EXPECT_EQ(m3.num_variable(), 0);
-//	EXPECT_EQ(m4.num_variable(), 0);
-//	EXPECT_EQ(m5.num_variable(), 1);
-//	EXPECT_EQ(m6.num_variable(), 5);
-//}
 
 //GTEST_TEST(MONOMIAL3D, CALL_OPERATOR1_1) {
 //	{
@@ -418,11 +423,6 @@ GTEST_TEST(POLYNOMIAL, CONSTRUCTOR) {
 	{
 		Polynomial p1 = { {1,2},{ Monomial(), Monomial{1} } };
 		Polynomial p2 = { {2,1},{ Monomial{1},Monomial() } };
-		EXPECT_EQ(p1, p2);
-	}
-	{
-		Polynomial p1 = { {1,3},{ Monomial(), Monomial{1} } };
-		Polynomial p2 = { {3,1},{ Monomial{1},Monomial() } };
 		EXPECT_EQ(p1, p2);
 	}
 }

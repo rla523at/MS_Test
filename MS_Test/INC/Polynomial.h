@@ -9,41 +9,30 @@
 
 class Monomial
 {
-	using Iter = std::vector<size_t>::iterator;
-
 private:
 	std::vector<size_t> exponent_set_;
 	bool is_constant_ = false;
 
-	//for optimization	
-	Iter start_iter_;
-	Iter end_iter_;
-	
 public:
 	explicit Monomial(void);
 	explicit Monomial(const size_t variable_index);			// Monomial(0) => x_0	/ Monomial(2) => x_2
 	Monomial(const std::initializer_list<size_t> list);		// Monomial{0} => 1		/ Monomial{2} => x^2 , without explicit m = {1,2,3} work!
 	Monomial(std::vector<size_t>&& exponent_set);
-	Monomial(const Monomial& other);
-	Monomial(Monomial&& other) noexcept;
 
 	Monomial& operator*=(const Monomial& other);
 	Monomial operator*(const Monomial& other) const;
 	double operator()(void) const;
 	double operator()(const MathVector& variable_vector) const;
-	Monomial& operator=(const Monomial& other);
-	Monomial& operator=(Monomial&& other) noexcept;
 	bool operator<(const Monomial& other) const;
 	bool operator==(const Monomial& other) const;
 
 	size_t exponent(size_t variable_index) const;
+	//bool is_constant(void) const;		//seem useless
+	//size_t num_variable(void) const;	//seem useless
 	size_t order(void) const;
 	Monomial& reduce_order(const size_t variable_index);
 	Monomial reduce_order(const size_t variable_index) const;
 	std::string to_string(void) const;
-
-	//bool is_constant(void) const;		//seem useless
-	//size_t num_variable(void) const;	//seem useless
 
 	////for performance test
 	//double call_operator1(const MathVector& variable_vector) const;
@@ -51,8 +40,6 @@ public:
 
 private:
 	bool check_constant(void) const;
-	void update_iterator(void); //consdier iterator invalidation
-	size_t size(void) const;
 };
 
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
