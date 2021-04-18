@@ -1,7 +1,6 @@
 #pragma once
 #include "gtest/gtest.h"
-#include "../MS_Test/SRC/MathVector.cpp"	//For inner_product in Polynomial::operator() 
-#include "../MS_Test/SRC/Polynomial.cpp"
+#include "../MS_Test/INC/Polynomial.h"
 
 GTEST_TEST(MONOMIAL, CONSTRUCTOR) {
 	{
@@ -47,34 +46,6 @@ GTEST_TEST(MONOMIAL, EXPONENT) {
 		EXPECT_EQ(m1.exponent(2), 2);
 	}
 }
-
-//GTEST_TEST(MONOMIAL, IS_CONSTANT) {
-//	Monomial m1;
-//	Monomial m2(0);
-//	Monomial m3{ 0 };
-//	Monomial m4{ 0,0,0,0,0,0,0,0,0 };
-//
-//	EXPECT_TRUE(m1.is_constant());
-//	EXPECT_FALSE(m2.is_constant());
-//	EXPECT_TRUE(m3.is_constant());
-//	EXPECT_TRUE(m4.is_constant()); 
-//} 
-
-//GTEST_TEST(MONOMIAL, NUM_VARIABLE) {
-//	Monomial m1;
-//	Monomial m2(0);
-//	Monomial m3{ 0 };
-//	Monomial m4{ 0,0,0,0,0,0,0,0,0 };
-//	Monomial m5(128);
-//	Monomial m6{ 1,2,3,4,5 };
-//
-//	EXPECT_EQ(m1.num_variable(), 0);
-//	EXPECT_EQ(m2.num_variable(), 1);
-//	EXPECT_EQ(m3.num_variable(), 0);
-//	EXPECT_EQ(m4.num_variable(), 0);
-//	EXPECT_EQ(m5.num_variable(), 1);
-//	EXPECT_EQ(m6.num_variable(), 5);
-//}
 
 GTEST_TEST(MONOMIAL, ORDER) {
 	Monomial m1;

@@ -67,31 +67,6 @@ double Monomial::operator()(const MathVector& variable_value_vector) const {
 	return result;
 }
 
-//double Monomial::call_operator1(const MathVector& variable_vector) const {
-//	if (this->exponent_set_.size() != variable_vector.size())
-//		throw "variables are not matched";
-//
-//	double result = 1.0;
-//	for (size_t i = 0; i < this->exponent_set_.size(); ++i) {
-//		if (this->exponent_set_[i] == 0 || variable_vector[i] == 0)
-//			continue;
-//		else
-//			result *= std::pow(variable_vector[i], this->exponent_set_[i]);
-//	}
-//	return result;
-//}
-//
-//double Monomial::call_operator2(const MathVector& variable_vector) const {
-//	if (this->exponent_set_.size() != variable_vector.size())
-//		throw "variables are not matched";
-//
-//	double result = 1.0;
-//	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
-//		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
-//
-//	return result;
-//}
-
 bool Monomial::operator<(const Monomial& other) const {
 	const auto this_order = this->order();
 	const auto other_order = other.order();
@@ -125,18 +100,6 @@ size_t Monomial::exponent(size_t variable_index) const {
 
 	return this->exponent_set_[variable_index];
 }
-
-//bool Monomial::is_constant(void) const {
-//	return this->exponent_set_.empty();
-//}
-
-//size_t Monomial::num_variable(void) const {
-//	const size_t zero = 0;
-//	const auto num_zero = std::count(this->exponent_set_.begin(), this->exponent_set_.end(), zero);
-//
-//	return this->exponent_set_.size() - num_zero;
-//};
-
 
 size_t Monomial::order(void) const {
 	if (this->is_constant_)
@@ -197,6 +160,42 @@ std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial) {
 	return ostream << monomial.to_string();
 }
 
+
+
+//double Monomial::call_operator1(const MathVector& variable_vector) const {
+//	if (this->exponent_set_.size() != variable_vector.size())
+//		throw "variables are not matched";
+//
+//	double result = 1.0;
+//	for (size_t i = 0; i < this->exponent_set_.size(); ++i) {
+//		if (this->exponent_set_[i] == 0 || variable_vector[i] == 0)
+//			continue;
+//		else
+//			result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+//	}
+//	return result;
+//}
+//
+//double Monomial::call_operator2(const MathVector& variable_vector) const {
+//	if (this->exponent_set_.size() != variable_vector.size())
+//		throw "variables are not matched";
+//
+//	double result = 1.0;
+//	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
+//		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
+//
+//	return result;
+//}
+//bool Monomial::is_constant(void) const {
+//	return this->exponent_set_.empty();
+//}
+
+//size_t Monomial::num_variable(void) const {
+//	const size_t zero = 0;
+//	const auto num_zero = std::count(this->exponent_set_.begin(), this->exponent_set_.end(), zero);
+//
+//	return this->exponent_set_.size() - num_zero;
+//};
 
 
 
@@ -445,11 +444,18 @@ bool Polynomial::is_simple_polynomial(void) const {
 
 bool Polynomial::is_same_polynomial(const Polynomial& other) const {
 	std::map<Monomial, double> ordered_this_polynomial;
-	
-	const auto num_this_term = this->coefficient_vector_.size();
-	ordered_this_polynomial.try_emplace()
+	std::map<Monomial, double> ordered_other_polynomial;
+	const auto num_term = this->coefficient_vector_.size();
 
-	return this->coefficient_vector_ == other.coefficient_vector_ && this->monomial_set_ == other.monomial_set_;
+	if (num_term != other.coefficient_vector_.size())
+		return false;
+
+	for (size_t i = 0; i < num_term; ++i) {
+		ordered_this_polynomial.try_emplace(this->monomial_set_[i], this->coefficient_vector_[i]);
+		ordered_other_polynomial.try_emplace(other.monomial_set_[i], other.coefficient_vector_[i]);
+	}
+
+	return ordered_this_polynomial == ordered_other_polynomial;
 }
 
 std::string Polynomial::to_string(void) const {
