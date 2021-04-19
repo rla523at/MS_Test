@@ -25,11 +25,13 @@ GTEST_TEST(MONOMIAL, EXPONENT) {
 	{
 		Monomial m1;
 		size_t variable_index = 0;
-		EXPECT_ANY_THROW(m1.exponent(variable_index));
+
+		size_t ref = 0;
+		EXPECT_EQ(m1.exponent(variable_index),ref);
 	}
 	{
 		Monomial m1(0);
-		Monomial m2{ 1 };
+		Monomial m2 = { 1 };
 		size_t variable_index = 0;
 		const size_t ref = 1;
 		EXPECT_EQ(m1.exponent(variable_index), ref);
@@ -42,8 +44,11 @@ GTEST_TEST(MONOMIAL, EXPONENT) {
 			EXPECT_EQ(m1.exponent(i), exponent_set[i]);
 	}
 	{
-		Monomial m1{ 0,1,2 };
-		EXPECT_EQ(m1.exponent(2), 2);
+		Monomial m1 = { 0,1,2 };
+		size_t variable_index = 5;
+
+		size_t ref = 0;
+		EXPECT_EQ(m1.exponent(variable_index), 0);
 	}
 }
 
@@ -265,108 +270,6 @@ GTEST_TEST(MONOMIAL, FUNCTION_CALL) {
 	}
 }
 
-//GTEST_TEST(MONOMIAL3D, CALL_OPERATOR1_1) {
-//	{
-//		Monomial3D m = { 1,1,1 };
-//		std::vector<Monomial3D> vec(100);
-//		std::vector<Monomial3D> vec2(100, m);
-//
-//		MathVector mv = { 1,2,3 };
-//
-//		double result = 0;
-//		for (size_t i = 0; i < 10000000000; ++i) {
-//			for (const auto& mono : vec)
-//				result += mono.call_operator1(mv);
-//			for (const auto& mono : vec2)
-//				result += mono.call_operator1(mv);
-//		}
-//	}
-//}
-//
-//GTEST_TEST(MONOMIAL3D, CALL_OPERATOR2_1) {
-//	{
-//		Monomial3D m = { 1,1,1 };
-//		std::vector<Monomial3D> vec(100);
-//		std::vector<Monomial3D> vec2(100, m);
-//
-//		MathVector mv = { 1,2,3 };
-//
-//		double result = 0;
-//		for (size_t i = 0; i < 10000000000; ++i) {
-//			for (const auto& mono : vec)
-//				result += mono.call_operator2(mv);
-//			for (const auto& mono : vec2)
-//				result += mono.call_operator2(mv);
-//		}
-//	}
-//}
-//
-//GTEST_TEST(MONOMIAL3D, CALL_OPERATOR1_2) {
-//	{
-//		std::vector<Monomial3D> vec(100);
-//		MathVector mv = { 1,2,3 };
-//
-//		double result = 0;
-//		for (size_t i = 0; i < 10000000000; ++i) {
-//			for (const auto& monomial : vec)
-//				result += monomial.call_operator1(mv);
-//		}
-//	}
-//}
-//
-//GTEST_TEST(MONOMIAL3D, CALL_OPERATOR2_2) {
-//	{
-//		std::vector<Monomial3D> vec(100);
-//		MathVector mv = { 1,2,3 };
-//
-//		double result = 0;
-//		for (size_t i = 0; i < 10000000000; ++i) {
-//			for (const auto& monomial : vec)
-//				result += monomial.call_operator2(mv);
-//		}
-//	}
-//}
-//
-//GTEST_TEST(MONOMIAL3D, CALL_OPERATOR1_3) {
-//	{
-//		Monomial3D m1 = { 1,1,1 };
-//		Monomial3D m2;
-//		std::vector<Monomial3D> vec;
-//		vec.reserve(200);
-//		for (size_t i = 0; i < 100; i++) {
-//			vec.push_back(m1);
-//			vec.push_back(m2);
-//		}
-//
-//		MathVector mv = { 1,2,3 };
-//		double result = 0;
-//		for (size_t i = 0; i < 10000000000; ++i) {
-//			for (const auto& mono : vec)
-//				result += mono.call_operator1(mv);
-//		}
-//	}
-//}
-//
-//GTEST_TEST(MONOMIAL3D, CALL_OPERATOR2_3) {
-//	{
-//		Monomial3D m1 = { 1,1,1 };
-//		Monomial3D m2;
-//		std::vector<Monomial3D> vec;
-//		vec.reserve(200);
-//		for (size_t i = 0; i < 100; i++) {
-//			vec.push_back(m1);
-//			vec.push_back(m2);
-//		}
-//
-//		MathVector mv = { 1,2,3 };
-//		double result = 0;
-//		for (size_t i = 0; i < 10000000000; ++i) {
-//			for (const auto& mono : vec)
-//				result += mono.call_operator2(mv);
-//		}
-//	}
-//}
-
 GTEST_TEST(POLYNOMIAL, CONSTRUCTOR) {
 	{
 		Polynomial p1;
@@ -395,6 +298,12 @@ GTEST_TEST(POLYNOMIAL, CONSTRUCTOR) {
 		Polynomial p1 = { {1,2},{ Monomial(), Monomial{1} } };
 		Polynomial p2 = { {2,1},{ Monomial{1},Monomial() } };
 		EXPECT_EQ(p1, p2);
+	}
+	{
+		std::vector<Monomial> m_set2 = { {1}, {0} };
+		std::vector<double> c_set2 = { 1, 1, 1 };
+		EXPECT_ANY_THROW(Polynomial p2(c_set2, m_set2));
+
 	}
 }
 
@@ -447,7 +356,15 @@ GTEST_TEST(POLYNOMIAL, MULTIPLICATION_ASSIGN) {
 GTEST_TEST(POLYNOMIAL, TO_STRING) {
 	{
 		Polynomial p = { {1,2,1},{Monomial{2},Monomial{1},Monomial{0}} };
-		std::string ref = "[" + std::to_string(1.0) + "(x0)^2 + " + std::to_string(2.0) + "(x0)^1 + " + std::to_string(1.0) + "(1)]";
+		std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^2 + " + ms::double_to_string(2.0) + "(x0)^1 + " + ms::double_to_string(1.0) + "(1)]";
+		EXPECT_EQ(p.to_string(), ref);
+	}
+	{
+		Polynomial p = { {1,1},{Monomial{1},Monomial{0}} };
+		p *= p;
+
+		std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)] X [" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)]";
+
 		EXPECT_EQ(p.to_string(), ref);
 	}
 }
@@ -455,7 +372,7 @@ GTEST_TEST(POLYNOMIAL, TO_STRING) {
 
 GTEST_TEST(POLYNOMIAL, CALL_OPERATOR) {
 	{
-		Polynomial p = { {1,2,1},{Monomial{2},Monomial{1},Monomial{0}} };
+		Polynomial p = { {1,2,1},{{2},{1},{0}} };
 
 		const MathVector v;
 		EXPECT_ANY_THROW(p(v));
@@ -473,7 +390,7 @@ GTEST_TEST(POLYNOMIAL, CALL_OPERATOR) {
 		EXPECT_DOUBLE_EQ(p(v2), ref2);
 	}
 	{
-		Polynomial p = { {1,-2.0e3,1.0e6},{Monomial{2},Monomial{1},Monomial{0}} };
+		Polynomial p = { {1,-2.0e3,1.0e6},{{2},{1},{0}} };
 
 		const MathVector v3 = { 1000.1 };
 		//const double ref = 0.01;
@@ -481,12 +398,60 @@ GTEST_TEST(POLYNOMIAL, CALL_OPERATOR) {
 		EXPECT_DOUBLE_EQ(p(v3), ref);	
 	}	
 	{
-		Polynomial p = { { 1,-1.0e3 }, { Monomial{1},Monomial{0}} };
+		Polynomial p = { { 1,-1.0e3 }, { {1},{0} } };
 		p *= p;
 		const MathVector v = { 1000.1 };
 		//const double ref = 0.01;
 		const double ref = 0.01000000000000455;	// still too large round off error
 		EXPECT_DOUBLE_EQ(p(v), ref);
+	}
+	{
+		Monomial m(0);
+
+		Polynomial p1(m);
+		Polynomial p2(-1.0e3);
+
+		p1 += p2;
+		p1 *= p1;
+
+		const MathVector v = { 1000.1 };
+		const double ref = 0.01000000000000455;	// still too large round off error
+		EXPECT_DOUBLE_EQ(p1(v), ref);
+	}
+	{
+		Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
+		Polynomial p2{ { 1, 1 }, { { 1 }, { 0 } } };
+		p1 *= p2;
+
+		const MathVector v = { -1 };
+		const double ref = 0.0;
+		EXPECT_DOUBLE_EQ(p1(v), ref);
+	}
+}
+
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE) {
+	{
+		Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
+
+		Polynomial ref({ 2,1 }, { {1},{0} });
+		size_t variable_index = 0;
+		EXPECT_EQ(p1.differentiate(variable_index), ref);
+	}
+	{
+		Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
+
+		Polynomial ref;
+		size_t variable_index = 1;
+		EXPECT_EQ(p1.differentiate(variable_index), ref);
+	}
+	{
+		Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
+		Polynomial p2({ 2,1 }, { {1},{0} });
+		p1 += p2;
+
+		Polynomial ref({ 2,3 }, { {1},{0} });
+		size_t variable_index = 0;
+		EXPECT_EQ(p1.differentiate(variable_index), ref);
 	}
 }
 

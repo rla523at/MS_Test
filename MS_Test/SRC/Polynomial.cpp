@@ -1,5 +1,13 @@
 #include "../INC/Polynomial.h"
 
+namespace ms {
+	std::string double_to_string(const double val) {
+		std::stringstream stream;
+		stream << std::setprecision(15) << std::noshowpoint << val;
+		return stream.str();
+	}
+}
+
 Monomial::Monomial(void) {
 	this->is_constant_ = true;
 }
@@ -93,10 +101,14 @@ bool Monomial::operator==(const Monomial& other) const {
 }
 
 size_t Monomial::exponent(size_t variable_index) const {
-	if (this->exponent_set_.size() <= variable_index)
-		throw std::out_of_range("variable index exceed range");
-	else if (this->is_constant_)
-		throw "constant monomial does not have exponent";
+	if (this->exponent_set_.size() <= variable_index || this->is_constant_)
+		return 0;
+
+
+	//if (this->exponent_set_.size() <= variable_index)
+	//	throw std::out_of_range("variable index exceed range");
+	//else if (this->is_constant_)
+	//	throw "constant monomial does not have exponent";
 
 	return this->exponent_set_[variable_index];
 }
@@ -112,10 +124,7 @@ size_t Monomial::order(void) const {
 }
 
 Monomial& Monomial::reduce_order(const size_t variable_index) {
-	if (this->is_constant_)
-		throw "constant can not reduce order";
-	
-	if (this->exponent_set_[variable_index] == 0)
+	if (this->exponent(variable_index) == 0)
 		throw "exponent can not be negative";
 	else
 		this->exponent_set_[variable_index]--;
@@ -186,96 +195,6 @@ std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial) {
 //
 //	return result;
 //}
-//bool Monomial::is_constant(void) const {
-//	return this->exponent_set_.empty();
-//}
-
-//size_t Monomial::num_variable(void) const {
-//	const size_t zero = 0;
-//	const auto num_zero = std::count(this->exponent_set_.begin(), this->exponent_set_.end(), zero);
-//
-//	return this->exponent_set_.size() - num_zero;
-//};
-
-
-
-
-
-
-
-
-
-
-//Monomial3D::Monomial3D(std::initializer_list<size_t> list) {
-//	if (list.size() > this->exponent_set_.size())
-//		throw("Too many input");
-//	
-//	std::move(list.begin(), list.end(), exponent_set_.begin());
-//	
-//	if (this->check_constant())
-//		this->is_constant_ = true;
-//};
-//
-//double Monomial3D::operator()(const MathVector& variable_vector) const {
-//	if (variable_vector.size() != this->exponent_set_.size())
-//		throw("variable is not matched");
-//
-//	double result = 1.0;
-//	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
-//		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
-//
-//	return result;
-//}
-//
-//double Monomial3D::call_operator1(const MathVector& variable_vector) const {
-//	if (variable_vector.size() != this->exponent_set_.size())
-//		throw("variable is not matched");
-//
-//	double result = 1.0;
-//	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
-//		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
-//
-//	return result;
-//}
-//
-//double Monomial3D::call_operator2(const MathVector& variable_vector) const {
-//	if (variable_vector.size() != this->exponent_set_.size())
-//		throw("variable is not matched");
-//
-//	if (this->is_constant_)
-//		return 1.0;
-//
-//	double result = 1.0;
-//	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
-//		result *= std::pow(variable_vector[i], this->exponent_set_[i]);
-//
-//	return result;
-//}
-//
-//
-//bool Monomial3D::check_constant(void) const {
-//	for (const auto& exponent : this->exponent_set_) {
-//		if (exponent != 0)
-//			return false;
-//	}
-//	return true;
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 Polynomial::Polynomial(void) {
@@ -299,6 +218,9 @@ Polynomial::Polynomial(const double coefficient, const Monomial& monomial) {
 }
 
 Polynomial::Polynomial(const std::vector<double>& coefficient_set, const std::vector<Monomial>& monomial_set) {
+	if (coefficient_set.size() != monomial_set.size())
+		throw "Size Error";
+
 	this->coefficient_vector_ = coefficient_set;
 	this->monomial_set_ = monomial_set;
 }
@@ -371,25 +293,63 @@ double Polynomial::operator()(const MathVector& variable_vector) const {
 }
 
 bool Polynomial::operator==(const Polynomial& other) const {
-	if (this->is_simple_polynomial() && other.is_simple_polynomial())
-		return this->is_same_polynomial(other);
-	else if (this->is_simple_polynomial() && !other.is_simple_polynomial()) {
-		const auto extended_poly = other.extend();
-		return this->is_same_polynomial(extended_poly);
+	const auto extended_this_poly = this->extend();
+	const auto extended_other_poly = other.extend();
+		
+	const auto num_term = extended_this_poly.coefficient_vector_.size();
+	if (num_term != extended_other_poly.coefficient_vector_.size())
+		return false;
+
+	std::map<Monomial, double> ordered_this_polynomial;
+	std::map<Monomial, double> ordered_other_polynomial;
+	for (size_t i = 0; i < num_term; ++i) {
+		ordered_this_polynomial.try_emplace(extended_this_poly.monomial_set_[i], extended_this_poly.coefficient_vector_[i]);
+		ordered_other_polynomial.try_emplace(extended_other_poly.monomial_set_[i], extended_other_poly.coefficient_vector_[i]);
 	}
-	else if (!this->is_simple_polynomial() && other.is_simple_polynomial()) {
-		const auto extended_poly = this->extend();
-		return extended_poly.is_same_polynomial(other);
-	}
-	else {
-		const auto extended_this_poly = this->extend();
-		const auto extended_other_poly = other.extend();
-		return extended_this_poly.is_same_polynomial(extended_other_poly);
-	}		
+
+	return ordered_this_polynomial == ordered_other_polynomial;
 }
 
 bool Polynomial::operator!=(const Polynomial& other) const {
 	return !((*this) == other);
+}
+
+Polynomial& Polynomial::differentiate(const size_t variable_index) {
+	if (this->is_simple_polynomial())
+		return this->differentiate_simple_poly(variable_index);
+	else {
+		this->differentiate_simple_poly(variable_index);
+
+		for (auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
+			switch (binary_operator) {
+			case  BinaryOperator::addition:
+				polynomial.differentiate_simple_poly(variable_index);
+				break;
+			}
+		}
+	}
+}
+
+std::string Polynomial::to_string(void) const {
+	if (this->is_simple_polynomial())
+		return this->to_poly_string();
+	else {
+		auto str = this->to_poly_string();
+
+		for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
+			switch (binary_operator) {
+			case  BinaryOperator::addition:
+				str += " + ";
+				break;
+			case BinaryOperator::multiplication:
+				str += " X ";
+				break;
+			}
+			str += polynomial.to_string() + "]";
+		}
+		str.pop_back();
+		return str;
+	}
 }
 
 double Polynomial::calculate(const MathVector& variable_vector) const {
@@ -402,6 +362,32 @@ double Polynomial::calculate(const MathVector& variable_vector) const {
 		monomial_value_vector.push_back(this->monomial_set_[i](variable_vector));
 
 	return this->coefficient_vector_.inner_product(monomial_value_vector);
+}
+
+Polynomial& Polynomial::differentiate_simple_poly(const size_t variable_index) {
+	//differetiate term
+	for (size_t i = 0; i < this->coefficient_vector_.size(); ++i) {
+		const auto exponent = this->monomial_set_[i].exponent(variable_index);
+		
+		this->coefficient_vector_[i] *= exponent;
+		if (coefficient_vector_[i]!=0)
+			this->monomial_set_[i].reduce_order(variable_index);
+	}
+
+	//remove zero term
+	for (;;) {
+		constexpr double zero_coefficient = 0.0;
+		auto iter = std::find(this->coefficient_vector_.begin(), this->coefficient_vector_.end(), zero_coefficient);
+
+		if (iter == this->coefficient_vector_.end())
+			break;
+
+		const auto position = iter - this->coefficient_vector_.begin();
+		this->coefficient_vector_.erase(this->coefficient_vector_.begin() + position);
+		this->monomial_set_.erase(this->monomial_set_.begin() + position);
+	}
+	
+	return *this;
 }
 
 void Polynomial::addition(const Polynomial& other) {
@@ -442,51 +428,13 @@ bool Polynomial::is_simple_polynomial(void) const {
 	return this->calculated_polynomial_set_.empty();
 }
 
-bool Polynomial::is_same_polynomial(const Polynomial& other) const {
-	std::map<Monomial, double> ordered_this_polynomial;
-	std::map<Monomial, double> ordered_other_polynomial;
-	const auto num_term = this->coefficient_vector_.size();
-
-	if (num_term != other.coefficient_vector_.size())
-		return false;
-
-	for (size_t i = 0; i < num_term; ++i) {
-		ordered_this_polynomial.try_emplace(this->monomial_set_[i], this->coefficient_vector_[i]);
-		ordered_other_polynomial.try_emplace(other.monomial_set_[i], other.coefficient_vector_[i]);
-	}
-
-	return ordered_this_polynomial == ordered_other_polynomial;
-}
-
-std::string Polynomial::to_string(void) const {
-	if (this->is_simple_polynomial()) 			
-		return this->to_poly_string();
-	else {
-		auto str = this->to_poly_string();
-
-		for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
-			switch (binary_operator) {
-			case  BinaryOperator::addition:
-				str += " + ";
-				break;
-			case BinaryOperator::multiplication:
-				str += " X ";
-				break;
-			}
-			str += polynomial.to_string() + "]";
-		}
-		str.pop_back();
-		return str;
-	}	
-}
-
 std::string Polynomial::to_poly_string(void) const {
 	std::string str;
 	str += "[";
 
 	const auto num_term = this->coefficient_vector_.size();
 	for (size_t i = 0; i < num_term; ++i)
-		str += std::to_string(coefficient_vector_[i]) + monomial_set_[i].to_string() + " + ";
+		str += ms::double_to_string(coefficient_vector_[i]) + monomial_set_[i].to_string() + " + ";
 
 	str.erase(str.end() - 3, str.end());
 	str += "]";
