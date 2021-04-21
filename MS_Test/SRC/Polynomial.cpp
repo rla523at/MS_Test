@@ -239,16 +239,24 @@ Polynomial& Polynomial::operator-=(const Polynomial& other) {
 }
 
 Polynomial& Polynomial::operator*=(const double scalar) {
-	this->scalar_multiplication(scalar);
-	for (auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
-		if (binary_operator == BinaryOperator::addition)
-			polynomial.scalar_multiplication(scalar);
+	if (this->power_index_ == 1) {
+		this->scalar_multiplication(scalar);
+		for (auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
+			if (binary_operator == BinaryOperator::addition)
+				polynomial.scalar_multiplication(scalar);
+		}
 	}
+	else
+		*this *= Polynomial(scalar);
+
 	return *this;
 }
 
 Polynomial& Polynomial::operator*=(const Polynomial& other) {
-	this->calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
+	if (*this == other)
+		this->power_index_++;
+	else
+		this->calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
 	return *this;
 }
 
@@ -318,16 +326,35 @@ Polynomial& Polynomial::differentiate(const size_t variable_index) {
 	if (this->is_simple_polynomial())
 		return this->differentiate_simple_poly(variable_index);
 	else {
-		this->differentiate_simple_poly(variable_index);
+		auto [binary_operator, polynomial] = this->calculated_polynomial_set_.back();
+		this->calculated_polynomial_set_.pop_back();
 
-		for (auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
-			switch (binary_operator) {
-			case  BinaryOperator::addition:
-				polynomial.differentiate_simple_poly(variable_index);
-				break;
-			}
+		switch (binary_operator) {
+		case  BinaryOperator::addition: {
+			this->differentiate(variable_index);
+			polynomial.differentiate(variable_index);
+			*this += polynomial;
+			break;
 		}
+		case BinaryOperator::multiplication: {
+			auto tmp_poly = *this;
+			tmp_poly.differentiate(variable_index);
+			tmp_poly *= polynomial;
+
+			polynomial.differentiate(variable_index);
+			*this *= polynomial;
+			*this += tmp_poly;
+			break;
+		}
+		}
+
+		return *this;
 	}
+}
+
+Polynomial& Polynomial::power(const size_t power_index) {
+	this->power_index_ = power_index;
+	return *this;
 }
 
 std::string Polynomial::to_string(void) const {
@@ -361,30 +388,45 @@ double Polynomial::calculate(const MathVector& variable_vector) const {
 	for (size_t i = 0; i < num_term; ++i)
 		monomial_value_vector.push_back(this->monomial_set_[i](variable_vector));
 
-	return this->coefficient_vector_.inner_product(monomial_value_vector);
+	return std::pow(this->coefficient_vector_.inner_product(monomial_value_vector), this->power_index_);
 }
 
 Polynomial& Polynomial::differentiate_simple_poly(const size_t variable_index) {
-	//differetiate term
-	for (size_t i = 0; i < this->coefficient_vector_.size(); ++i) {
-		const auto exponent = this->monomial_set_[i].exponent(variable_index);
-		
-		this->coefficient_vector_[i] *= exponent;
-		if (coefficient_vector_[i]!=0)
-			this->monomial_set_[i].reduce_order(variable_index);
+	if (power_index_ == 1) {
+		//differetiate term
+		for (size_t i = 0; i < this->coefficient_vector_.size(); ++i) {
+			const auto exponent = this->monomial_set_[i].exponent(variable_index);
+
+			this->coefficient_vector_[i] *= exponent;
+			if (coefficient_vector_[i] != 0)
+				this->monomial_set_[i].reduce_order(variable_index);
+		}
+
+		//remove zero term
+		for (;;) {
+			constexpr double zero_coefficient = 0.0;
+			auto iter = std::find(this->coefficient_vector_.begin(), this->coefficient_vector_.end(), zero_coefficient);
+
+			if (iter == this->coefficient_vector_.end())
+				break;
+
+			const auto position = iter - this->coefficient_vector_.begin();
+			this->coefficient_vector_.erase(this->coefficient_vector_.begin() + position);
+			this->monomial_set_.erase(this->monomial_set_.begin() + position);
+		}
+
+		if (this->coefficient_vector_.empty())
+			*this = Polynomial();
 	}
+	else {
+		auto differentiate_polynomial = *this;
+		differentiate_polynomial.power_index_ = 1;
+		differentiate_polynomial.differentiate_simple_poly(variable_index);
 
-	//remove zero term
-	for (;;) {
-		constexpr double zero_coefficient = 0.0;
-		auto iter = std::find(this->coefficient_vector_.begin(), this->coefficient_vector_.end(), zero_coefficient);
+		differentiate_polynomial *= static_cast<double>(this->power_index_);
+		this->power_index_--;
 
-		if (iter == this->coefficient_vector_.end())
-			break;
-
-		const auto position = iter - this->coefficient_vector_.begin();
-		this->coefficient_vector_.erase(this->coefficient_vector_.begin() + position);
-		this->monomial_set_.erase(this->monomial_set_.begin() + position);
+		*this *= differentiate_polynomial;
 	}
 	
 	return *this;
@@ -406,13 +448,13 @@ void Polynomial::scalar_multiplication(const double scalar) {
 
 void Polynomial::multiplication(const Polynomial& other) {
 	const auto num_this_term = this->coefficient_vector_.size();
-	const auto num_oter_term = other.coefficient_vector_.size();
+	const auto num_other_term = other.coefficient_vector_.size();
 
 	Polynomial result;
 	for (size_t i = 0; i < num_this_term; ++i) {
 		const auto& this_coefficient = this->coefficient_vector_[i];
 		const auto& this_monomial = this->monomial_set_[i];
-		for (size_t j = 0; j < num_this_term; ++j) {
+		for (size_t j = 0; j < num_other_term; ++j) {
 			const auto& other_coefficient = other.coefficient_vector_[j];
 			const auto& other_monomial = other.monomial_set_[j];
 
@@ -438,6 +480,10 @@ std::string Polynomial::to_poly_string(void) const {
 
 	str.erase(str.end() - 3, str.end());
 	str += "]";
+
+	if (this->power_index_ > 1)
+		str += "^(" + std::to_string(this->power_index_) + ")";
+
 	return str;
 }
 
@@ -450,9 +496,16 @@ Polynomial Polynomial::extend(void) const {
 
 	for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
 		if (binary_operator == BinaryOperator::addition)
-			result.addition(polynomial);
+			result.addition(polynomial.extend());
 		else
-			result.multiplication(polynomial);
+			result.multiplication(polynomial.extend());
+	}
+
+	if (this->power_index_ > 1) {
+		for (size_t i = 1; i < this->power_index_; ++i)
+			result.multiplication(result);
+
+		//return result.extend();
 	}
 
 	return result;
@@ -480,333 +533,3 @@ void Polynomial::insert(const double coefficient, const Monomial& monomial) {
 		}
 	}
 }
-
-
-
-
-
-//
-//Polynomial& Polynomial::operator*=(const double scalar) {
-//	if (this->is_Zero())
-//		return *this;
-//
-//	if (scalar == 0.0) {
-//		*this = Polynomial();
-//		return *this;
-//	}
-//
-//	for (auto& [monomial, coefficient] : monomial_to_coefficient_)
-//		coefficient *= scalar;
-//
-//	return *this;
-//}
-//
-//Polynomial Polynomial::operator*(const double scalar) const{
-//	if (scalar == 0)	
-//		return Polynomial();
-//
-//	Polynomial result(*this);
-//	return result *= scalar;
-//}
-//
-//Polynomial& Polynomial::operator*=(const Polynomial& other) {
-//	if (this->is_Zero() || other.is_Zero())
-//		return *this = Polynomial();
-//
-//	Polynomial result;
-//	for (const auto& [this_monomial, this_coefficient] : this->monomial_to_coefficient_)
-//		for (const auto& [other_monomial, other_coefficient] : other.monomial_to_coefficient_) {
-//			const auto result_coefficient = this_coefficient * other_coefficient;
-//			auto result_monomial = this_monomial * other_monomial;
-//			result.insert(result_coefficient, std::move(result_monomial));
-//		}
-//	return *this = std::move(result);
-//}
-//
-//Polynomial Polynomial::operator*(const Polynomial& other) const {
-//	Polynomial result(*this);
-//	return result *= other;
-//}
-//
-//Polynomial& Polynomial::operator+=(const Polynomial& other){
-//	for (const auto& [other_monomial, other_coefficient] : other.monomial_to_coefficient_)
-//		this->insert(other_coefficient, other_monomial);
-//
-//	return *this;
-//}
-//
-//Polynomial& Polynomial::operator-=(const Polynomial& other){
-//	for (const auto& [other_monomial, other_coefficient] : other.monomial_to_coefficient_)
-//		this->insert(-other_coefficient, other_monomial);
-//
-//	return *this;
-//}
-//
-//double Polynomial::operator()(const MathVector& variable_vector) const {
-//	double result = 0.0;
-//	for (const auto& [monomial, coefficient] : this->monomial_to_coefficient_)
-//		result += coefficient * monomial(variable_vector);
-//
-//	return result;
-//}
-//
-//Polynomial& Polynomial::differentiate(const size_t differential_variable) {
-//	Polynomial result;
-//
-//	for (auto& [monomial, coefficient] : this->monomial_to_coefficient_)
-//		result += coefficient * Math::differentiate(monomial, differential_variable);
-//
-//	*this = std::move(result);
-//	return *this;
-//}
-//
-//Polynomial Polynomial::differentiate(const size_t differential_variable) const {
-//	Polynomial result;
-//
-//	for (auto& [monomial, coefficient] : this->monomial_to_coefficient_) 
-//		result += coefficient * Math::differentiate(monomial, differential_variable);
-//
-//	return result;
-//}
-//
-//
-//void Polynomial::insert(const double coefficient, const Monomial& monomial) {
-//	if (coefficient == 0) 
-//		return;
-//
-//	auto iter = this->monomial_to_coefficient_.find(monomial);
-//	if (iter == this->monomial_to_coefficient_.end())
-//		this->monomial_to_coefficient_.emplace(monomial, coefficient);
-//	else{
-//		iter->second += coefficient;
-//		if (iter->second == 0)
-//			this->monomial_to_coefficient_.erase(iter);
-//	}
-//}
-//
-//void Polynomial::insert(const double coefficient, Monomial&& monomial) {
-//	if (coefficient == 0)
-//		return;
-//
-//	auto iter = this->monomial_to_coefficient_.find(monomial);
-//	if (iter == this->monomial_to_coefficient_.end())
-//		this->monomial_to_coefficient_.emplace(std::move(monomial), coefficient);
-//	else {
-//		iter->second += coefficient;
-//		if (iter->second == 0)
-//			this->monomial_to_coefficient_.erase(iter);
-//	}
-//}
-//
-//bool Polynomial::is_Zero() const{
-//	if (this->monomial_to_coefficient_.size() == 0)
-//		return true;
-//
-//	if (this->monomial_to_coefficient_.size() > 1)
-//		return false;
-//
-//	const auto& [monomial, coefficient] = *this->monomial_to_coefficient_.begin();
-//
-//	if (coefficient == 0)
-//		return true;
-//	else
-//		return false;
-//}
-//
-//size_t Polynomial::order(void) const {
-//	const auto& [highest_order_monomial, coefficient] = *this->monomial_to_coefficient_.rbegin();
-//	return highest_order_monomial.order();
-//}
-//
-//Polynomial& Polynomial::translate(const MathVector& translation_vector) {
-//	Polynomial result;
-//	for (const auto& [monomial, coefficient] : this->monomial_to_coefficient_)
-//		result += coefficient * Math::translate(monomial, translation_vector);
-//	*this = std::move(result);
-//	return *this;
-//}
-//
-//std::string Polynomial::to_String(void) const {
-//	if (this->is_Zero())
-//		return "{ 0 }";
-//
-//	std::string str;
-//
-//	str += "{ ";
-//	const auto start_iter = this->monomial_to_coefficient_.rbegin();
-//	const auto end_iter = this->monomial_to_coefficient_.rend();
-//	for (auto iter = start_iter; iter != end_iter; ++iter) {
-//		const auto& [monomial, coefficient] = *iter;
-//		str += std::to_string(coefficient) + "\t";
-//	}
-//	StringEditor::erase_back(str, 1);
-//	str += " } { ";
-//	for (auto iter = start_iter; iter != end_iter; ++iter) {
-//		const auto& [monomial, coefficient] = *iter;
-//		str += monomial.to_string() + ", ";
-//	}
-//	StringEditor::erase_back(str, 2);
-//	str += " }";
-//	
-//	return str;
-//}
-//
-//
-//namespace Math {
-//	Polynomial translate(const Monomial& monomial, const MathVector& translation_vector) {
-//		if (monomial.is_constant())
-//			return Polynomial(monomial);
-//
-//		Polynomial result(1.0);
-//		for (size_t i = 0; i < monomial.num_variable(); ++i) {
-//			const auto exponent = monomial.exponent(i);
-//
-//			if (exponent == 0)
-//				continue;
-//
-//			std::array<double, 2> coefficient_set = { 1, -translation_vector[i] };
-//			std::array<Monomial, 2> monomial_set = { Monomial(i),Monomial() };
-//			Polynomial translated_Xi(coefficient_set, monomial_set);
-//
-//			for (size_t i = 0; i < exponent; ++i)
-//				result *= translated_Xi;
-//		}
-//
-//		return result;
-//	}
-//
-//	Polynomial differentiate(const Monomial& monomial, const size_t differential_variable_index) {
-//		if (monomial.is_constant())
-//			return Polynomial();
-//
-//		auto result_monomial = monomial;
-//
-//		const auto coefficient = static_cast<double>(monomial.exponent(differential_variable_index));
-//		result_monomial.reduce_order(differential_variable_index);
-//
-//		return Polynomial(coefficient, result_monomial);
-//	}
-//}
-
-
-
-
-
-//
-//double PolynomialSet::operator()(const MathVector& variable_vector) const {
-//	double result = 0.0;
-//	for (const auto& [op, polynomial] : this->polynomial_set_) {
-//		switch (op) {
-//		case  BinaryOperator::plus:
-//			result += polynomial(variable_vector);
-//			break;
-//		case BinaryOperator::multiply:
-//			result *= polynomial(variable_vector);
-//			break;
-//		}
-//	}
-//	return result;
-//
-//	//double result = 0.0;
-//	//if (this->rational_set_.size() == 1){
-//	//	for (const auto& [op, polynomial] : this->polynomial_set_) {
-//	//		switch (op) {
-//	//		case  BinaryOperator::plus:
-//	//			result += polynomial(variable_vector);
-//	//			break;
-//	//		case BinaryOperator::multiply:
-//	//			result *= polynomial(variable_vector);
-//	//			break;
-//	//		}
-//	//	}
-//	//}
-//	//else {
-//	//	for (const auto& [op, rational] : this->rational_set_) {
-//	//		switch (op) {
-//	//		case  BinaryOperator::plus:
-//	//			result += rational(variable_vector);
-//	//			break;
-//	//		case BinaryOperator::multiply:
-//	//			result *= rational(variable_vector);
-//	//			break;
-//	//		}
-//	//	}
-//	//}
-//	//return result;
-//
-//
-//	//if (this->junction_indicator_.empty()) {
-//	//	const size_t start_index = 0;
-//	//	const size_t end_index = this->polynomial_set_.size();
-//	//	return this->calculate(variable_vector, start_index, end_index);
-//	//}
-//
-//	//const auto num_junction = this->junction_indicator_.size();
-//	//const auto num_intermediate_result = num_junction + 1;
-//	//std::vector<double> result_set(num_intermediate_result);
-//
-//	//const auto num_index = num_intermediate_result + 1;
-//	//std::vector<size_t> index_set;
-//	//index_set.reserve(num_index);
-//
-//	//index_set.emplace_back(0);
-//	//for (const auto& [junction_binary_operator, junction_index] : this->junction_indicator_)
-//	//	index_set.emplace_back(junction_index);
-//	//index_set.emplace_back(this->polynomial_set_.size());
-//
-//	//for (size_t i = 0; i < num_intermediate_result; ++i) {
-//	//	const auto& start_index = index_set[i];
-//	//	const auto& end_index = index_set[i + 1];
-//
-//	//	result_set[i] = this->calculate(variable_vector, start_index, end_index);
-//	//}
-//
-//	//double result = 0.0;
-//	//for (size_t i = 0; i < num_junction; ++i) {
-//	//	const auto& [junction_binary_operator, junction_index] = this->junction_indicator_[i];
-//	//	switch (junction_binary_operator) {
-//	//	case  BinaryOperator::plus:
-//	//		result += result_set[i] + result_set[i + 1];
-//	//		break;
-//	//	case BinaryOperator::multiply:
-//	//		result *= result_set[i + 1];
-//	//		break;
-//	//	}
-//	//}
-//
-//	//return result;
-//}
-//
-////double Rational::calculate(const MathVector& variable_vector, const size_t start_index, const size_t end_index) const {
-////	double result = 0.0;
-////	for (size_t index = start_index; index < end_index; ++index) {
-////		const auto& [binary_operator, polynomial] = this->polynomial_set_[index];
-////		switch (binary_operator) {
-////		case  BinaryOperator::plus:
-////			result += polynomial(variable_vector);
-////			break;
-////		case BinaryOperator::multiply:
-////			result *= polynomial(variable_vector);
-////			break;
-////		}
-////	}
-////	return result;
-////}
-//
-////double Rational::calculate(const MathVector& variable_vector) const {
-////	if (this->rational_set_.size() == 1)
-////		return rational_set_.front().second(variable_vector);
-////	else {
-////		double result = 0.0;
-////		for (const auto& [op, ra] : this->rational_set_) {
-////			switch (op) {
-////			case  BinaryOperator::plus:
-////				result += ra.calculate(variable_vector);
-////				break;
-////			case BinaryOperator::multiply:
-////				result *= ra.calculate(variable_vector);
-////				break;
-////			}
-////		}
-////	}	
-////}

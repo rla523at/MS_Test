@@ -2,71 +2,79 @@
 #include "gtest/gtest.h"
 #include "../MS_Test/INC/Polynomial.h"
 
-GTEST_TEST(MONOMIAL, CONSTRUCTOR) {
-	{
-		Monomial m1;
-		Monomial m2{ 0 };
-		EXPECT_EQ(m1, m2);
-	}
-	{
-		Monomial m1(0);
-		Monomial m2{ 1 };
-		EXPECT_EQ(m1, m2);
-	}
-	{
-		Monomial m1{ 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
-		std::vector<size_t> exponent_set = { 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
-		Monomial m2(std::move(exponent_set));
-		EXPECT_EQ(m1, m2);
-	}
-}
-
-GTEST_TEST(MONOMIAL, EXPONENT) {
-	{
-		Monomial m1;
-		size_t variable_index = 0;
-
-		size_t ref = 0;
-		EXPECT_EQ(m1.exponent(variable_index),ref);
-	}
-	{
-		Monomial m1(0);
-		Monomial m2 = { 1 };
-		size_t variable_index = 0;
-		const size_t ref = 1;
-		EXPECT_EQ(m1.exponent(variable_index), ref);
-		EXPECT_EQ(m2.exponent(variable_index), ref);
-	}
-	{
-		Monomial m1{ 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
-		std::vector<size_t> exponent_set = { 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
-		for (size_t i = 0; i < exponent_set.size(); ++i)
-			EXPECT_EQ(m1.exponent(i), exponent_set[i]);
-	}
-	{
-		Monomial m1 = { 0,1,2 };
-		size_t variable_index = 5;
-
-		size_t ref = 0;
-		EXPECT_EQ(m1.exponent(variable_index), 0);
-	}
-}
-
-GTEST_TEST(MONOMIAL, ORDER) {
+GTEST_TEST(MONOMIAL, CONSTRUCTOR1) {
 	Monomial m1;
-	Monomial m2(0);
-	Monomial m3{ 0 };
-	Monomial m4{ 0,0,0,0,0,0,0,0,0 };
-	Monomial m5(128);
-	Monomial m6{ 1,2,3,4,5 };
-
-	EXPECT_EQ(m1.order(), 0);
-	EXPECT_EQ(m2.order(), 1);
-	EXPECT_EQ(m3.order(), 0);
-	EXPECT_EQ(m4.order(), 0);
-	EXPECT_EQ(m5.order(), 1);
-	EXPECT_EQ(m6.order(), 15);
+	Monomial m2{ 0 };
+	EXPECT_EQ(m1, m2);
 }
+GTEST_TEST(MONOMIAL, CONSTRUCTOR2){
+	Monomial m1(0);
+	Monomial m2{ 1 };
+	EXPECT_EQ(m1, m2);
+}
+GTEST_TEST(MONOMIAL, CONSTRUCTOR3) {
+	Monomial m1{ 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
+	std::vector<size_t> exponent_set = { 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
+	Monomial m2(std::move(exponent_set));
+	EXPECT_EQ(m1, m2);
+}
+
+
+GTEST_TEST(MONOMIAL, EXPONENT1) {
+	Monomial m1;
+	size_t variable_index = 0;
+
+	size_t ref = 0;
+	EXPECT_EQ(m1.exponent(variable_index),ref);
+}
+GTEST_TEST(MONOMIAL, EXPONENT2) {
+	Monomial m1(0);
+	Monomial m2 = { 1 };
+	size_t variable_index = 0;
+	const size_t ref = 1;
+	EXPECT_EQ(m1.exponent(variable_index), ref);
+	EXPECT_EQ(m2.exponent(variable_index), ref);
+}
+GTEST_TEST(MONOMIAL, EXPONENT3) {
+	Monomial m1{ 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
+	std::vector<size_t> exponent_set = { 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };
+	for (size_t i = 0; i < exponent_set.size(); ++i)
+		EXPECT_EQ(m1.exponent(i), exponent_set[i]);
+}
+GTEST_TEST(MONOMIAL, EXPONENT4) {
+	Monomial m1 = { 0,1,2 };
+	size_t variable_index = 5;
+
+	size_t ref = 0;
+	EXPECT_EQ(m1.exponent(variable_index), 0);
+}
+
+
+GTEST_TEST(MONOMIAL, ORDER1) {
+	Monomial m;
+	EXPECT_EQ(m.order(), 0);
+}
+GTEST_TEST(MONOMIAL, ORDER2) {
+	Monomial m(0);
+	EXPECT_EQ(m.order(), 1);
+}
+GTEST_TEST(MONOMIAL, ORDER3) {
+	Monomial m = { 0 };
+	EXPECT_EQ(m.order(), 0);
+}
+GTEST_TEST(MONOMIAL, ORDER4) {
+	Monomial m = { 0,0,0,0,0,0,0,0,0 };
+	EXPECT_EQ(m.order(), 0);
+}
+GTEST_TEST(MONOMIAL, ORDER5) {
+	Monomial m(128);
+	EXPECT_EQ(m.order(), 1);
+}
+GTEST_TEST(MONOMIAL, ORDER6) {
+	Monomial m = { 1,2,3,4,5 };
+	EXPECT_EQ(m.order(), 15);
+}
+
 
 GTEST_TEST(MONOMIAL, REDUCE_ORDER) {
 	{
@@ -270,51 +278,63 @@ GTEST_TEST(MONOMIAL, FUNCTION_CALL) {
 	}
 }
 
-GTEST_TEST(POLYNOMIAL, CONSTRUCTOR) {
-	{
-		Polynomial p1;
-		Polynomial p2(0.0);
-		Polynomial p3(1.0);
 
-		Monomial m1;
-		Polynomial p4(m1);
-
-		EXPECT_EQ(p1, p2);
-		EXPECT_NE(p1, p3); 
-		EXPECT_NE(p2, p3);
-		EXPECT_FALSE(p1 == p3);		
-		EXPECT_EQ(p3, p4);
-	}
-	{
-		std::vector<double> v_c = { 1,2 };
-		std::vector<Monomial> v_m = { Monomial(), Monomial{1,2,3} };
-
-		Polynomial p1 = { {1,2},{ Monomial(), Monomial{1,2,3} } };
-		Polynomial p2(v_c, v_m);
-
-		EXPECT_EQ(p1, p2);
-	}
-	{
-		Polynomial p1 = { {1,2},{ Monomial(), Monomial{1} } };
-		Polynomial p2 = { {2,1},{ Monomial{1},Monomial() } };
-		EXPECT_EQ(p1, p2);
-	}
-	{
-		std::vector<Monomial> m_set2 = { {1}, {0} };
-		std::vector<double> c_set2 = { 1, 1, 1 };
-		EXPECT_ANY_THROW(Polynomial p2(c_set2, m_set2));
-
-	}
+GTEST_TEST(POLYNOMIAL, CONSTRUCTOR1) {
+	Polynomial p1;
+	Polynomial p2(0.0);
+	EXPECT_EQ(p1, p2);
 }
+GTEST_TEST(POLYNOMIAL, CONSTRUCTOR2) {
+	Polynomial p1;
+	Polynomial p2(1.0);
+	EXPECT_NE(p1, p2);
+}
+GTEST_TEST(POLYNOMIAL, CONSTRUCTOR3) {
+	Polynomial p1(0.0);
+	Polynomial p2(1.0);
+	EXPECT_NE(p1, p2);
+}
+GTEST_TEST(POLYNOMIAL, CONSTRUCTOR4) {
+	Polynomial p1((Monomial()));
+	Polynomial p2(1.0);
+	EXPECT_EQ(p1, p2);
+}
+GTEST_TEST(POLYNOMIAL, CONSTRUCTOR5) {
+	std::vector<double> v_c = { 1,2 };
+	std::vector<Monomial> v_m = { Monomial(), Monomial{1,2,3} };
+
+	Polynomial p1 = { {1,2},{ {0}, {1,2,3} } };
+	Polynomial p2(v_c, v_m);
+
+	EXPECT_EQ(p1, p2);
+}
+GTEST_TEST(POLYNOMIAL, CONSTRUCTOR6) {
+	Polynomial p1 = { { 1,2 },{ {0},{1} } };
+	Polynomial p2 = { { 2,1 },{ {1},{0} } };
+	EXPECT_EQ(p1, p2);
+}
+GTEST_TEST(POLYNOMIAL, CONSTRUCTOR7) {
+	std::vector<Monomial> m_set2 = { {1}, {0} };
+	std::vector<double> c_set2 = { 1, 1, 1 };
+	EXPECT_ANY_THROW(Polynomial p2(c_set2, m_set2));
+}
+GTEST_TEST(POLYNOMIAL, CONSTRUCTOR8) {
+	Polynomial p = { { 1,1 }, { {1},{0} } };
+	p.power(2);
+
+	Polynomial ref = { {1,2,1}, { {2},{1},{0} } };
+	EXPECT_EQ(p, ref); 
+}
+
 
 GTEST_TEST(POLYNOMIAL, ADDITION_ASSIGN) {
 	{
-		Polynomial p1 = { {1,1},{Monomial{2},Monomial{1}} };
-		Polynomial p2 = { {1,1},{Monomial{1},Monomial{0}} };
-		Polynomial ref = { {1,2,1},{Monomial{2},Monomial{1},Monomial{0}} };
+		//Polynomial p1 = { {1,1},{{2},{1}} };
+		//Polynomial p2 = { {1,1},{{1},{0}} };
+		//Polynomial ref = { {1,2,1},{{2},{1},{0}} };
 
-		p1 += p2;
-		EXPECT_EQ(p1, ref);
+		//p1 += p2;
+		//EXPECT_EQ(p1, ref);
 	}
 	{
 		Polynomial p1;
@@ -353,22 +373,35 @@ GTEST_TEST(POLYNOMIAL, MULTIPLICATION_ASSIGN) {
 	}
 }
 
-GTEST_TEST(POLYNOMIAL, TO_STRING) {
-	{
-		Polynomial p = { {1,2,1},{Monomial{2},Monomial{1},Monomial{0}} };
-		std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^2 + " + ms::double_to_string(2.0) + "(x0)^1 + " + ms::double_to_string(1.0) + "(1)]";
-		EXPECT_EQ(p.to_string(), ref);
-	}
-	{
-		Polynomial p = { {1,1},{Monomial{1},Monomial{0}} };
-		p *= p;
-
-		std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)] X [" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)]";
-
-		EXPECT_EQ(p.to_string(), ref);
-	}
+GTEST_TEST(POLYNOMIAL, TO_STRING1) {
+	Polynomial p = { {1,2,1},{{2},{1},{0}} };
+	std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^2 + " + ms::double_to_string(2.0) + "(x0)^1 + " + ms::double_to_string(1.0) + "(1)]";
+	EXPECT_EQ(p.to_string(), ref);
 }
+GTEST_TEST(POLYNOMIAL, TO_STRING2) {
+	Polynomial p = { {1,1},{{1},{0}} };
+	p *= p;
 
+	std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)] X [" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)]";
+	EXPECT_EQ(p.to_string(), ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING3) {
+	Polynomial p1 = { {1,1},{{1},{0}} };
+	Polynomial p2 = { {1,1},{{1},{0}} };
+	p1.power(2);
+	
+	std::string ref = p2.to_string() + "^(2)";
+	EXPECT_EQ(p1.to_string(), ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING4) {
+	Polynomial p1 = { {1,1},{{1},{0}} };
+	Polynomial p2 = { {1,1},{{1},{0}} };
+	p1.power(2);
+	p2 *= p2;
+
+	std::string ref = p2.to_string();
+	EXPECT_EQ(p1.to_string(), ref);
+}
 
 GTEST_TEST(POLYNOMIAL, CALL_OPERATOR) {
 	{
@@ -429,30 +462,73 @@ GTEST_TEST(POLYNOMIAL, CALL_OPERATOR) {
 	}
 }
 
-GTEST_TEST(POLYNOMIAL, DIFFERENTIATE) {
-	{
-		Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
 
-		Polynomial ref({ 2,1 }, { {1},{0} });
-		size_t variable_index = 0;
-		EXPECT_EQ(p1.differentiate(variable_index), ref);
-	}
-	{
-		Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE1) {
+	Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
 
-		Polynomial ref;
-		size_t variable_index = 1;
-		EXPECT_EQ(p1.differentiate(variable_index), ref);
-	}
-	{
-		Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
-		Polynomial p2({ 2,1 }, { {1},{0} });
-		p1 += p2;
+	Polynomial ref({ 2,1 }, { {1},{0} });
+	size_t variable_index = 0;
+	EXPECT_EQ(p1.differentiate(variable_index), ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE2) {
+	Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
 
-		Polynomial ref({ 2,3 }, { {1},{0} });
-		size_t variable_index = 0;
-		EXPECT_EQ(p1.differentiate(variable_index), ref);
-	}
+	Polynomial ref;
+	size_t variable_index = 1;
+	EXPECT_EQ(p1.differentiate(variable_index), ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE3) {
+	Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
+	Polynomial p2({ 2,1 }, { {1},{0} });
+	p1 += p2;
+
+	Polynomial ref({ 2,3 }, { {1},{0} });
+	size_t variable_index = 0;
+	EXPECT_EQ(p1.differentiate(variable_index), ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE4) {
+	Polynomial p({ 1,1 }, { {1},{0} });
+	p *= p;
+
+	Polynomial ref({ 2,2 }, { {1},{0} });
+	size_t variable_index = 0;
+	EXPECT_EQ(p.differentiate(variable_index), ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE5) {
+	Polynomial p1({ 1,1 }, { {1},{0} });
+	Polynomial p2({ 1,1 }, { {0,1},{0} });
+	auto result = (p1 + p2) * p1;
+
+	Polynomial ref({ 2,1,3 }, { {1},{0,1},{0} });
+	size_t variable_index = 0;
+	EXPECT_EQ(result.differentiate(variable_index), ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE6) {
+	Polynomial p1({ 1,1 }, { {1},{0} });
+	Polynomial p2({ 1,1 }, { {0,1},{0} });
+	auto result = (p1 + p2) * p1;
+
+	Polynomial ref({ 1,1 }, { {1},{0} });
+	size_t variable_index = 1;
+	EXPECT_EQ(result.differentiate(variable_index), ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE7) {
+	Polynomial p1({ 1,1 }, { {1},{0} });
+	Polynomial p2({ 1,1 }, { {0,1},{0} });
+	auto result = (p1 * p2) + p1;
+
+	Polynomial ref({ 1,2 }, { {0,1},{0} });
+	size_t variable_index = 0;
+	EXPECT_EQ(result.differentiate(variable_index), ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE8) {
+	Polynomial p1({ 1,1 }, { {1},{0} }); 
+	Polynomial p2({ 1,1 }, { {0,1},{0} });
+	auto result = (p1 * p2) + p1;
+
+	Polynomial ref({ 1,1 }, { {1},{0} });
+	size_t variable_index = 1;
+	EXPECT_EQ(result.differentiate(variable_index), ref);
 }
 
 
