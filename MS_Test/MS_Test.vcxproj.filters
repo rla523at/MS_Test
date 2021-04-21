@@ -26,10 +26,10 @@
     <ClCompile Include="SRC\MathVector.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\Polynomial.cpp">
+    <ClCompile Include="SRC\main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\main.cpp">
+    <ClCompile Include="SRC\Polynomial.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

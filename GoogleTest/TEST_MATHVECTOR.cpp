@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 #include "../MS_Test/SRC/MathVector.cpp"
 
-GTEST_TEST(CONSTRUCTOR, INITIALIZE_LIST) {
+GTEST_TEST(MATHVECTOR, CONSTRUCTOR) {
 	{
 		MathVector v1 = { 1E-1,2E-1,3E-1,4E-1,5E-1,6E-1,7E-1,8E-1,9E-1,10E-1 };
 		for (size_t i = 0; i < 10; ++i)
@@ -33,9 +33,6 @@ GTEST_TEST(CONSTRUCTOR, INITIALIZE_LIST) {
 		for (size_t i = 0; i < 10; ++i)
 			EXPECT_EQ(v1[i], (i + 1));
 	}
-}
-
-GTEST_TEST(CONSTRUCTOR, PERFECTFORWARD) {
 	{
 		MathVector v(5, 2.1);
 		MathVector ref = { 2.1,2.1,2.1,2.1,2.1 };
@@ -52,20 +49,20 @@ GTEST_TEST(CONSTRUCTOR, PERFECTFORWARD) {
 			EXPECT_EQ(v[i], 2.112345678997);
 	}
 	{
-		std::vector<double> v1(1234,18.54789);
+		std::vector<double> v1(1234, 18.54789);
 		MathVector v(v1.begin(), v1.end());
 		MathVector ref(1234, 18.54789);
 		EXPECT_EQ(v, ref);
 	}
 	{
-		EXPECT_ANY_THROW(MathVector v(-1));		
+		EXPECT_ANY_THROW(MathVector v(-1));
 	}
 	{
 		//prevent by delete!
 		//EXPECT_ANY_THROW(MathVector v(1.1));
 	}
 	{
- 		MathVector v1(100, 2.112345678997);
+		MathVector v1(100, 2.112345678997);
 		MathVector v2(v1.begin(), v1.end());
 		EXPECT_EQ(v1, v2);
 	}
@@ -78,7 +75,7 @@ GTEST_TEST(CONSTRUCTOR, PERFECTFORWARD) {
 	}
 }
 
-GTEST_TEST(STDVECTOR, SIZE) {
+GTEST_TEST(MATHVECTOR, SIZE) {
 	{
 		const MathVector v1 = { 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 };
 		const size_t ref = 10;
@@ -96,7 +93,7 @@ GTEST_TEST(STDVECTOR, SIZE) {
 	}
 }
 
-GTEST_TEST(OPERATOR, EQUAL) {
+GTEST_TEST(MATHVECTOR, OPERATOR_EQUAL) {
 	{
 		const MathVector v1 = { 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 };
 		const MathVector v2 = { 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 }; 
@@ -126,7 +123,7 @@ GTEST_TEST(OPERATOR, EQUAL) {
 	}
 }
 
-GTEST_TEST(OPERATOR, ADDITION_ASSIGNMENT) {
+GTEST_TEST(MATHVECTOR, OPERATOR_ADDITION_ASSIGNMENT) {
 	{
 		MathVector v1 = { 0.1 };
 		MathVector v2 = { 0.1,0.4 };
