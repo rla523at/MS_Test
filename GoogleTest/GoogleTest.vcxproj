@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TEST_POLYNOMIAL.cpp" />
+    <ClCompile Include="TEST_TEXT.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MS_Test\MS_Test.vcxproj">
