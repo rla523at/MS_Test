@@ -318,63 +318,71 @@ GTEST_TEST(POLYNOMIAL, CONSTRUCTOR7) {
 	std::vector<double> c_set2 = { 1, 1, 1 };
 	EXPECT_ANY_THROW(Polynomial p2(c_set2, m_set2));
 }
-GTEST_TEST(POLYNOMIAL, CONSTRUCTOR8) {
+
+
+GTEST_TEST(POLYNOMIAL, ADDITION_ASSIGN1) {
+	Polynomial p1 = { {1,1},{{2},{1}} };
+	Polynomial p2 = { {1,1},{{1},{0}} };
+	Polynomial ref = { {1,2,1},{{2},{1},{0}} };
+
+	p1 += p2;
+	EXPECT_EQ(p1, ref);
+}
+GTEST_TEST(POLYNOMIAL, ADDITION_ASSIGN2) {
+	Polynomial p1;
+	Polynomial p2;
+	Polynomial ref;
+
+	p1 += p2;
+	EXPECT_EQ(p1, ref);
+}
+GTEST_TEST(POLYNOMIAL, ADDITION_ASSIGN3) {
+	Polynomial p1{ {-12,45},{ {2,1},{1} } };
+	Polynomial p2{ {12,-45},{ {2,1},{1} } };
+	Polynomial ref;
+
+	p1 += p2;
+	EXPECT_EQ(p1, ref);
+}
+
+
+GTEST_TEST(POLYNOMIAL, MULTIPLICATION_ASSIGN1) {
+	Polynomial p1 = { {1,1},{{1},{0}} };
+	Polynomial p2 = { {1,1},{{1},{0}} };
+	Polynomial ref = { {1,2,1},{{2},{1},{0}} };
+
+	p1 *= p2;
+	EXPECT_EQ(p1, ref);
+}
+GTEST_TEST(POLYNOMIAL, MULTIPLICATION_ASSIGN2) {
+	Polynomial p1;
+	Polynomial p2;
+	Polynomial ref;
+
+	p1 *= p2;
+	EXPECT_EQ(p1, ref);
+}
+
+
+GTEST_TEST(POLYNOMIAL, POWER1) {
 	Polynomial p = { { 1,1 }, { {1},{0} } };
 	p.power(2);
 
 	Polynomial ref = { {1,2,1}, { {2},{1},{0} } };
-	EXPECT_EQ(p, ref); 
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, POWER2) {
+	Polynomial p = { { 1,1 }, { {0,1},{0} } };
+	p.power(2);
+
+	Polynomial ref = { {1,2,1}, { {0,2},{0,1},{0} } };
+	EXPECT_EQ(p, ref);
 }
 
-
-GTEST_TEST(POLYNOMIAL, ADDITION_ASSIGN) {
-	{
-		//Polynomial p1 = { {1,1},{{2},{1}} };
-		//Polynomial p2 = { {1,1},{{1},{0}} };
-		//Polynomial ref = { {1,2,1},{{2},{1},{0}} };
-
-		//p1 += p2;
-		//EXPECT_EQ(p1, ref);
-	}
-	{
-		Polynomial p1;
-		Polynomial p2;
-		Polynomial ref;
-
-		p1 += p2;
-		EXPECT_EQ(p1, ref); 
-	}
-	{
-		Polynomial p1{ {-12,45},{Monomial{2,1},Monomial{1}} };
-		Polynomial p2{ {12,-45},{Monomial{2,1},Monomial{1}} };
-		Polynomial ref;
-
-		p1 += p2;
-		EXPECT_EQ(p1, ref);
-	}
-}
-
-GTEST_TEST(POLYNOMIAL, MULTIPLICATION_ASSIGN) {
-	{
-		Polynomial p1 = { {1,1},{Monomial{1},Monomial{0}} };
-		Polynomial p2 = { {1,1},{Monomial{1},Monomial{0}} };
-		Polynomial ref = { {1,2,1},{Monomial{2},Monomial{1},Monomial{0}} };
-
-		p1 *= p2;
-		EXPECT_EQ(p1, ref);
-	}
-	{
-		Polynomial p1;
-		Polynomial p2;
-		Polynomial ref;
-
-		p1 *= p2;
-		EXPECT_EQ(p1, ref);
-	}
-}
 
 GTEST_TEST(POLYNOMIAL, TO_STRING1) {
 	Polynomial p = { {1,2,1},{{2},{1},{0}} };
+
 	std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^2 + " + ms::double_to_string(2.0) + "(x0)^1 + " + ms::double_to_string(1.0) + "(1)]";
 	EXPECT_EQ(p.to_string(), ref);
 }
@@ -382,7 +390,7 @@ GTEST_TEST(POLYNOMIAL, TO_STRING2) {
 	Polynomial p = { {1,1},{{1},{0}} };
 	p *= p;
 
-	std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)] X [" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)]";
+	std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)]^(2)";
 	EXPECT_EQ(p.to_string(), ref);
 }
 GTEST_TEST(POLYNOMIAL, TO_STRING3) {
@@ -399,67 +407,111 @@ GTEST_TEST(POLYNOMIAL, TO_STRING4) {
 	p1.power(2);
 	p2 *= p2;
 
-	std::string ref = p2.to_string();
-	EXPECT_EQ(p1.to_string(), ref);
+	EXPECT_EQ(p1.to_string(), p2.to_string());
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING5) {
+	Polynomial p1 = { {1,2,1},{ {2},{1},{0} } };
+	Polynomial p2 = { {2,1,1},{ {1},{2},{0} } };
+	
+	EXPECT_EQ(p1.to_string(), p2.to_string());
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING6) {
+	Polynomial p({ 1,1 }, { {1},{0} });
+	p.power(2);
+	size_t variable_index = 1;
+	p.differentiate(variable_index);
+
+	std::string ref = Polynomial().to_string();
+	EXPECT_EQ(p.to_string(), ref);
 }
 
-GTEST_TEST(POLYNOMIAL, CALL_OPERATOR) {
-	{
-		Polynomial p = { {1,2,1},{{2},{1},{0}} };
 
-		const MathVector v;
-		EXPECT_ANY_THROW(p(v));
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL1) {
+	Polynomial p = { {1,2,1},{{2},{1},{0}} };
 
-		const MathVector v0 = { 0 };
-		const double ref0 = 1;
-		EXPECT_EQ(p(v0), ref0);
+	const MathVector v;
+	EXPECT_ANY_THROW(p(v));
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL2) {
+	Polynomial p = { {1,2,1},{{2},{1},{0}} };
+	
+	const MathVector v0 = { 0 };
+	const double ref0 = 1;
+	EXPECT_EQ(p(v0), ref0);
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL3) {
+	Polynomial p = { {1,2,1},{{2},{1},{0}} };
 
-		const MathVector v1 = { 1 };
-		const double ref1 = 4;
-		EXPECT_EQ(p(v1), ref1);
+	const MathVector v1 = { 1 };
+	const double ref1 = 4;
+	EXPECT_EQ(p(v1), ref1);
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL4) {
+	Polynomial p = { {1,2,1},{{2},{1},{0}} };
 
-		const MathVector v2 = { 1.87945646187 };
-		const double ref2 = 8.291269515804899;
-		EXPECT_DOUBLE_EQ(p(v2), ref2);
-	}
-	{
-		Polynomial p = { {1,-2.0e3,1.0e6},{{2},{1},{0}} };
+	const MathVector v2 = { 1.87945646187 };
+	const double ref2 = 8.291269515804899;
+	EXPECT_DOUBLE_EQ(p(v2), ref2);
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL5) {
+	Polynomial p = { {1,-2.0e3,1.0e6},{{2},{1},{0}} };
 
-		const MathVector v3 = { 1000.1 };
-		//const double ref = 0.01;
-		const double ref = 0.01000000000931323;	// too large round off error
-		EXPECT_DOUBLE_EQ(p(v3), ref);	
-	}	
-	{
-		Polynomial p = { { 1,-1.0e3 }, { {1},{0} } };
-		p *= p;
-		const MathVector v = { 1000.1 };
-		//const double ref = 0.01;
-		const double ref = 0.01000000000000455;	// still too large round off error
-		EXPECT_DOUBLE_EQ(p(v), ref);
-	}
-	{
-		Monomial m(0);
+	const MathVector v3 = { 1000.1 };
+	//const double ref = 0.01;
+	const double ref = 0.01000000000931323;	// too large round off error
+	EXPECT_DOUBLE_EQ(p(v3), ref);
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL6) {
+	Polynomial p = { { 1,-1.0e3 }, { {1},{0} } };
+	p.power(2);
+	const MathVector v = { 1000.1 };
+	//const double ref = 0.01;
+	const double ref = 0.01000000000000455;	// still too large round off error
+	EXPECT_DOUBLE_EQ(p(v), ref);
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL7) {
+	Polynomial p1 = { {1}, {{1}} };
+	Polynomial p2(-1.0e3);
 
-		Polynomial p1(m);
-		Polynomial p2(-1.0e3);
+	p1 += p2;
+	p1.power(2);
 
-		p1 += p2;
-		p1 *= p1;
+	const MathVector v = { 1000.1 };
+	const double ref = 0.01000000000000455;	// still too large round off error
+	EXPECT_DOUBLE_EQ(p1(v), ref);
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL8) {
+	Polynomial p1 = { { 1, 1, 1 }, { {2}, {1}, {0} } };
+	Polynomial p2 = { { 1, 1 }, { { 1 }, { 0 } } };
+	p1 *= p2;
 
-		const MathVector v = { 1000.1 };
-		const double ref = 0.01000000000000455;	// still too large round off error
-		EXPECT_DOUBLE_EQ(p1(v), ref);
-	}
-	{
-		Polynomial p1({ 1, 1, 1 }, { {2}, {1}, {0} });
-		Polynomial p2{ { 1, 1 }, { { 1 }, { 0 } } };
-		p1 *= p2;
+	const MathVector v = { -1 };
+	const double ref = 0.0;
+	EXPECT_DOUBLE_EQ(p1(v), ref);
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL9) {
+	Polynomial p1 = { { 1, 1 }, { {1}, {0} } };
+	p1.power(10);
 
-		const MathVector v = { -1 };
-		const double ref = 0.0;
-		EXPECT_DOUBLE_EQ(p1(v), ref);
-	}
+	const MathVector v = { -1 };
+	const double ref = 0.0;
+	EXPECT_DOUBLE_EQ(p1(v), ref);
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL10) {
+	Polynomial p1 = { { 1, 1 }, { {1}, {0} } };
+	p1.power(10);
+
+	const MathVector v = { 0 };
+	const double ref = 1.0;
+	EXPECT_DOUBLE_EQ(p1(v), ref);
+}
+GTEST_TEST(POLYNOMIAL, FUNCTION_CALL11) {
+	Polynomial p1 = { { 1, 1 }, { {1}, {0} } };
+	p1.power(10);
+
+	const MathVector v = { 1 };
+	const double ref = 1024;
+	EXPECT_DOUBLE_EQ(p1(v), ref);
 }
 
 
@@ -530,7 +582,22 @@ GTEST_TEST(POLYNOMIAL, DIFFERENTIATE8) {
 	size_t variable_index = 1;
 	EXPECT_EQ(result.differentiate(variable_index), ref);
 }
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE9) {
+	Polynomial p({ 1,1 }, { {1},{0} });
+	p.power(2);
 
+	Polynomial ref({ 2,2 }, { {1},{0} });
+	size_t variable_index = 0;
+	EXPECT_EQ(p.differentiate(variable_index), ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE10) {
+	Polynomial p({ 1,1 }, { {1},{0} });
+	p.power(2);
+
+	Polynomial ref;
+	size_t variable_index = 1;
+	EXPECT_EQ(p.differentiate(variable_index), ref);
+}
 
 //
 //GTEST_TEST(MONOMIAL, PERFORMANCE_CALL_OPERATOR1_1) {

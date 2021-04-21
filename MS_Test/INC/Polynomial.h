@@ -48,6 +48,7 @@ private:
 
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
 
+
 class Polynomial
 {
 	enum class BinaryOperator{
@@ -64,13 +65,11 @@ private:
 	size_t power_index_ = 1;
 	std::vector<CalculatedPolynomial> calculated_polynomial_set_; // to minimize truncation error
 
-
-
 public:
 	explicit Polynomial(void);
 	explicit Polynomial(const double coefficient);
 	explicit Polynomial(const Monomial& monomial);
-	explicit Polynomial(const double coefficient, const Monomial& monomial);
+	Polynomial(const double coefficient, const Monomial& monomial);
 	Polynomial(const std::vector<double>& coefficient_set, const std::vector<Monomial>& monomial_set);
 	
 	Polynomial& operator+=(const Polynomial& other);

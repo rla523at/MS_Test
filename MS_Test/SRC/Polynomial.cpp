@@ -423,12 +423,15 @@ Polynomial& Polynomial::differentiate_simple_poly(const size_t variable_index) {
 		differentiate_polynomial.power_index_ = 1;
 		differentiate_polynomial.differentiate_simple_poly(variable_index);
 
-		differentiate_polynomial *= static_cast<double>(this->power_index_);
-		this->power_index_--;
+		if (differentiate_polynomial == Polynomial())
+			*this = Polynomial();
+		else {
+			differentiate_polynomial *= static_cast<double>(this->power_index_);
+			this->power_index_--;
 
-		*this *= differentiate_polynomial;
-	}
-	
+			*this *= differentiate_polynomial;
+		}
+	}	
 	return *this;
 }
 
@@ -475,8 +478,15 @@ std::string Polynomial::to_poly_string(void) const {
 	str += "[";
 
 	const auto num_term = this->coefficient_vector_.size();
+	std::map<Monomial, double> ordered_this_polynomial;
 	for (size_t i = 0; i < num_term; ++i)
-		str += ms::double_to_string(coefficient_vector_[i]) + monomial_set_[i].to_string() + " + ";
+		ordered_this_polynomial.try_emplace(this->monomial_set_[i], this->coefficient_vector_[i]);
+
+	auto iter = ordered_this_polynomial.rbegin();
+	for (; iter != ordered_this_polynomial.rend(); ++iter) {
+		const auto& [monomial, coefficient] = *iter;
+		str += ms::double_to_string(coefficient) + monomial.to_string() + " + ";
+	}
 
 	str.erase(str.end() - 3, str.end());
 	str += "]";
@@ -504,8 +514,6 @@ Polynomial Polynomial::extend(void) const {
 	if (this->power_index_ > 1) {
 		for (size_t i = 1; i < this->power_index_; ++i)
 			result.multiplication(result);
-
-		//return result.extend();
 	}
 
 	return result;
