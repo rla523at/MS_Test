@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="INC\MathVector.h" />
     <ClInclude Include="INC\Text.h" />
   </ItemGroup>
   <ItemGroup>

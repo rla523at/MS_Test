@@ -77,7 +77,7 @@ GTEST_TEST(TEXT, READ5) {
 }
 
 
-GTEST_TEST(TEXT, REMOVE_EMPTY_LINE2) {
+GTEST_TEST(TEXT, REMOVE_EMPTY_LINE1) {
 	std::string file_name = "test.txt";
 	std::ofstream ofs(file_name);
 	ofs << "abc" << "\n\n\n" << "bcd";
@@ -89,4 +89,30 @@ GTEST_TEST(TEXT, REMOVE_EMPTY_LINE2) {
 
 	Text txt2 = { "abc","bcd" };
 	EXPECT_EQ(txt, txt2);
+}
+
+
+GTEST_TEST(STRINGEDITOR, PARSE1) {
+	std::string str = "a,b,c,f,d,e";
+	const char delimiter = ',';
+	const auto pared_str_set = StringEditor::parse(str, delimiter);
+
+	Text ref = { "a","b","c","f","d","e" };
+	EXPECT_EQ(pared_str_set, ref);
+}
+GTEST_TEST(STRINGEDITOR, PARSE2) {
+	std::string str = ",,,,,,a,,,b,c,f,,,d,e,,,,";
+	const char delimiter = ',';
+	const auto pared_str_set = StringEditor::parse(str, delimiter);
+
+	Text ref = { "a","b","c","f","d","e" };
+	EXPECT_EQ(pared_str_set, ref);
+}
+GTEST_TEST(STRINGEDITOR, PARSE3) {
+	std::string str = ",,,,,,abbc,,,bcf,,,d,e,,,,";
+	const char delimiter = ',';
+	const auto pared_str_set = StringEditor::parse(str, delimiter);
+
+	Text ref = { "abbc","bcf","d","e" };
+	EXPECT_EQ(pared_str_set, ref);
 }

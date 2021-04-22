@@ -5,6 +5,18 @@
 #include <string>
 #include <vector>
 
+namespace StringEditor {
+	std::vector<std::string> parse(const std::string& str, const char delimiter);
+	template<typename ValueType>
+	ValueType toValue(const std::string& str) {
+		std::istringstream iss(str);
+		ValueType value;
+		iss >> value;
+		return value;
+	};
+}
+
+
 class Text : public std::vector<std::string>
 {
 public:
@@ -15,6 +27,8 @@ public:
 	Text& read(const std::string& read_file_path);
 	Text& remove_empty_line(void);
 };
+
+
 
 
 //#include "FatalError.h"

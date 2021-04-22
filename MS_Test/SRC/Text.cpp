@@ -18,6 +18,69 @@ Text& Text::remove_empty_line(void) {
 	return *this;
 }
 
+namespace StringEditor {
+	std::vector<std::string> parse(const std::string& str, const char delimiter) {
+		if (str.empty())
+			return std::vector<std::string>();
+
+		std::vector<std::string> parsed_string_set;
+		for (auto iter1 = str.begin();;) {
+			auto iter2 = std::find(iter1, str.end(), delimiter);
+
+			if (iter1 != iter2)
+				parsed_string_set.emplace_back(iter1, iter2);
+
+			if (iter2 == str.end())
+				return parsed_string_set;
+
+			iter1 = iter2 + 1;
+		}
+	};
+}
+
+
+//	std::vector<std::string> parse(const std::string& str, const std::vector<char>& delimiter_set) {
+//		if (str.empty())
+//			return std::vector<std::string>();
+//		if (delimiter_set.empty())
+//			return std::vector<std::string>(1, str);
+//
+//		auto temporary_string = str;
+//
+//		const auto& reference_delimiter = delimiter_set.front();
+//		for (const auto& other_delimiter : delimiter_set)
+//		{
+//			if (other_delimiter != reference_delimiter)
+//				Editor::replace(temporary_string, other_delimiter, reference_delimiter);
+//		}
+//
+//		return StringEditor::parse(temporary_string, reference_delimiter);
+//	};
+//
+//	std::string& remove_comment(std::string& str, const std::string& comment) {
+//		const auto position = Tool::find_First_Position(str, comment);
+//
+//		if (position == std::string::npos)
+//			return str;
+//		else
+//			return str.erase(position, std::string::npos);
+//	}
+//
+//	std::string& UpperCase(std::string& str) {
+//		std::transform(str.begin(), str.end(), str.begin(), std::toupper);
+//		return str;
+//	};
+//
+//	std::string UpperCase(const std::string& str) {
+//		auto result = str;
+//		return StringEditor::UpperCase(result);
+//	};
+//
+//	std::string UpperCase(std::string&& str) {
+//		auto result = std::move(str);
+//		return StringEditor::UpperCase(result);
+//	};
+//}
 //
 //
 //Text::Text(std::ifstream& read_file_stream, const size_t num_line) {
@@ -67,15 +130,15 @@ Text& Text::remove_empty_line(void) {
 //}
 //
 //void Text::write(const std::string& file_path) const{
-//	std::ofstream outfile(file_path);
-//
-//	if (!outfile.is_open())
-//		FATAL_ERROR("Fail to open" + file_path);
-//
-//	const auto num_sentence = this->sentence_set_.size();
-//	for (size_t i = 0; i < num_sentence - 1; ++i)
-//		outfile << this->sentence_set_[i] << "\n";
-//	outfile << this->sentence_set_[num_sentence - 1];
-//
-//	outfile.close();
+	//std::ofstream outfile(file_path);
+
+	//if (!outfile.is_open())
+	//	FATAL_ERROR("Fail to open" + file_path);
+
+	//const auto num_sentence = this->sentence_set_.size();
+	//for (size_t i = 0; i < num_sentence - 1; ++i)
+	//	outfile << this->sentence_set_[i] << "\n";
+	//outfile << this->sentence_set_[num_sentence - 1];
+
+	//outfile.close();
 //}
