@@ -15,12 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="INC\Text.h">
+    <ClInclude Include="INC\Matrix.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\Text.cpp">
+    <ClCompile Include="SRC\Matrix.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\MathVector.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,13 +1,5 @@
 #include "../INC/Polynomial.h"
 
-namespace ms {
-	std::string double_to_string(const double val) {
-		std::stringstream stream;
-		stream << std::setprecision(15) << std::noshowpoint << val;
-		return stream.str();
-	}
-}
-
 Monomial::Monomial(void) {
 	this->is_constant_ = true;
 }

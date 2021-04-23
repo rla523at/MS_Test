@@ -1,9 +1,11 @@
 #pragma once
 
 #include <fstream>
+#include <iomanip>	//set precision
 #include <mkl.h>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include <vector>
 
 class MathVector : public std::vector<double>
@@ -33,7 +35,7 @@ public:
 	MathVector normalize(void) const;
 	MathVector& sqrt(void);
 	MathVector sqrt(void) const;
-	std::string to_String(void) const;
+	std::string to_string(void) const;
 };
 
 
@@ -41,55 +43,60 @@ std::ostream& operator<<(std::ostream& os, const MathVector& x);
 
 MathVector operator*(const double scalar, const MathVector& x);
 
-namespace Math {
+
+namespace ms {
+	std::string double_to_string(const double val, const size_t precision = 15);
+
 	double inner_product(const MathVector& v1, const MathVector& v2);
 }
 
+//template <typename T>
+//class VectorFunction : public std::vector<T>
+//{
+//public:
+//	template <typename ... Vals>
+//	VectorFunction(Vals&&... values)
+//		:std::vector<T>(std::forward<Vals>(values)...) {};
+//
+//	VectorFunction(std::initializer_list<T> list)
+//		:std::vector<T>(list) {};
+//
+//
+//	MathVector operator()(const MathVector& variable_vector) const {
+//		MathVector result;
+//		result.reserve(this->size());
+//		for (const auto& function : *this)
+//			result.emplace_back(function(variable_vector));
+//		return result;
+//	}
+//
+//	std::vector<MathVector> operator()(const std::vector<MathVector>& variable_vector_set) const {
+//		std::vector<MathVector> result_set;
+//		result_set.reserve(variable_vector_set.size());
+//
+//		for (const auto& variable_vector : variable_vector_set) {
+//			MathVector result;
+//			result.reserve(this->size());
+//
+//			for (const auto& function : *this)
+//				result.emplace_back(function(variable_vector));
+//
+//			result_set.emplace_back(result);
+//		}
+//		return result_set;
+//	}
+//
+//	std::string to_String(void) const {
+//		std::string str;
+//		for (const auto& func : *this)
+//			str << func << "\n";
+//
+//		return str;
+//	}
+//};
 
-template <typename T>
-class VectorFunction : public std::vector<T>
-{
-public:
-	template <typename ... Vals>
-	VectorFunction(Vals&&... values)
-		:std::vector<T>(std::forward<Vals>(values)...) {};
-
-	VectorFunction(std::initializer_list<T> list)
-		:std::vector<T>(list) {};
 
 
-	MathVector operator()(const MathVector& variable_vector) const {
-		MathVector result;
-		result.reserve(this->size());
-		for (const auto& function : *this)
-			result.emplace_back(function(variable_vector));
-		return result;
-	}
-
-	std::vector<MathVector> operator()(const std::vector<MathVector>& variable_vector_set) const {
-		std::vector<MathVector> result_set;
-		result_set.reserve(variable_vector_set.size());
-
-		for (const auto& variable_vector : variable_vector_set) {
-			MathVector result;
-			result.reserve(this->size());
-
-			for (const auto& function : *this)
-				result.emplace_back(function(variable_vector));
-
-			result_set.emplace_back(result);
-		}
-		return result_set;
-	}
-
-	std::string to_String(void) const {
-		std::string str;
-		for (const auto& func : *this)
-			str << func << "\n";
-
-		return str;
-	}
-};
 
 
 //

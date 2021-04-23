@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TEST_TEXT.cpp" />
+    <ClCompile Include="TEST_MATRIX.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MS_Test\MS_Test.vcxproj">

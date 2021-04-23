@@ -123,7 +123,7 @@ MathVector MathVector::sqrt(void) const {
 	return x.sqrt();
 }
 
-std::string MathVector::to_String(void) const {
+std::string MathVector::to_string(void) const {
 	std::string result;
 	result += "{ ";
 	for (const auto& value : *this)
@@ -133,15 +133,22 @@ std::string MathVector::to_String(void) const {
 }
 
 std::ostream& operator<<(std::ostream& os, const MathVector& x) {
-	return os << x.to_String();
+	return os << x.to_string();
 }
 
 MathVector operator*(const double scalar, const MathVector& x) {
 	return x * scalar;
 }
 
-namespace Math {
-	inline double inner_product(const MathVector& v1, const MathVector& v2) {
+
+namespace ms {
+	std::string double_to_string(const double val, const size_t precision) {
+		std::stringstream stream;
+		stream << std::setprecision(precision) << std::noshowpoint << val;
+		return stream.str();
+	}
+
+	double inner_product(const MathVector& v1, const MathVector& v2) {
 		return v1.inner_product(v2);
 	}
 }

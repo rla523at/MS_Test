@@ -1,16 +1,8 @@
 #pragma once
-
 #include "MathVector.h"
 
 #include <algorithm> //for min max
-#include <iomanip>	//std::setprecision()
 #include <map>
-#include <sstream>
-
-
-namespace ms {
-	std::string double_to_string(const double val);
-}
 
 
 class Monomial
