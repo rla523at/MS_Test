@@ -18,7 +18,7 @@ Text& Text::remove_empty_line(void) {
 	return *this;
 }
 
-namespace StringEditor {
+namespace ms {
 	std::vector<std::string> parse(const std::string& str, const char delimiter) {
 		if (str.empty())
 			return std::vector<std::string>();

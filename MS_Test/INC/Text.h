@@ -5,17 +5,6 @@
 #include <string>
 #include <vector>
 
-namespace StringEditor {
-	std::vector<std::string> parse(const std::string& str, const char delimiter);
-	template<typename ValueType>
-	ValueType toValue(const std::string& str) {
-		std::istringstream iss(str);
-		ValueType value;
-		iss >> value;
-		return value;
-	};
-}
-
 
 class Text : public std::vector<std::string>
 {
@@ -29,7 +18,35 @@ public:
 };
 
 
+namespace ms {
+	std::vector<std::string> parse(const std::string& str, const char delimiter);
+	template<typename T>
+	T to_value(const std::string& str);
+	template<typename T>
+	std::vector<T> to_value_set(const std::vector<std::string>& str_set);
+}
 
+
+//template definition
+namespace ms {
+	template<typename T>
+	T to_value(const std::string& str) {
+		std::istringstream iss(str);
+		T value;
+		iss >> value;
+		return value;
+	};
+	template<typename T>
+	std::vector<T> to_value_set(const std::vector<std::string>& str_set) {
+		std::vector<T> result;
+		result.reserve(str_set.size());
+
+		for (const auto& str : str_set)
+			result.push_back(ms::to_value<T>(str));
+
+		return result;
+	};
+}
 
 //#include "FatalError.h"
 //#include "FreeFunction.h"

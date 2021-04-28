@@ -29,7 +29,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TEST_MATRIX.cpp" />
+    <ClCompile Include="TEST_FIGURE.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4e3f2b7d-d2c9-4c04-b151-1725d3f11a41}</ProjectGuid>
