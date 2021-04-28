@@ -82,13 +82,13 @@ std::string MathVector::to_string(void) const {
 	std::string result;
 	result += "{ ";
 	for (const auto& value : *this)
-		result += std::to_string(value) + ", ";
+		result += ms::double_to_string(value) + ", ";
 	result += " }";
 	return result;
 }
 
 std::ostream& operator<<(std::ostream& os, const MathVector& x) {
-	return os << this->to_string();
+	return os << x.to_string();
 }
 
 MathVector operator*(const double scalar, const MathVector& x) {
@@ -104,5 +104,11 @@ namespace ms {
 	MathVector normalize(const MathVector& x) {
 		auto result = x;
 		return result.normalize();
+	}
+
+	std::string double_to_string(const double val, const size_t precision) {
+		std::stringstream stream;
+		stream << std::setprecision(precision) << std::noshowpoint << val;
+		return stream.str();
 	}
 }
