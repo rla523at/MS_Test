@@ -19,11 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="INC\Matrix.h" />
+    <ClCompile Include="SRC\MathVector.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\MathVector.cpp" />
-    <ClCompile Include="SRC\Matrix.cpp" />
+    <ClInclude Include="INC\MathVector.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

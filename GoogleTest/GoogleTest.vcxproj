@@ -19,9 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TEST_MATRIX.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\MS_Test\MS_Test.vcxproj">
       <Project>{ab2f70aa-f336-47d1-a885-c7240a5877da}</Project>
     </ProjectReference>
@@ -30,6 +27,9 @@
     <ProjectReference Include="..\MS_Test\MS_Test.vcxproj">
       <Project>{ab2f70aa-f336-47d1-a885-c7240a5877da}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="TEST_MATHVECTOR.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4e3f2b7d-d2c9-4c04-b151-1725d3f11a41}</ProjectGuid>

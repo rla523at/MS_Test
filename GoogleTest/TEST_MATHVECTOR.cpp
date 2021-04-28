@@ -1,6 +1,6 @@
 #pragma once
 #include "gtest/gtest.h"
-#include "../MS_Test/SRC/MathVector.cpp"
+#include "../MS_Test/INC/MathVector.h"
 
 GTEST_TEST(MATHVECTOR, CONSTRUCTOR) {
 	{
@@ -123,6 +123,7 @@ GTEST_TEST(MATHVECTOR, OPERATOR_EQUAL) {
 	}
 }
 
+
 GTEST_TEST(MATHVECTOR, OPERATOR_ADDITION_ASSIGNMENT) {
 	{
 		MathVector v1 = { 0.1 };
@@ -136,4 +137,20 @@ GTEST_TEST(MATHVECTOR, OPERATOR_ADDITION_ASSIGNMENT) {
 		v1 += v1;
 		EXPECT_EQ(v1, ref);
 	}	
+}
+
+
+GTEST_TEST(MATHVECTOR, ABS1) {
+	MathVector v1 = { -1,-2,-3 };
+	auto v = ms::abs(v1);
+
+	MathVector ref = { 1,2,3 };
+	EXPECT_EQ(v, ref);
+}
+GTEST_TEST(MATHVECTOR, ABS2) {
+	MathVector v1 = { -1,-2,-3 };
+	v1.abs();
+
+	MathVector ref = { 1,2,3 };
+	EXPECT_EQ(v1, ref);
 }
