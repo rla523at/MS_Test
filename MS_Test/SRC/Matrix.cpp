@@ -13,49 +13,39 @@ RowMajorMatrix::RowMajorMatrix(const size_t matrix_order)
 		this->at(i, i) = 1;
 }
 
-RowMajorMatrix::RowMajorMatrix(const size_t matrix_order, const MathVector& value)
-	: row_(matrix_order), column_(matrix_order), value_set_(value) {
-		this->inspect_value_size();
-}
-
-RowMajorMatrix::RowMajorMatrix(const size_t matrix_order, MathVector&& value)
-	: row_(matrix_order), column_(matrix_order), value_set_(std::move(value)) {
-	this->inspect_value_size();
-}
-
 RowMajorMatrix::RowMajorMatrix(const size_t num_row, const size_t num_column, const MathVector& value)
-	: row_(num_row), column_(num_column), value_set_(value) {};
+	: row_(num_row), column_(num_column), value_set_(value) {
+	this->inspect_value_size();
+};
 
 RowMajorMatrix::RowMajorMatrix(const size_t num_row, const size_t num_column, MathVector&& value)
-	: row_(num_row), column_(num_column), value_set_(std::move(value)) {};
+	: row_(num_row), column_(num_column), value_set_(std::move(value)) {
+	this->inspect_value_size();
+};
 
 RowMajorMatrix& RowMajorMatrix::operator+=(const RowMajorMatrix& B) {
 	if (this->size() != B.size())
 		throw std::length_error("size of matrix is not same");
 
 	if (this->transpose_type_ != B.transpose_type_) {
-		auto tmp = B;
-		this->value_set_ += tmp.direct_transpose().value_set_;
+		this->transpose_value();
+		if (this->is_transposed())
+			this->transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
+		else
+			this->transpose_type_ = CBLAS_TRANSPOSE::CblasTrans;
 	}
-	else
-		this->value_set_ += B.value_set_;
+
+	this->value_set_ += B.value_set_;
 
 	return *this;
 }
 
-bool RowMajorMatrix::operator==(const RowMajorMatrix& other) const {
-	if (this->size() != other.size())
-		return false;
+RowMajorMatrix& RowMajorMatrix::operator*=(const RowMajorMatrix& other) {
+	this->value_set_ = this->multiply_value(other);
+	this->column_ = other.column_;
+	this->transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
 
-	const auto [rows, cols] = this->size();
-	for (size_t i = 0; i < rows; ++i) {
-		for (size_t j = 0; j < cols; ++j) {
-			if (this->at(i, j) != other.at(i, j))
-				return false;
-		}
-	}
-
-	return true;
+	return *this;
 }
 
 double& RowMajorMatrix::at(const size_t irow, const size_t jcolumn) {
@@ -74,12 +64,23 @@ double RowMajorMatrix::at(const size_t irow, const size_t jcolumn) const {
 		return this->value_set_[irow * this->column_ + jcolumn];
 }
 
-const double* RowMajorMatrix::data(void) const {
-	return this->value_set_.data();
-}
+RowMajorMatrix& RowMajorMatrix::inverse(void) {
+	if (!this->is_square_matrix())
+		throw std::runtime_error("can not inverse non square matrix");
 
-double* RowMajorMatrix::data(void) {
-	return this->value_set_.data();
+	const auto ipiv = this->PLU_decomposition();
+
+	const int matrix_layout = LAPACK_ROW_MAJOR;
+	const lapack_int n = static_cast<int>(this->row_);
+	const lapack_int lda = n;
+	const lapack_int info = LAPACKE_dgetri(matrix_layout, n, this->value_set_.data(), lda, ipiv.data());
+
+	if (info > 0)
+		throw std::runtime_error("U is singular matrix in L-U decomposition");
+	else if (info < 0)
+		throw std::runtime_error("fail to inverse the matrix");
+
+	return *this;
 }
 
 std::pair<size_t, size_t> RowMajorMatrix::size(void) const {
@@ -108,15 +109,63 @@ std::string RowMajorMatrix::to_string(void) const {
 	return str;
 }
 
-RowMajorMatrix& RowMajorMatrix::direct_transpose(void) {
+MathVector RowMajorMatrix::multiply_value(const RowMajorMatrix& other) const {
+	if (this->column_ != other.row_)
+		throw std::length_error("length is not matched");
+
+	const CBLAS_LAYOUT layout = CBLAS_LAYOUT::CblasRowMajor;
+	const CBLAS_TRANSPOSE transA = this->transpose_type_;
+	const CBLAS_TRANSPOSE transB = other.transpose_type_;
+	const MKL_INT m = static_cast<int>(this->row_);
+	const MKL_INT n = static_cast<int>(other.column_);
+	const MKL_INT k = static_cast<int>(this->column_);
+	const double alpha = 1;
+	const MKL_INT lda = static_cast<int>(this->leading_dimension());
+	const MKL_INT ldb = static_cast<int>(other.leading_dimension());
+	const double beta = 0;
+	const MKL_INT ldc = n;
+
+	MathVector new_value(this->row_ * other.column_);
+	cblas_dgemm(layout, transA, transB, m, n, k, alpha, this->value_set_.data(), lda, other.value_set_.data(), ldb, beta, new_value.data(), ldc);
+	
+	return new_value;
+}
+
+size_t RowMajorMatrix::leading_dimension(void) const {
+	if (this->is_transposed())
+		return this->row_;
+	else
+		return this->column_;
+}
+
+std::vector<int> RowMajorMatrix::PLU_decomposition(void) {
 	if (this->is_transposed()) {
-		std::swap(this->row_, this->column_);
+		this->transpose_value();
 		this->transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
+	}
+
+	const int matrix_layout = LAPACK_ROW_MAJOR;
+	const lapack_int m = static_cast<int>(this->row_);
+	const lapack_int n = static_cast<int>(this->column_);
+	const lapack_int lda = n;
+	std::vector<int> ipiv(std::min(m, n));
+	lapack_int info = LAPACKE_dgetrf(matrix_layout, m, n, this->value_set_.data(), lda, ipiv.data());
+
+	if (info < 0)
+		throw std::runtime_error("Fail to PLU decompose");
+
+	return ipiv;
+}
+
+RowMajorMatrix& RowMajorMatrix::transpose_value(void) {
+	auto [rows, cols] = this->size();
+
+	if (this->is_transposed()) {
+		std::swap(rows,cols);
 	}
 		
 	const char odering = 'R';
-	const char trans = 'T';
-	const auto [rows, cols] = this->size();
+	const char trans = 'T';	
 	const double alpha = 1;
 	const size_t lda = cols;
 	const size_t ldb = rows;
@@ -139,7 +188,7 @@ void RowMajorMatrix::inspect_range(const size_t irow, const size_t jcolumn) cons
 }
 
 void RowMajorMatrix::inspect_value_size(void) const {
-	if (this->is_square_matrix() || this->value_set_.size() != this->row_ * this->column_)
+	if (this->value_set_.size() != this->row_ * this->column_)
 		throw std::length_error("matrix value size is not matched");
 }
 
@@ -147,10 +196,35 @@ std::ostream& operator<<(std::ostream& os, const RowMajorMatrix& x) {
 	return os << x.to_string();
 }
 
+namespace ms {
+	RowMajorMatrix transpose(const RowMajorMatrix& A) {
+		auto result = A;
+		return result.transpose();
+	};
+}
 
 
 
+//bool RowMajorMatrix::operator==(const RowMajorMatrix& other) const {
+//	if (this->size() != other.size())
+//		return false;
+//
+//	if (this->transpose_type_ != other.transpose_type_) {
+//		auto tmp = *this;
+//		return tmp.transpose_value().value_set_ == other.value_set_;
+//	}
+//	else
+//		return this->value_set_ == other.value_set_;
+//}
 
+
+//const double* RowMajorMatrix::data(void) const {
+//	return this->value_set_.data();
+//}
+//
+//double* RowMajorMatrix::data(void) {
+//	return this->value_set_.data();
+//}
 
 //RowMajorMatrix::RowMajorMatrix(const MatrixType matrix_type, const size_t num_row, const size_t num_column)
 //	:matrix_type_(matrix_type), row_(num_row), column_(num_column) {
@@ -648,23 +722,23 @@ std::ostream& operator<<(std::ostream& os, const RowMajorMatrix& x) {
 //}
 //
 //std::vector<int> RowMajorMatrix::PLU_decomposition(void) { // A=PLU, A is overwriiten by L + U. The unit diagonal element of L are not stored		
-//	if (this->matrix_type_ != MatrixType::Full)
-//		FATAL_TYPE_ERROR;
-//
-//	if (this->is_transposed())
-//		this->transpose_Value();
-//
-//	const int matrix_layout = LAPACK_ROW_MAJOR;
-//	const lapack_int m = static_cast<int>(this->row_);
-//	const lapack_int n = static_cast<int>(this->column_);
-//	const lapack_int lda = n;
-//	std::vector<int> ipiv(std::min(m, n));
-//	lapack_int info = LAPACKE_dgetrf(matrix_layout, m, n, this->data(), lda, ipiv.data());
-//
-//	if (info < 0)
-//		FATAL_ERROR("Fail to decompose");
-//
-//	return ipiv;
+	//if (this->matrix_type_ != MatrixType::Full)
+	//	FATAL_TYPE_ERROR;
+
+	//if (this->is_transposed())
+	//	this->transpose_Value();
+
+	//const int matrix_layout = LAPACK_ROW_MAJOR;
+	//const lapack_int m = static_cast<int>(this->row_);
+	//const lapack_int n = static_cast<int>(this->column_);
+	//const lapack_int lda = n;
+	//std::vector<int> ipiv(std::min(m, n));
+	//lapack_int info = LAPACKE_dgetrf(matrix_layout, m, n, this->data(), lda, ipiv.data());
+
+	//if (info < 0)
+	//	FATAL_ERROR("Fail to decompose");
+
+	//return ipiv;
 //}
 //
 //MathVector RowMajorMatrix::row(const size_t row_index) const {
@@ -948,20 +1022,20 @@ std::ostream& operator<<(std::ostream& os, const RowMajorMatrix& x) {
 //}
 //
 //RowMajorMatrix& RowMajorMatrix::inverse_Full_Matrix(void) {
-//	const std::vector<int> ipiv = this->PLU_decomposition();
-//
-//	const int matrix_layout = LAPACK_ROW_MAJOR;
-//	const lapack_int n = static_cast<int>(this->order());
-//	const lapack_int lda = n;
-//	const lapack_int info = LAPACKE_dgetri(matrix_layout, n, this->data(), lda, ipiv.data());
-//
-//	if (info > 0)
-//		FATAL_ERROR("U is singular matrix in L-U decomposition");
-//	else if (info < 0)
-//		FATAL_ERROR("fail to inverse the matrix");
-//
-//	this->update_Type();
-//	return *this;
+	//const std::vector<int> ipiv = this->PLU_decomposition();
+
+	//const int matrix_layout = LAPACK_ROW_MAJOR;
+	//const lapack_int n = static_cast<int>(this->order());
+	//const lapack_int lda = n;
+	//const lapack_int info = LAPACKE_dgetri(matrix_layout, n, this->data(), lda, ipiv.data());
+
+	//if (info > 0)
+	//	FATAL_ERROR("U is singular matrix in L-U decomposition");
+	//else if (info < 0)
+	//	FATAL_ERROR("fail to inverse the matrix");
+
+	//this->update_Type();
+	//return *this;
 //}
 //
 //RowMajorMatrix& RowMajorMatrix::inverse_Full_Triangle_Matrix(void) {
@@ -1129,40 +1203,40 @@ std::ostream& operator<<(std::ostream& os, const RowMajorMatrix& x) {
 //}
 //
 //size_t RowMajorMatrix::Leading_Dimension(void) const {
-//	// use when need original leading dimension
-//	if (this->is_transposed())
-//		return this->row_;
-//	else
-//		return this->column_;
+	//// use when need original leading dimension
+	//if (this->is_transposed())
+	//	return this->row_;
+	//else
+	//	return this->column_;
 //}
 //
 //RowMajorMatrix& RowMajorMatrix::multiply_Full_Matrix_Full_Matrix(const RowMajorMatrix& B) { // A = alpha * A * B + beta * A	=>	A *= B
-//	RowMajorMatrix& A = *this;
-//
-//	if (A.column_ != B.row_)
-//		FATAL_SIZE_ERROR;
-//
-//	const CBLAS_LAYOUT layout = CBLAS_LAYOUT::CblasRowMajor;
-//	const CBLAS_TRANSPOSE transA = A.transpose_type_;
-//	const CBLAS_TRANSPOSE transB = B.transpose_type_;
-//	const MKL_INT m = static_cast<int>(A.row_);
-//	const MKL_INT n = static_cast<int>(B.column_);
-//	const MKL_INT k = static_cast<int>(A.column_);
-//	const double alpha = 1;
-//	const MKL_INT lda = static_cast<int>(A.Leading_Dimension());
-//	const MKL_INT ldb = static_cast<int>(B.Leading_Dimension());
-//	const double beta = 0;
-//	const MKL_INT ldc = n;
-//
-//	std::vector<double> new_value(A.row_ * B.column_);
-//	cblas_dgemm(layout, transA, transB, m, n, k, alpha, A.data(), lda, B.data(), ldb, beta, new_value.data(), ldc);
-//	
-//	A.column_ = B.column_;
-//	A.transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
-//	A.value_set_ = std::move(new_value);
-//	A.update_Type();
-//
-//	return A;
+	//RowMajorMatrix& A = *this;
+
+	//if (A.column_ != B.row_)
+	//	FATAL_SIZE_ERROR;
+
+	//const CBLAS_LAYOUT layout = CBLAS_LAYOUT::CblasRowMajor;
+	//const CBLAS_TRANSPOSE transA = A.transpose_type_;
+	//const CBLAS_TRANSPOSE transB = B.transpose_type_;
+	//const MKL_INT m = static_cast<int>(A.row_);
+	//const MKL_INT n = static_cast<int>(B.column_);
+	//const MKL_INT k = static_cast<int>(A.column_);
+	//const double alpha = 1;
+	//const MKL_INT lda = static_cast<int>(A.Leading_Dimension());
+	//const MKL_INT ldb = static_cast<int>(B.Leading_Dimension());
+	//const double beta = 0;
+	//const MKL_INT ldc = n;
+
+	//std::vector<double> new_value(A.row_ * B.column_);
+	//cblas_dgemm(layout, transA, transB, m, n, k, alpha, A.data(), lda, B.data(), ldb, beta, new_value.data(), ldc);
+	//
+	//A.column_ = B.column_;
+	//A.transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
+	//A.value_set_ = std::move(new_value);
+	//A.update_Type();
+
+	//return A;
 //}
 //
 //RowMajorMatrix& RowMajorMatrix::multiply_Full_Matrix_Full_Triangle_Matrix(const RowMajorMatrix& B) { // A = alpha * A * B => A *= B
