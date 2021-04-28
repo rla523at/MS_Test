@@ -14,36 +14,34 @@ public:
 	MathVector(std::initializer_list<double> list) :std::vector<double>(list) {};
 	MathVector(const double) = delete;
 	
+
 	MathVector& operator+=(const MathVector& y);
 	MathVector& operator-=(const MathVector& y);
 	MathVector& operator*=(const double scalar);
-	MathVector& operator*=(const MathVector& y);
 	MathVector operator+(const MathVector& y) const;
 	MathVector operator-(const MathVector& y) const;
 	MathVector operator*(const double scalar) const;
-	MathVector operator*(const MathVector& y) const;
 
-	MathVector& abs(void);
-	MathVector abs(void) const;	
+
+	MathVector& abs(void);	
 	double inner_product(const MathVector& other) const;
 	double L2_Norm(void) const;
 	void merge(const MathVector& other);
 	void merge(MathVector&& other);
 	MathVector& normalize(void);
-	MathVector normalize(void) const;
-	MathVector& sqrt(void);
-	MathVector sqrt(void) const;
-	std::string to_String(void) const;
+	std::string to_string(void) const;
 };
 
 
 std::ostream& operator<<(std::ostream& os, const MathVector& x);
-
 MathVector operator*(const double scalar, const MathVector& x);
 
-namespace Math {
-	double inner_product(const MathVector& v1, const MathVector& v2);
+
+namespace ms {
+	MathVector abs(const MathVector& x);
+	MathVector normalize(const MathVector& x);
 }
+
 
 
 template <typename T>

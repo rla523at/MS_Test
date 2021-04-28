@@ -1,50 +1,32 @@
 #include "../INC/MathVector.h"
 
-MathVector& MathVector::operator+=(const MathVector& y) { //x = x + y
-	MathVector& x = *this;
+MathVector& MathVector::operator+=(const MathVector& y) {
+	if (this->size() != y.size())
+		throw std::length_error("two vector have different length");
 
-	if (x.size() != y.size())
-		throw "two vector have different length";
+	const MKL_INT n = static_cast<int>(this->size());
+	vdAdd(n, this->data(), y.data(), this->data());
 
-	const MKL_INT n = static_cast<int>(x.size());
-	vdAdd(n, x.data(), y.data(), x.data());
-
-	return x;
+	return *this;
 };
 
-MathVector& MathVector::operator-=(const MathVector& y) { //x = x - y
-	MathVector& x = *this;
+MathVector& MathVector::operator-=(const MathVector& y) {
+	if (this->size() != y.size())
+		throw std::length_error("two vector have different length");
 
-	if (x.size() != y.size())
-		throw "two vector have different length";
+	const MKL_INT n = static_cast<int>(this->size());
+	vdSub(n, this->data(), y.data(), this->data());
 
-	const MKL_INT n = static_cast<int>(x.size());
-	vdSub(n, x.data(), y.data(), x.data());
-
-	return x;
+	return *this;
 };
 
-MathVector& MathVector::operator*=(const double scalar) { //x = a * x	
-	MathVector& x = *this;
-
-	const MKL_INT n = static_cast<int>(x.size());
+MathVector& MathVector::operator*=(const double scalar) {	
+	const MKL_INT n = static_cast<int>(this->size());
 	const double a = scalar;
 	const MKL_INT incx = 1;
-	cblas_dscal(n, a, x.data(), incx);
+	cblas_dscal(n, a, this->data(), incx);
 
-	return x;
-};
-
-MathVector& MathVector::operator*=(const MathVector& y) { //x_i *= y_i value by value
-	MathVector& x = *this;
-
-	if (x.size() != y.size())
-		throw "two vector have different length";
-
-	const MKL_INT n = static_cast<int>(x.size());
-	vdMul(n, x.data(), y.data(), x.data());
-
-	return x;
+	return *this;
 };
 
 MathVector MathVector::operator+(const MathVector& y) const {
@@ -62,21 +44,10 @@ MathVector MathVector::operator*(const double scalar) const {
 	return x *= scalar;
 };
 
-MathVector MathVector::operator*(const MathVector& y) const {
-	MathVector x = *this;
-	return x *= y;
-};
-
-
 MathVector& MathVector::abs(void) {
 	const MKL_INT n = static_cast<int>(this->size());
 	vdAbs(n, this->data(), this->data());
 	return *this;
-}
-
-MathVector MathVector::abs(void) const {
-	MathVector x = *this;
-	return x.abs();
 }
 
 double MathVector::inner_product(const MathVector& other) const {
@@ -107,23 +78,7 @@ MathVector& MathVector::normalize(void) {
 	return *this *= 1.0 / this->L2_Norm();
 }
 
-MathVector MathVector::normalize(void) const {
-	MathVector result = *this;
-	return result.normalize();
-}
-
-MathVector& MathVector::sqrt(void) {
-	const MKL_INT n = static_cast<int>(this->size());
-	vdSqrt(n, this->data(), this->data());
-	return *this;
-}
-
-MathVector MathVector::sqrt(void) const {
-	MathVector x = *this;
-	return x.sqrt();
-}
-
-std::string MathVector::to_String(void) const {
+std::string MathVector::to_string(void) const {
 	std::string result;
 	result += "{ ";
 	for (const auto& value : *this)
@@ -133,15 +88,21 @@ std::string MathVector::to_String(void) const {
 }
 
 std::ostream& operator<<(std::ostream& os, const MathVector& x) {
-	return os << x.to_String();
+	return os << this->to_string();
 }
 
 MathVector operator*(const double scalar, const MathVector& x) {
 	return x * scalar;
 }
 
-namespace Math {
-	inline double inner_product(const MathVector& v1, const MathVector& v2) {
-		return v1.inner_product(v2);
+namespace ms {
+	MathVector abs(const MathVector& x) {
+		auto result = x;
+		return result.abs();
+	}
+	
+	MathVector normalize(const MathVector& x) {
+		auto result = x;
+		return result.normalize();
 	}
 }
