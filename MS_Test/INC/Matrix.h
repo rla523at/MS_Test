@@ -17,10 +17,8 @@ public:
 	RowMajorMatrix(const size_t num_row, const size_t num_column, const MathVector& value);
 	RowMajorMatrix(const size_t num_row, const size_t num_column, MathVector&& value);
 
-
 	RowMajorMatrix& operator+=(const RowMajorMatrix& other);
 	RowMajorMatrix& operator*=(const RowMajorMatrix& other);
-
 
 	double& at(const size_t row, const size_t column);
 	double at(const size_t row, const size_t column) const;
@@ -28,13 +26,6 @@ public:
 	std::pair<size_t, size_t> size(void) const;
 	RowMajorMatrix& transpose(void);
 	std::string to_string(void) const;
-
-
-	//seem useless
-	//bool operator==(const RowMajorMatrix& other) const;
-	//const double* data(void) const;
-	//double* data(void);
-
 
 private:
 	MathVector multiply_value(const RowMajorMatrix& other) const;
@@ -48,15 +39,15 @@ private:
 	void inspect_value_size(void) const;	
 };
 
-std::ostream& operator<<(std::ostream& os, const RowMajorMatrix& x);
 
-//MathVector operator*(const double scalar, const MathVector& x);
+std::ostream& operator<<(std::ostream& os, const RowMajorMatrix& x);
+template <typename T>
+VectorFunction<T> operator*(const RowMajorMatrix& m, const VectorFunction<T> vector_function);
 
 
 namespace ms {
 	RowMajorMatrix transpose(const RowMajorMatrix& A);
 }
-
 
 
 template <typename T>
@@ -67,65 +58,97 @@ private:
 
 public:
 	JacobianMatrix(void) = default;
-	JacobianMatrix(const VectorFunction<T>& vector_function, const size_t num_variable) {
-		const auto num_function = vector_function.size();
+	JacobianMatrix(const VectorFunction<T>& vector_function, const size_t num_variable);
 
-		this->function_set_.resize(num_function);
-		for (auto& set : this->function_set_)
-			set.resize(num_variable);
+	RowMajorMatrix operator()(const MathVector& variable_vector) const;
 
-		for (size_t i = 0; i < num_function; ++i)
-			for (size_t j = 0; j < num_variable; ++j)
-				this->function_set_[i][j] = ms::differentiate(vector_function.at(i), j);
-	}
-
-
-	RowMajorMatrix operator()(const MathVector& variable_vector) const {
-		const auto [num_row, num_column] = this->size();
-
-		RowMajorMatrix value(num_row, num_column);
-		for (size_t i = 0; i < num_row; ++i)
-			for (size_t j = 0; j < num_column; ++j)
-				value.at(i, j) = function_set_[i][j](variable_vector);
-
-		return value;
-	}
-
-
-	T& at(const size_t i_index, const size_t j_index) {
-		return function_set_[i_index][j_index];
-	}
-
-	const T& at(const size_t i_index, const size_t j_index) const {
-		return function_set_[i_index][j_index];
-	}
-
-	std::pair<size_t, size_t> size(void) const {
-		return { this->function_set_.size(), this->function_set_.front().size() };
-	}
-
-	std::string to_String(void) const {
-		std::string str;
-
-		const auto [num_row, num_column] = this->size();
-		for (size_t i = 0; i < num_row; ++i)
-			for (size_t j = 0; j < num_column; ++j)
-				str += "[" + std::to_string(i) + "," + std::to_string(j) + "]  :  " + this->at(i, j).to_string() + "\n";
-
-		return str;
-	}
+	T& at(const size_t i_index, const size_t j_index);
+	const T& at(const size_t i_index, const size_t j_index) const;
+	std::pair<size_t, size_t> size(void) const;
+	std::string to_string(void) const;
 };
 
 
 template <typename T>
-inline std::ostream& operator<<(std::ostream& os, const JacobianMatrix<T>& Jacobian_matrix) {
-	return os << Jacobian_matrix.to_String();
+std::ostream& operator<<(std::ostream& os, const JacobianMatrix<T>& Jacobian_matrix);
+
+
+
+
+//template definition part
+template <typename T>
+VectorFunction<T> operator*(const RowMajorMatrix& m, const VectorFunction<T> vector_function) {
+	const auto [num_row, num_colum] = m.size();
+
+	if (num_row != vector_function.size())
+		throw std::length_error("length does not match");
+
+	VectorFunction<T> result(num_row);
+	for (size_t i = 0; i < num_row; ++i)
+		for (size_t j = 0; j < num_column; ++j)
+			result[i] += m.at(i, j) * vector_function[j];
+
+	return result;
 }
 
 
+template <typename T>
+JacobianMatrix<T>::JacobianMatrix(const VectorFunction<T>& vector_function, const size_t num_variable) {
+	const auto num_function = vector_function.size();
+
+	this->function_set_.resize(num_function);
+	for (auto& set : this->function_set_)
+		set.resize(num_variable);
+
+	for (size_t i = 0; i < num_function; ++i)
+		for (size_t j = 0; j < num_variable; ++j)
+			this->function_set_[i][j] = ms::differentiate(vector_function.at(i), j);
+}
+
+template <typename T>
+RowMajorMatrix JacobianMatrix<T>::operator()(const MathVector& variable_vector) const {
+	const auto [num_row, num_column] = this->size();
+
+	RowMajorMatrix value(num_row, num_column);
+	for (size_t i = 0; i < num_row; ++i)
+		for (size_t j = 0; j < num_column; ++j)
+			value.at(i, j) = this->function_set_[i][j](variable_vector);
+
+	return value;
+}
+
+template <typename T>
+T& JacobianMatrix<T>::at(const size_t i_index, const size_t j_index) {
+	return this->function_set_[i_index][j_index];
+}
+
+template <typename T>
+const T& JacobianMatrix<T>::at(const size_t i_index, const size_t j_index) const {
+	return this->function_set_[i_index][j_index];
+}
+
+template <typename T>
+std::pair<size_t, size_t> JacobianMatrix<T>::size(void) const {
+	return { this->function_set_.size(), this->function_set_.front().size() };
+}
+
+template <typename T>
+std::string JacobianMatrix<T>::to_string(void) const {
+	std::string str;
+
+	const auto [num_row, num_column] = this->size();
+	for (size_t i = 0; i < num_row; ++i)
+		for (size_t j = 0; j < num_column; ++j)
+			str += "[" + std::to_string(i) + "," + std::to_string(j) + "]  :  " + this->at(i, j).to_string() + "\n";
+
+	return str;
+}
 
 
-
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const JacobianMatrix<T>& Jacobian_matrix) {
+	return os << Jacobian_matrix.to_string();
+}
 
 
 
