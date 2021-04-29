@@ -78,7 +78,7 @@ std::ostream& operator<<(std::ostream& os, const JacobianMatrix<T>& Jacobian_mat
 //template definition part
 template <typename T>
 VectorFunction<T> operator*(const RowMajorMatrix& m, const VectorFunction<T> vector_function) {
-	const auto [num_row, num_colum] = m.size();
+	const auto [num_row, num_column] = m.size();
 
 	if (num_row != vector_function.size())
 		throw std::length_error("length does not match");
@@ -100,9 +100,9 @@ JacobianMatrix<T>::JacobianMatrix(const VectorFunction<T>& vector_function, cons
 	for (auto& set : this->function_set_)
 		set.resize(num_variable);
 
-	for (size_t i = 0; i < num_function; ++i)
-		for (size_t j = 0; j < num_variable; ++j)
-			this->function_set_[i][j] = ms::differentiate(vector_function.at(i), j);
+	//for (size_t i = 0; i < num_function; ++i)
+	//	for (size_t j = 0; j < num_variable; ++j)
+	//		this->function_set_[i][j] = ms::differentiate(vector_function.at(i), j);
 }
 
 template <typename T>

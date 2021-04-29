@@ -14,7 +14,7 @@ enum class FigureType
 struct QuadratureRule
 {
 	std::vector<MathVector> quadrature_point_set;
-	std::vector<double> quadrature_weight_set;
+	std::vector<double> quadrature_weight_set;	
 };
 
 class ReferenceFigure
@@ -30,20 +30,23 @@ private:
 	size_t figure_order_;
 
 public:
-	ReferenceFigure(const FigureType figure_type, const size_t figure_order) : figure_type_(figure_type), figure_order_(figure_order) {};
+	ReferenceFigure(const FigureType figure_type, const size_t figure_order);
 
 	const std::vector<MathVector>& reference_transformation_node_set(void);
 	const QuadratureRule& reference_quadrature_rule(const size_t integrand_order);
 	const std::vector<MathVector>& reference_post_node_set(const size_t post_order);
 	const std::vector<std::vector<size_t>>& reference_connectivity(const size_t post_order);
 
-	MathVector calculate_center_node(void);
-	std::map<size_t, FigureType> calculate_Face_index_to_Figure_Type_Set(void);
-	std::map<size_t, std::vector<size_t>> calculate_Face_index_to_Node_Index_Order_Set(void);
-	MathVector calculate_Normal_Vector(void);
-	FigureType calculate_Simplex_Figure_Type(void);
-	std::vector<size_t> calculate_Vertex_Node_Index_Order_Set(void);
-	std::vector<std::vector<size_t>> calculate_Vertex_Simplex_Element_Consisting_Node_Index_Order_Family(void);
+	MathVector center_node(void) const;
+	std::vector<FigureType> face_figure_type_set(void) const;
+	MathVector normal_vector(void) const;
+	FigureType simplex_figure_type(void) const;
+	VectorFunction<Monomial> transformation_monomial_vector(void) const;
+	
+	// node index set을 받아서 알아서 처리하게 그러면 Reference Figure말고 Indexed Figure에 넣어놓는게 맞지 않나 ?
+	std::map<size_t, std::vector<size_t>> face_index_to_node_index_order_set(void) const;	
+	std::vector<size_t> vertex_node_index_order_set(void) const;
+	std::vector<std::vector<size_t>> vertex_simplex_node_index_order_family(void) const;
 
 private:
 	size_t calculate_Required_Order(const size_t integrand_order) const;
@@ -57,6 +60,21 @@ namespace ms {
 }
 
 
+class Figure
+{
+private:
+	ReferenceFigure reference_figure_;
+	std::vector<const MathVector*> node_set_;
+	VectorFunction<Polynomial> transformation_function_;
+	JacobianMatrix<Polynomial> transformation_Jacobian_matrix_;
+
+public:
+	explicit Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set);
+
+private:
+	
+};
+
 //
 //class Figure : public ReferenceFigure
 //{
@@ -65,11 +83,11 @@ namespace ms {
 //	
 //	size_t figure_order_;
 //		
-//	std::vector<const MathVector*> node_set_;
-//
-//	VectorFunction<Polynomial> transformation_function_;
-//
-//	JacobianMatrix<Polynomial> transformation_Jacobian_matrix_;
+	//std::vector<const MathVector*> node_set_;
+
+	//VectorFunction<Polynomial> transformation_function_;
+
+	//JacobianMatrix<Polynomial> transformation_Jacobian_matrix_;
 //
 //	//debug
 //	VectorFunction<Polynomial> linear_transformation_function_;

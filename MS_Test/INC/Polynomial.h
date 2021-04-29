@@ -25,17 +25,14 @@ public:
 	bool operator==(const Monomial& other) const;
 
 	size_t exponent(size_t variable_index) const;
-	size_t order(void) const;
+	size_t monomial_order(void) const;
+	size_t domain_order(void) const;
 	Monomial& reduce_order(const size_t variable_index);
 	Monomial reduce_order(const size_t variable_index) const;
 	std::string to_string(void) const;
 
-	////for performance test
-	//double call_operator1(const MathVector& variable_vector) const;
-	//double call_operator2(const MathVector& variable_vector) const;
-
 private:
-	bool check_constant(void) const;
+	void remove_meaningless_zero(void);
 };
 
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
@@ -73,8 +70,8 @@ public:
 	Polynomial operator*(const double scalar) const;
 	Polynomial operator*(const Polynomial& other) const;	
 	double operator()(const MathVector& variable_vector) const;
-	bool operator==(const Polynomial& other) const;
-	bool operator!=(const Polynomial& other) const;
+	//bool operator==(const Polynomial& other) const;
+	//bool operator!=(const Polynomial& other) const;
 
 	Polynomial& differentiate(const size_t variable_index);
 	Polynomial& power(const size_t power_index);

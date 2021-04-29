@@ -15,6 +15,7 @@ public:
 
 	Text& read(const std::string& read_file_path);
 	Text& remove_empty_line(void);
+	void write(const std::string& write_file_path) const;
 };
 
 

@@ -27,6 +27,9 @@
     <ClCompile Include="SRC\Text.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="SRC\Polynomial.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="INC\MathVector.h">
@@ -39,6 +42,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="INC\Text.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="INC\Polynomial.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

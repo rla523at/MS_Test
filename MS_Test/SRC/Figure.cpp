@@ -5,8 +5,14 @@ std::map<std::pair<FigureType, size_t>, QuadratureRule> ReferenceFigure::key_to_
 std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> ReferenceFigure::key_to_post_node_set_;
 std::map<std::pair<FigureType, size_t>, std::vector<std::vector<size_t>>> ReferenceFigure::key_to_connectivity_;
 
+ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figure_order)
+	: figure_type_(figure_type), figure_order_(figure_order) {
+	if (figure_order == 0)
+		throw std::invalid_argument("figure order should be greater than 0");
+}
+
 const std::vector<MathVector>& ReferenceFigure::reference_transformation_node_set(void) {
-	const auto key = std::make_pair(this->figure_type_, this->figure_order_);
+	auto key = std::make_pair(this->figure_type_, this->figure_order_);
 
 	if (ReferenceFigure::key_to_transformation_node_set_.find(key) == ReferenceFigure::key_to_transformation_node_set_.end()) {
 		if (this->figure_order_ > this->support_element_order())
@@ -25,7 +31,7 @@ const std::vector<MathVector>& ReferenceFigure::reference_transformation_node_se
 		node_set.reserve(num_nodes);
 		for (const auto& sentence : transformation_node_set_text) {
 			const char delimiter = ' ';
-			const auto parsed_str = ms::parse(sentence, delimiter);
+			auto parsed_str = ms::parse(sentence, delimiter);
 			auto point_value = ms::to_value_set<double>(parsed_str);
 
 			point_value.erase(point_value.begin());
@@ -39,7 +45,7 @@ const std::vector<MathVector>& ReferenceFigure::reference_transformation_node_se
 }
 
 const QuadratureRule& ReferenceFigure::reference_quadrature_rule(const size_t integrand_order) {
-	const auto key = std::make_pair(this->figure_type_, integrand_order);
+	auto key = std::make_pair(this->figure_type_, integrand_order);
 
 	if (ReferenceFigure::key_to_quadrature_rule_.find(key) == ReferenceFigure::key_to_quadrature_rule_.end()) {
 		const auto required_order = ReferenceFigure::calculate_Required_Order(integrand_order);
@@ -75,7 +81,7 @@ const QuadratureRule& ReferenceFigure::reference_quadrature_rule(const size_t in
 }
 
 const std::vector<MathVector>& ReferenceFigure::reference_post_node_set(const size_t post_order) {
-	const auto key = std::make_pair(this->figure_type_, post_order);
+	auto key = std::make_pair(this->figure_type_, post_order);
 
 	if (ReferenceFigure::key_to_post_node_set_.find(key) == ReferenceFigure::key_to_post_node_set_.end()) {
 		std::vector<MathVector> node_set;
@@ -117,14 +123,14 @@ const std::vector<MathVector>& ReferenceFigure::reference_post_node_set(const si
 			throw std::runtime_error("worng figure type");
 			break;
 		}
-		ReferenceFigure::key_to_post_node_set_.emplace(key, node_set);
+		ReferenceFigure::key_to_post_node_set_.emplace(std::move(key), std::move(node_set));
 	}		
 
 	return ReferenceFigure::key_to_post_node_set_.at(key);
 }
 
 const std::vector<std::vector<size_t>>& ReferenceFigure::reference_connectivity(const size_t post_order) {
-	const auto key = std::make_pair(this->figure_type_, post_order);
+	auto key = std::make_pair(this->figure_type_, post_order);
 	if (ReferenceFigure::key_to_connectivity_.find(key) == ReferenceFigure::key_to_connectivity_.end()) {
 		std::vector<std::vector<size_t>> connectivity;
 
@@ -133,7 +139,7 @@ const std::vector<std::vector<size_t>>& ReferenceFigure::reference_connectivity(
 			const size_t num_simplex = (post_order + 1) * (post_order + 1);
 			connectivity.resize(num_simplex);
 
-			constexpr size_t num_simplex_node_set = 3;
+			constexpr size_t num_node = 3;
 
 			size_t isimplex = 0;
 			for (size_t j = 0; j <= post_order; j++) {
@@ -143,10 +149,10 @@ const std::vector<std::vector<size_t>>& ReferenceFigure::reference_connectivity(
 					//    |            |		// a(0,j)   = a(0,0) + (order + 2) * j - (j-1) * j * 0.5
 					//    a  --------- a+1		// a(0,0)	= 1
 
-					const double a_point_index = i + 1 + (post_order + 2) * j - (j - 1) * j * 0.5;
-					const double b_point_index = i + 1 + (post_order + 2) * (j + 1) - j * (j + 1) * 0.5;
+					const size_t a_point_index = static_cast<size_t>(i + 1 + (post_order + 2) * j - (j - 1) * j * 0.5);
+					const size_t b_point_index = static_cast<size_t>(i + 1 + (post_order + 2) * (j + 1) - j * (j + 1) * 0.5);
 
-					connectivity[isimplex].resize(num_simplex_node_set);
+					connectivity[isimplex].resize(num_node);
 					connectivity[isimplex][0] = a_point_index;
 					connectivity[isimplex][1] = a_point_index + 1;
 					connectivity[isimplex][2] = b_point_index;
@@ -155,7 +161,7 @@ const std::vector<std::vector<size_t>>& ReferenceFigure::reference_connectivity(
 					if (i == post_order - j)
 						continue;
 
-					connectivity[isimplex].resize(num_simplex_node_set);
+					connectivity[isimplex].resize(num_node);
 					connectivity[isimplex][0] = a_point_index + 1;
 					connectivity[isimplex][1] = b_point_index + 1;
 					connectivity[isimplex][2] = b_point_index;
@@ -169,9 +175,7 @@ const std::vector<std::vector<size_t>>& ReferenceFigure::reference_connectivity(
 			const size_t num_simplex = 2 * (post_order + 1) * (post_order + 1);
 			connectivity.resize(num_simplex);
 
-			const size_t num_consisting_node = 3;
-
-
+			const size_t num_node = 3;
 			size_t isimplex = 0;
 			for (size_t j = 0; j <= post_order; j++) {
 				for (size_t i = 0; i <= post_order; i++) {
@@ -180,16 +184,16 @@ const std::vector<std::vector<size_t>>& ReferenceFigure::reference_connectivity(
 					//    |            |		// a(0,j)   = a(0,0) + (order + 2) * j
 					//    a  --------- a+1		// a(0,0)	= 1
 
-					const double a_point_index = static_cast<double>(i + 1 + (post_order + 2) * j);
-					const double b_point_index = static_cast<double>(i + 1 + (post_order + 2) * (j + 1));
+					const size_t a_point_index = i + 1 + (post_order + 2) * j;
+					const size_t b_point_index = i + 1 + (post_order + 2) * (j + 1);
 
-					connectivity[isimplex].resize(num_consisting_node);
+					connectivity[isimplex].resize(num_node);
 					connectivity[isimplex][0] = a_point_index;
 					connectivity[isimplex][1] = a_point_index + 1;
 					connectivity[isimplex][2] = b_point_index;
 					isimplex++;
 
-					connectivity[isimplex].resize(num_consisting_node);
+					connectivity[isimplex].resize(num_node);
 					connectivity[isimplex][0] = a_point_index + 1;
 					connectivity[isimplex][1] = b_point_index + 1;
 					connectivity[isimplex][2] = b_point_index;
@@ -208,8 +212,257 @@ const std::vector<std::vector<size_t>>& ReferenceFigure::reference_connectivity(
 	return ReferenceFigure::key_to_connectivity_.at(key);
 }
 
+MathVector ReferenceFigure::center_node(void) const {
+	switch (this->figure_type_) {
+	case FigureType::Line:
+		return { 0, 0, 0 };
 
-std::map<size_t, std::vector<size_t>> ReferenceFigure::calculate_Face_index_to_Node_Index_Order_Set(void) {
+	case FigureType::Triangle:
+		return { -1.0 / 3.0, -1.0 / 3.0, 0 };
+
+	case FigureType::Quadrilateral:
+		return { 0, 0, 0 };
+
+	default:
+		throw std::runtime_error("wrong figure type");
+		return MathVector();
+	}
+}
+
+std::vector<FigureType> ReferenceFigure::face_figure_type_set(void) const {
+	std::vector<FigureType> face_figure_type_set;
+	switch (this->figure_type_) {
+
+	case FigureType::Line: {
+		// 0 式式式式 1
+
+		face_figure_type_set.push_back(FigureType::Point);
+		face_figure_type_set.push_back(FigureType::Point);
+		break;
+	}
+
+	case FigureType::Triangle: {
+		//    / \
+		//	 2   1
+		//	/     \
+		//  式式式0式式式
+
+		face_figure_type_set.push_back(FigureType::Line);
+		face_figure_type_set.push_back(FigureType::Line);
+		face_figure_type_set.push_back(FigureType::Line);
+		break;
+	}
+
+	case FigureType::Quadrilateral: {
+		//  忙式 2 式忖
+		//  3     1
+		//  戌式 0 式戎
+
+		face_figure_type_set.push_back(FigureType::Line);
+		face_figure_type_set.push_back(FigureType::Line);
+		face_figure_type_set.push_back(FigureType::Line);
+		face_figure_type_set.push_back(FigureType::Line);
+		break;
+	}
+	default:
+		throw std::runtime_error("wrong figure type");
+	}
+
+	return face_figure_type_set;
+}
+
+MathVector ReferenceFigure::normal_vector(void) const {
+	switch (this->figure_type_) {
+	case FigureType::Line:
+		return { 0,1,0 };
+
+	case FigureType::Triangle:
+	case FigureType::Quadrilateral:
+		return { 0,0,1 };
+
+	default:
+		throw std::runtime_error("wrong figure type");
+		return MathVector();
+	}
+}
+
+FigureType ReferenceFigure::simplex_figure_type(void) const {
+	switch (this->figure_type_) {
+	case FigureType::Triangle:
+	case FigureType::Quadrilateral:
+		return FigureType::Triangle;
+
+	default:
+		throw std::runtime_error("wrong figure type");
+		return FigureType::Triangle;
+	}
+}
+
+VectorFunction<Monomial> ReferenceFigure::transformation_monomial_vector(void) const {
+	VectorFunction<Monomial> transformation_monomial_vector;
+
+	switch (this->figure_type_) {
+	case FigureType::Line: {
+		const size_t num_monomial = this->figure_order_ + 1;
+		transformation_monomial_vector.reserve(num_monomial);
+
+		for (size_t a = 0; a <= this->figure_order_; ++a)
+			transformation_monomial_vector.push_back(Monomial{ a });
+
+		return transformation_monomial_vector;	// 1 r r^2 ...
+	}
+
+	case FigureType::Triangle: {
+		const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 2) * (this->figure_order_ + 1) * 0.5);
+		transformation_monomial_vector.reserve(num_monomial);
+
+		for (size_t a = 0; a <= this->figure_order_; ++a)
+			for (size_t b = 0; b <= a; ++b)
+				transformation_monomial_vector.push_back(Monomial{ a - b, b });
+
+		return transformation_monomial_vector;	// 1 r s r^2 rs s^2 ...
+	}
+
+	case FigureType::Quadrilateral: {
+		const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 1) * (this->figure_order_ + 1));
+		transformation_monomial_vector.reserve(num_monomial);
+
+		for (size_t a = 0; a <= this->figure_order_; ++a) {
+			for (size_t b = 0; b <= a; ++b)
+				transformation_monomial_vector.push_back(Monomial{ a, b });
+
+			if (a == 0)
+				continue;
+
+			size_t index = a;
+			while (true) {
+				transformation_monomial_vector.push_back(Monomial{ --index, a });
+				if (index == 0)
+					break;
+			}
+		}
+
+		return transformation_monomial_vector;	// 1 r rs s r^2 r^2s r^2s^2 rs^2 s^2...
+	}
+	default:
+		throw std::runtime_error("wrong figure type");
+		return transformation_monomial_vector;
+	}
+}
+
+size_t ReferenceFigure::calculate_Required_Order(const size_t integrand_order) const {
+	const auto remain = integrand_order % 2;
+
+	switch (this->figure_type_) {
+	case FigureType::Line:
+	case FigureType::Quadrilateral: {
+		if (remain == 0)
+			return integrand_order + 1;
+		else
+			return integrand_order;
+	}
+	case FigureType::Triangle: {
+		if (remain == 0)
+			return integrand_order;
+		else
+			return integrand_order + 1;
+	}
+	default:
+		return NULL;
+	}
+}
+
+size_t ReferenceFigure::calculate_Num_Required_Point(const size_t required_order) const {
+	switch (this->figure_type_) {
+	case FigureType::Line:
+		return static_cast<size_t>((required_order + 1) * 0.5);
+	case FigureType::Triangle:
+		return static_cast<size_t>((required_order * 0.5 + 1) * (required_order * 0.5 + 1));
+	case FigureType::Quadrilateral:
+		return static_cast<size_t>((required_order + 1) * (required_order + 1) * 0.25);
+	default:
+		return NULL;
+	}
+}
+
+size_t ReferenceFigure::support_element_order(void) const {
+	switch (this->figure_type_) {
+	case FigureType::Line:
+		return 6;
+	case FigureType::Triangle:
+		return 5;
+	case FigureType::Quadrilateral:
+		return 6;
+	default:
+		throw std::runtime_error("wrong type");
+		return NULL;
+	}
+}
+
+std::vector<std::vector<size_t>> ReferenceFigure::vertex_simplex_node_index_order_family(void) const {
+	//For hMLP_BD Limiter
+	std::vector<std::vector<size_t>> vertex_simplex_space_node_index_order_family;
+	switch (this->figure_type_) {
+	case FigureType::Quadrilateral:
+	{
+		//  3式式式式式2
+		//  弛     弛
+		//  0式式式式式1
+
+		constexpr size_t num_simplex = 4;
+
+		const std::vector<size_t> first_simplex_node_index = { 0,1,3 };
+		const std::vector<size_t> second_simplex_node_index = { 1,2,0 };
+		const std::vector<size_t> third_simplex_node_index = { 2,3,1 };
+		const std::vector<size_t> fourth_simplex_node_index = { 3,0,2 };
+
+		vertex_simplex_space_node_index_order_family.reserve(num_simplex);
+		vertex_simplex_space_node_index_order_family.emplace_back(first_simplex_node_index);
+		vertex_simplex_space_node_index_order_family.emplace_back(second_simplex_node_index);
+		vertex_simplex_space_node_index_order_family.emplace_back(third_simplex_node_index);
+		vertex_simplex_space_node_index_order_family.emplace_back(fourth_simplex_node_index);
+
+		break;
+	}
+	default:
+		throw std::runtime_error("wrong figure type");
+	}
+
+	return vertex_simplex_space_node_index_order_family;
+}
+
+std::vector<size_t> ReferenceFigure::vertex_node_index_order_set(void) const {
+	switch (this->figure_type_) {
+	case FigureType::Line: {
+		// 0 式式式式 1
+
+		return { 0,1 };
+	}
+
+	case FigureType::Triangle: {
+		//  2
+		//  弛 \
+		//	弛  \
+		//  0式式式1
+
+		return { 0,1,2 };
+	}
+
+	case FigureType::Quadrilateral: {
+		//  3式式式式式2
+		//  弛     弛
+		//  0式式式式式1
+
+		return { 0,1,2,3 };
+	}
+
+	default:
+		throw std::runtime_error("wrong figure type");
+		return { 0 };
+	}
+}
+
+std::map<size_t, std::vector<size_t>> ReferenceFigure::face_index_to_node_index_order_set(void) const {
 	// it tells index order of i - th face consisting node at cell consisting node index
 
 	std::map<size_t, std::vector<size_t>> face_index_to_node_index_order_set;
@@ -296,205 +549,6 @@ std::map<size_t, std::vector<size_t>> ReferenceFigure::calculate_Face_index_to_N
 	return face_index_to_node_index_order_set;
 }
 
-std::map<size_t, FigureType> ReferenceFigure::calculate_Face_index_to_Figure_Type_Set(void) {
-	std::map<size_t, FigureType> face_figure_type_set;
-	switch (this->figure_type_) {
-
-	case FigureType::Line: {
-		// 0 式式式式 1
-
-		face_figure_type_set.emplace(0, FigureType::Point);
-		face_figure_type_set.emplace(1, FigureType::Point);
-		break;
-	}
-
-	case FigureType::Triangle: {
-		//    / \
-		//	 2   1
-		//	/     \
-		//  式式式0式式式
-
-		face_figure_type_set[0] = FigureType::Line;
-		face_figure_type_set[1] = FigureType::Line;
-		face_figure_type_set[2] = FigureType::Line;
-		break;
-	}
-
-	case FigureType::Quadrilateral: {
-		//  忙式 2 式忖
-		//  3     1
-		//  戌式 0 式戎
-
-		face_figure_type_set[0] = FigureType::Line;
-		face_figure_type_set[1] = FigureType::Line;
-		face_figure_type_set[2] = FigureType::Line;
-		face_figure_type_set[3] = FigureType::Line;
-
-		break;
-	}
-	default:
-		throw std::runtime_error("wrong figure type");
-	}
-
-	return face_figure_type_set;
-}
-
-MathVector ReferenceFigure::calculate_center_node(void) {
-	switch (this->figure_type_) {
-	case FigureType::Line:
-		return { 0, 0, 0 };
-
-	case FigureType::Triangle:
-		return { -1.0 / 3.0, -1.0 / 3.0, 0 };
-
-	case FigureType::Quadrilateral:
-		return { 0, 0, 0 };
-
-	default:
-		throw std::runtime_error("wrong figure type");
-		return MathVector();
-	}
-}
-
-MathVector ReferenceFigure::calculate_Normal_Vector(void) {
-	switch (this->figure_type_) {
-	case FigureType::Line:
-		return { 0,1 };
-
-	case FigureType::Triangle:
-	case FigureType::Quadrilateral:
-		return { 0,0,1 };
-
-	default:
-		throw std::runtime_error("wrong figure type");
-		return MathVector();
-	}
-}
-
-FigureType ReferenceFigure::calculate_Simplex_Figure_Type(void) {
-	switch (this->figure_type_) {
-	case FigureType::Triangle:
-	case FigureType::Quadrilateral:
-		return FigureType::Triangle;
-
-	default:
-		throw std::runtime_error("wrong figure type");
-		return FigureType::Triangle;
-	}
-}
-
-std::vector<size_t> ReferenceFigure::calculate_Vertex_Node_Index_Order_Set(void) {
-	switch (this->figure_type_) {
-	case FigureType::Line: {
-		// 0 式式式式 1
-
-		return { 0,1 };
-	}
-
-	case FigureType::Triangle: {
-		//  2
-		//  弛 \
-		//	弛  \
-		//  0式式式1
-
-		return { 0,1,2 };
-	}
-
-	case FigureType::Quadrilateral: {
-		//  3式式式式式2
-		//  弛     弛
-		//  0式式式式式1
-
-		return { 0,1,2,3 };
-	}
-
-	default:
-		throw std::runtime_error("wrong figure type");
-		return { 0 };
-	}
-}
-
-std::vector<std::vector<size_t>> ReferenceFigure::calculate_Vertex_Simplex_Element_Consisting_Node_Index_Order_Family(void) {
-	//For hMLP_BD Limiter
-	std::vector<std::vector<size_t>> vertex_simplex_space_node_index_order_family;
-	switch (this->figure_type_) {
-	case FigureType::Quadrilateral:
-	{
-		//  3式式式式式2
-		//  弛     弛
-		//  0式式式式式1
-
-		constexpr size_t num_simplex = 4;
-
-		const std::vector<size_t> first_simplex_node_index = { 0,1,3 };
-		const std::vector<size_t> second_simplex_node_index = { 1,2,0 };
-		const std::vector<size_t> third_simplex_node_index = { 2,3,1 };
-		const std::vector<size_t> fourth_simplex_node_index = { 3,0,2 };
-
-		vertex_simplex_space_node_index_order_family.reserve(num_simplex);
-		vertex_simplex_space_node_index_order_family.emplace_back(first_simplex_node_index);
-		vertex_simplex_space_node_index_order_family.emplace_back(second_simplex_node_index);
-		vertex_simplex_space_node_index_order_family.emplace_back(third_simplex_node_index);
-		vertex_simplex_space_node_index_order_family.emplace_back(fourth_simplex_node_index);
-
-		break;
-	}
-	default:
-		throw std::runtime_error("wrong figure type");
-	}
-
-	return vertex_simplex_space_node_index_order_family;
-}
-
-
-size_t ReferenceFigure::calculate_Required_Order(const size_t integrand_order) const {
-	const auto remain = integrand_order % 2;
-
-	switch (this->figure_type_) {
-	case FigureType::Line:
-	case FigureType::Quadrilateral: {
-		if (remain == 0)
-			return integrand_order + 1;
-		else
-			return integrand_order;
-	}
-	case FigureType::Triangle: {
-		if (remain == 0)
-			return integrand_order;
-		else
-			return integrand_order + 1;
-	}
-	default:
-		return NULL;
-	}
-}
-
-size_t ReferenceFigure::calculate_Num_Required_Point(const size_t required_order) const {
-	switch (this->figure_type_) {
-	case FigureType::Line:
-		return static_cast<size_t>((required_order + 1) * 0.5);
-	case FigureType::Triangle:
-		return static_cast<size_t>((required_order * 0.5 + 1) * (required_order * 0.5 + 1));
-	case FigureType::Quadrilateral:
-		return static_cast<size_t>((required_order + 1) * (required_order + 1) * 0.25);
-	default:
-		return NULL;
-	}
-}
-
-size_t ReferenceFigure::support_element_order(void) const {
-	switch (this->figure_type_) {
-	case FigureType::Point:
-		return 0;
-	case FigureType::Line:
-		return 6;
-	case FigureType::Triangle:
-		return 5;
-	case FigureType::Quadrilateral:
-		return 6;
-	}
-}
-
 namespace ms {
 	std::string to_string(const FigureType figure_type) {
 		switch (figure_type) {
@@ -506,35 +560,38 @@ namespace ms {
 			return "Triangle";
 		case FigureType::Quadrilateral:
 			return "Quadrilateral";
+		default:
+			throw std::runtime_error("wrong type");
+			return NULL;
 		}
 	}
 }
 
 //
 //Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set)
-//	: figure_type_(figure_type), figure_order_(figure_order), node_set_(std::move(node_set)) {
-//	const auto& reference_transformation_node_set = ReferenceFigure::TransfomrationNodeSet::get(this->figure_type_, this->figure_order_);
+//	: reference_figure_(figure_type, figure_order), node_set_(std::move(node_set)) {	
+//	const auto& reference_transformation_node_set = reference_figure_.reference_transformation_node_set();
 //
-//	const auto num_original_point = reference_transformation_node_set.size();
-//	const auto num_transformed_point = this->node_set_.size();
-//	if (num_original_point != num_transformed_point)
-//		FATAL_ERROR("number of original point(" + Editor::to_String(num_original_point) + ") and number of transformed point(" + Editor::to_String(num_transformed_point) + ") is not 1:1 correspondence");
+//	const auto num_reference_node = reference_transformation_node_set.size();
+//	const auto num_transformed_node = this->node_set_.size();
+//	if (num_reference_node != num_transformed_node)
+//		throw std::runtime_error("reference node and transformed node does not 1:1 match");
 //
-//	//	C = X * INV(M)							
+//	//	X = CM
 //	//	C : transformation coefficient matrix	
 //	//	X : transformed point matrix			
 //	//	M : transformation monomial matrix	=> always same for same figure type => can be precalculated
 //	const auto transformation_monomial_set = this->calculate_Transformation_Monomial_Set();
 //	const auto num_transformation_monomial = transformation_monomial_set.size();
 //
-//	RowMajorMatrix M(MatrixType::Full, num_transformation_monomial, num_original_point);
+//	RowMajorMatrix M(MatrixType::Full, num_transformation_monomial, num_reference_node);
 //	for (size_t i = 0; i < num_transformation_monomial; ++i)
-//		for (size_t j = 0; j < num_original_point; ++j)
+//		for (size_t j = 0; j < num_reference_node; ++j)
 //			M.at(i, j) = transformation_monomial_set[i](reference_transformation_node_set[j]);
 //
 //	constexpr size_t num_coord = 3;
-//	RowMajorMatrix X(MatrixType::Full, num_coord, num_transformed_point);
-//	for (size_t i = 0; i < num_transformed_point; ++i)
+//	RowMajorMatrix X(MatrixType::Full, num_coord, num_transformed_node);
+//	for (size_t i = 0; i < num_transformed_node; ++i)
 //		X.change_Column(i, *this->node_set_[i]);
 //
 //	const auto C = X * M.inverse();
@@ -550,32 +607,32 @@ namespace ms {
 //	this->transformation_Jacobian_matrix_ = Math::Jacobian(transformation_function_, num_variable);
 //
 //
-//	//linear transformation function
-//	const auto linear_transformation_monomial_set = this->calculate_Linear_Transformation_Monomial_Set();
-//	const auto num_linear_transformation_monomial = linear_transformation_monomial_set.size();
+//	////linear transformation function
+//	//const auto linear_transformation_monomial_set = this->calculate_Linear_Transformation_Monomial_Set();
+//	//const auto num_linear_transformation_monomial = linear_transformation_monomial_set.size();
 //
-//	RowMajorMatrix M_linear(MatrixType::Full, num_linear_transformation_monomial, num_original_point);
-//	for (size_t i = 0; i < num_linear_transformation_monomial; ++i)
-//		for (size_t j = 0; j < num_original_point; ++j)
-//			M_linear.at(i, j) = linear_transformation_monomial_set[i](*this->node_set_[j]);
+//	//RowMajorMatrix M_linear(MatrixType::Full, num_linear_transformation_monomial, num_original_point);
+//	//for (size_t i = 0; i < num_linear_transformation_monomial; ++i)
+//	//	for (size_t j = 0; j < num_original_point; ++j)
+//	//		M_linear.at(i, j) = linear_transformation_monomial_set[i](*this->node_set_[j]);
 //
-//	// X_linear = C_linear * M_linear
-//	// C_linear = X_linear * TRS(M_linear) * INV(M_linear * TRS(M_linear))
-//	RowMajorMatrix X_linear(MatrixType::Full, num_coord, num_original_point);
-//	for (size_t i = 0; i < num_original_point; ++i)
-//		X_linear.change_Column(i, reference_transformation_node_set[i]);
+//	//// X_linear = C_linear * M_linear
+//	//// C_linear = X_linear * TRS(M_linear) * INV(M_linear * TRS(M_linear))
+//	//RowMajorMatrix X_linear(MatrixType::Full, num_coord, num_original_point);
+//	//for (size_t i = 0; i < num_original_point; ++i)
+//	//	X_linear.change_Column(i, reference_transformation_node_set[i]);
 //
-//	const auto tmp = M_linear;
-//	const auto& trs_M_linear = M_linear.transpose();
-//	const auto C_linear = X_linear * trs_M_linear * ((tmp * trs_M_linear).inverse());
-//	
-//	const auto first_coord_linear_trasnformation_coeffcient_set = C_linear.row(0);
-//	const auto second_coord_linear_trasnformation_coeffcient_set = C_linear.row(1);
-//	const auto third_coord_linear_trasnformation_coeffcient_set = C_linear.row(2);
+//	//const auto tmp = M_linear;
+//	//const auto& trs_M_linear = M_linear.transpose();
+//	//const auto C_linear = X_linear * trs_M_linear * ((tmp * trs_M_linear).inverse());
+//	//
+//	//const auto first_coord_linear_trasnformation_coeffcient_set = C_linear.row(0);
+//	//const auto second_coord_linear_trasnformation_coeffcient_set = C_linear.row(1);
+//	//const auto third_coord_linear_trasnformation_coeffcient_set = C_linear.row(2);
 //
-//	this->linear_transformation_function_.emplace_back(Polynomial(first_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
-//	this->linear_transformation_function_.emplace_back(Polynomial(second_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
-//	this->linear_transformation_function_.emplace_back(Polynomial(third_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
+//	//this->linear_transformation_function_.emplace_back(Polynomial(first_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
+//	//this->linear_transformation_function_.emplace_back(Polynomial(second_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
+//	//this->linear_transformation_function_.emplace_back(Polynomial(third_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
 //};
 //
 //std::vector<std::vector<double>> Figure::calculate_Connecitivity_Set(const size_t post_order, const size_t start_index) const {
@@ -780,83 +837,83 @@ namespace ms {
 //}
 //
 //std::vector<Monomial> Figure::calculate_Linear_Transformation_Monomial_Set(void) const {
-//	std::vector<Monomial> transformation_monomials;
-//
-//	switch (this->figure_type_) {
-//	case FigureType::Line: {
-//		const size_t num_transformation_monomial = this->figure_order_ + 1;
-//		transformation_monomials.reserve(num_transformation_monomial);
-//
-//		for (size_t a = 0; a <= this->figure_order_; ++a)
-//			transformation_monomials.emplace_back(Monomial{ a });
-//
-//		return transformation_monomials;	// 1 r r^2 ...
-//	}
-//	case FigureType::Triangle: 
-//	case FigureType::Quadrilateral: {
-//		const size_t num_transformation_monomial = static_cast<size_t>((this->figure_order_ + 2) * (this->figure_order_ + 1) * 0.5);
-//		transformation_monomials.reserve(num_transformation_monomial);
-//
-//		for (size_t a = 0; a <= this->figure_order_; ++a)
-//			for (size_t b = 0; b <= a; ++b)
-//				transformation_monomials.emplace_back(a - b, b);
-//
-//		return transformation_monomials;	// 1 r s r^2 rs s^2 ...
-//	}
-//	default:
-//		throw std::runtime_error("wrong figure type");
-//		return transformation_monomials;
-//	}
+	//std::vector<Monomial> transformation_monomials;
+
+	//switch (this->figure_type_) {
+	//case FigureType::Line: {
+	//	const size_t num_transformation_monomial = this->figure_order_ + 1;
+	//	transformation_monomials.reserve(num_transformation_monomial);
+
+	//	for (size_t a = 0; a <= this->figure_order_; ++a)
+	//		transformation_monomials.emplace_back(Monomial{ a });
+
+	//	return transformation_monomials;	// 1 r r^2 ...
+	//}
+	//case FigureType::Triangle: 
+	//case FigureType::Quadrilateral: {
+	//	const size_t num_transformation_monomial = static_cast<size_t>((this->figure_order_ + 2) * (this->figure_order_ + 1) * 0.5);
+	//	transformation_monomials.reserve(num_transformation_monomial);
+
+	//	for (size_t a = 0; a <= this->figure_order_; ++a)
+	//		for (size_t b = 0; b <= a; ++b)
+	//			transformation_monomials.emplace_back(a - b, b);
+
+	//	return transformation_monomials;	// 1 r s r^2 rs s^2 ...
+	//}
+	//default:
+	//	throw std::runtime_error("wrong figure type");
+	//	return transformation_monomials;
+	//}
 //}
 //
 //std::vector<Monomial> Figure::calculate_Transformation_Monomial_Set(void) const {
 //	std::vector<Monomial> transformation_monomials;
 //
-//	switch (this->figure_type_) {
-//	case FigureType::Line: {
-//		const size_t num_transformation_monomial = this->figure_order_ + 1;
-//		transformation_monomials.reserve(num_transformation_monomial);
-//
-//		for (size_t a = 0; a <= this->figure_order_; ++a)
-//			transformation_monomials.emplace_back(Monomial{ a });
-//
-//		return transformation_monomials;	// 1 r r^2 ...
-//	}
-//	case FigureType::Triangle: {
-//		const size_t num_transformation_monomial = static_cast<size_t>((this->figure_order_ + 2) * (this->figure_order_ + 1) * 0.5);
-//		transformation_monomials.reserve(num_transformation_monomial);
-//
-//		for (size_t a = 0; a <= this->figure_order_; ++a)
-//			for (size_t b = 0; b <= a; ++b)
-//				transformation_monomials.emplace_back(a - b, b);
-//
-//		return transformation_monomials;	// 1 r s r^2 rs s^2 ...
-//	}
-//	case FigureType::Quadrilateral: {
-//		const size_t num_transformation_monomial = static_cast<size_t>((this->figure_order_ + 1) * (this->figure_order_ + 1));
-//		transformation_monomials.reserve(num_transformation_monomial);
-//
-//		for (size_t a = 0; a <= this->figure_order_; ++a) {
-//			for (size_t b = 0; b <= a; ++b)
-//				transformation_monomials.emplace_back(a, b);
-//
-//			if (a == 0)
-//				continue;
-//
-//			size_t index = a;
-//			while (true) {
-//				transformation_monomials.emplace_back(--index, a);
-//				if (index == 0)
-//					break;
-//			}
-//		}
-//
-//		return transformation_monomials;	// 1 r rs s r^2 r^2s r^2s^2 rs^2 s^2...
-//	}
-//	default:
-//		throw std::runtime_error("wrong figure type");
-//		return transformation_monomials;
-//	}
+	//switch (this->figure_type_) {
+	//case FigureType::Line: {
+	//	const size_t num_transformation_monomial = this->figure_order_ + 1;
+	//	transformation_monomials.reserve(num_transformation_monomial);
+
+	//	for (size_t a = 0; a <= this->figure_order_; ++a)
+	//		transformation_monomials.emplace_back(Monomial{ a });
+
+	//	return transformation_monomials;	// 1 r r^2 ...
+	//}
+	//case FigureType::Triangle: {
+	//	const size_t num_transformation_monomial = static_cast<size_t>((this->figure_order_ + 2) * (this->figure_order_ + 1) * 0.5);
+	//	transformation_monomials.reserve(num_transformation_monomial);
+
+	//	for (size_t a = 0; a <= this->figure_order_; ++a)
+	//		for (size_t b = 0; b <= a; ++b)
+	//			transformation_monomials.emplace_back(a - b, b);
+
+	//	return transformation_monomials;	// 1 r s r^2 rs s^2 ...
+	//}
+	//case FigureType::Quadrilateral: {
+	//	const size_t num_transformation_monomial = static_cast<size_t>((this->figure_order_ + 1) * (this->figure_order_ + 1));
+	//	transformation_monomials.reserve(num_transformation_monomial);
+
+	//	for (size_t a = 0; a <= this->figure_order_; ++a) {
+	//		for (size_t b = 0; b <= a; ++b)
+	//			transformation_monomials.emplace_back(a, b);
+
+	//		if (a == 0)
+	//			continue;
+
+	//		size_t index = a;
+	//		while (true) {
+	//			transformation_monomials.emplace_back(--index, a);
+	//			if (index == 0)
+	//				break;
+	//		}
+	//	}
+
+	//	return transformation_monomials;	// 1 r rs s r^2 r^2s r^2s^2 rs^2 s^2...
+	//}
+	//default:
+	//	throw std::runtime_error("wrong figure type");
+	//	return transformation_monomials;
+	//}
 //}
 //
 //double Figure::calculate_Transformation_Scale(const MathVector& position_vector) const {

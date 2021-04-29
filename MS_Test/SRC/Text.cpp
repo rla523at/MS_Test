@@ -18,6 +18,19 @@ Text& Text::remove_empty_line(void) {
 	return *this;
 }
 
+void Text::write(const std::string& file_path) const {
+	std::ofstream outfile(file_path);
+	if (!outfile.is_open())
+		throw std::runtime_error("Fail to open file" + file_path);
+
+	const auto num_sentence = this->size();
+	for (auto i = this->begin(); i != this->end() - 1; ++i)
+		outfile << *i << "\n";
+	outfile << this->back();
+
+	outfile.close();
+}
+
 namespace ms {
 	std::vector<std::string> parse(const std::string& str, const char delimiter) {
 		if (str.empty())
