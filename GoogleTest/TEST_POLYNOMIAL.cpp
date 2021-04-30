@@ -134,22 +134,6 @@ GTEST_TEST(MONOMIAL, REDUCE_ORDER) {
  		EXPECT_EQ(m.reduce_order(10), ref);
 	}
 	{
-		const Monomial m{ 1,0,3,0,5 };
-		
-		Monomial ref1{ 0,0,3,0,5 };
-		EXPECT_EQ(m.reduce_order(0), ref1);
-		
-		EXPECT_ANY_THROW(m.reduce_order(1));
-		
-		Monomial ref3{ 1,0,2,0,5 };
-		EXPECT_EQ(m.reduce_order(2), ref3);
-		
-		EXPECT_ANY_THROW(m.reduce_order(3));
-	
-		Monomial ref5{ 1,0,3,0,4 };
-		EXPECT_EQ(m.reduce_order(4), ref5);
-	}
-	{
 		Monomial m{ 1,0,3,0,5 };
 		Monomial ref1{ 0,0,3,0,5 };
 		EXPECT_EQ(m.reduce_order(0), ref1);

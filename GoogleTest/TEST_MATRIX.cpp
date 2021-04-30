@@ -252,8 +252,29 @@ GTEST_TEST(MATRIX, INVERSE3) {
 	const double epsilon = 1.0E-15;
 	for (size_t i = 0; i < rows; ++i)
 		for (size_t j = 0; j < cols; ++j)
-			EXPECT_NEAR(m.at(i, j), ref.at(i, j), epsilon); // suffering by machine error!
-			//EXPECT_DOUBLE_EQ(m.at(i, j), ref.at(i, j))
+			EXPECT_NEAR(m.at(i, j), ref.at(i, j), epsilon); 	
+	
+	// suffering by machine error!
+	//const size_t ULP_factor = 10000000;
+	//for (size_t i = 0; i < rows; ++i) {
+	//	for (size_t j = 0; j < cols; ++j) {
+	//		if (!ms::compare_double(m.at(i, j), ref.at(i, j), ULP_factor)) {
+	//			const auto lower_ULP = m.at(i, j) - std::nextafter(m.at(i, j), std::numeric_limits<double>::lowest());
+	//			const auto upper_ULP = std::nextafter(m.at(i, j), std::numeric_limits<double>::max()) - m.at(i, j);
+
+	//			const auto lower_bound = m.at(i, j) - ULP_factor * lower_ULP;
+	//			const auto upper_bound = m.at(i, j) + ULP_factor * upper_ULP;
+
+	//			std::cout << std::setprecision(20);
+	//			std::cout << "value of m : " << m.at(i, j) << "\n";
+	//			std::cout << "lower ULP : " << lower_ULP << "\n";
+	//			std::cout << "upper ULP : " << upper_ULP << "\n";
+	//			std::cout << "lower bound : " << lower_bound << "\n";
+	//			std::cout << "upper bound : " << upper_bound << "\n";
+	//			std::cout << "value : " << ref.at(i, j) << "\n";
+	//		}
+	//	}
+	//}
 }
 GTEST_TEST(MATRIX, INVERSE4) {
 	RowMajorMatrix m(5, 5, { 1, 2, 3, 4, 5,  2, 3, 4, 1, 6, 1, 6, 5, 4, 3, 4, 1, 2, 7, 8, 9, 8, 7, 6, 5 });

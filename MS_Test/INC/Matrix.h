@@ -47,6 +47,7 @@ VectorFunction<T> operator*(const RowMajorMatrix& m, const VectorFunction<T> vec
 
 namespace ms {
 	RowMajorMatrix transpose(const RowMajorMatrix& A);
+	bool compare_double(const double d1, const double d2, const size_t ULP_factor = 4);
 }
 
 

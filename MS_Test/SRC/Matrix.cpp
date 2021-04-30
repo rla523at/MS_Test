@@ -201,6 +201,13 @@ namespace ms {
 		auto result = A;
 		return result.transpose();
 	};
+
+	bool compare_double(const double d1, const double d2, const size_t ULP_factor) {
+		const auto lower_ULP = d1 - std::nextafter(d1, std::numeric_limits<double>::lowest());
+		const auto upper_ULP = std::nextafter(d1, std::numeric_limits<double>::max()) - d1;
+
+		return d1 - ULP_factor * lower_ULP <= d2 && d2 <= d1 + ULP_factor * upper_ULP;
+	}
 }
 
 

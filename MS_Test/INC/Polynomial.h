@@ -4,6 +4,8 @@
 #include <algorithm> //for min max
 #include <map>
 
+// if need highly optimized code
+// make Monomial3D 
 
 class Monomial
 {
@@ -28,7 +30,6 @@ public:
 	size_t monomial_order(void) const;
 	size_t domain_order(void) const;
 	Monomial& reduce_order(const size_t variable_index);
-	Monomial reduce_order(const size_t variable_index) const;
 	std::string to_string(void) const;
 
 private:
@@ -49,7 +50,7 @@ class Polynomial
 
 private:
 	MathVector coefficient_vector_;
-	std::vector<Monomial> monomial_set_;
+	std::vector<Monomial> monomial_set_;	
 	
 	size_t power_index_ = 1;
 	std::vector<CalculatedPolynomial> calculated_polynomial_set_; // to minimize truncation error
@@ -70,12 +71,15 @@ public:
 	Polynomial operator*(const double scalar) const;
 	Polynomial operator*(const Polynomial& other) const;	
 	double operator()(const MathVector& variable_vector) const;
-	//bool operator==(const Polynomial& other) const;
+	bool operator==(const Polynomial& other) const;
 	//bool operator!=(const Polynomial& other) const;
 
 	Polynomial& differentiate(const size_t variable_index);
 	Polynomial& power(const size_t power_index);
 	std::string to_string(void) const;
+
+	size_t polynomial_order(void) const;
+	size_t domain_order(void) const;
 
 private:
 	double calculate(const MathVector& variable_vector) const;
@@ -84,6 +88,9 @@ private:
 	void addition(const Polynomial& other);
 	void scalar_multiplication(const double scalar);
 	void multiplication(const Polynomial& other);
+	
+	size_t simple_domain_order(void) const;
+	size_t simple_polynomial_order(void) const;
 
 	Polynomial extend(void) const;
 	void insert(const double coefficient, const Monomial& monomial);
