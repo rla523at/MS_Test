@@ -26,6 +26,7 @@ public:
 
 
 	MathVector& abs(void);	
+	bool compare_with_finite_precision(const MathVector& other, const size_t ULP_precision = 4) const;
 	double inner_product(const MathVector& other) const;
 	double L2_Norm(void) const;
 	void merge(const MathVector& other);
@@ -43,6 +44,7 @@ namespace ms {
 	MathVector abs(const MathVector& x);
 	MathVector normalize(const MathVector& x);
 	std::string double_to_string(const double val, const size_t precision = 15);
+	bool compare_double(const double d1, const double d2, const size_t ULP_precision = 4);
 }
 
 

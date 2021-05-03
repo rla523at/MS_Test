@@ -50,6 +50,18 @@ MathVector& MathVector::abs(void) {
 	return *this;
 }
 
+bool MathVector::compare_with_finite_precision(const MathVector& other, const size_t ULP_precision) const {
+	if (this->size() != other.size())
+		return false;
+
+	for (size_t i = 0; i < this->size(); ++i) {
+		if (!ms::compare_double((*this)[i], other[i], ULP_precision))
+			return false;
+	}
+
+	return true;
+}
+
 double MathVector::inner_product(const MathVector& other) const {
 	if (this->size() != other.size())
 		throw "two vector have different length";
@@ -83,6 +95,7 @@ std::string MathVector::to_string(void) const {
 	result += "{ ";
 	for (const auto& value : *this)
 		result += ms::double_to_string(value) + ", ";
+	result.erase(result.end() - 2, result.end());
 	result += " }";
 	return result;
 }
@@ -110,5 +123,12 @@ namespace ms {
 		std::stringstream stream;
 		stream << std::setprecision(precision) << std::noshowpoint << val;
 		return stream.str();
+	}
+
+	bool compare_double(const double d1, const double d2, const size_t ULP_precision) {
+		const auto lower_ULP = d1 - std::nextafter(d1, std::numeric_limits<double>::lowest());
+		const auto upper_ULP = std::nextafter(d1, std::numeric_limits<double>::max()) - d1;
+
+		return d1 - ULP_precision * lower_ULP <= d2 && d2 <= d1 + ULP_precision * upper_ULP;
 	}
 }

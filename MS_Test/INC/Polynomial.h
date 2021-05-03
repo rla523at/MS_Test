@@ -72,7 +72,7 @@ public:
 	Polynomial operator*(const Polynomial& other) const;	
 	double operator()(const MathVector& variable_vector) const;
 	bool operator==(const Polynomial& other) const;
-	//bool operator!=(const Polynomial& other) const;
+	bool operator!=(const Polynomial& other) const;
 
 	Polynomial& differentiate(const size_t variable_index);
 	Polynomial& power(const size_t power_index);
@@ -81,7 +81,14 @@ public:
 	size_t polynomial_order(void) const;
 	size_t domain_order(void) const;
 
+	//performance test
+	bool compare_v1(const Polynomial& other) const;
+	bool compare_v2(const Polynomial& other) const;
+	
+
 private:
+	std::vector<MathVector> build_compare_node_set(void) const;
+	
 	double calculate(const MathVector& variable_vector) const;
 	Polynomial& differentiate_simple_poly(const size_t variable_index);
 
@@ -94,9 +101,15 @@ private:
 
 	Polynomial extend(void) const;
 	void insert(const double coefficient, const Monomial& monomial);
+	bool is_zero(void) const;
 	bool is_simple_polynomial(void) const;
 
 	std::string to_poly_string(void) const;
 };
 
 std::ostream& operator<<(std::ostream& ostream, const Polynomial& monomial);
+
+namespace ms {
+	size_t combination(const size_t n, const size_t k);
+	size_t combination_with_repetition(const size_t n, const size_t k);
+}

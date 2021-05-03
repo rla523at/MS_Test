@@ -32,7 +32,6 @@ private:
 public:
 	ReferenceFigure(const FigureType figure_type, const size_t figure_order);
 
-	const std::vector<MathVector>& reference_transformation_node_set(void);
 	const QuadratureRule& reference_quadrature_rule(const size_t integrand_order);
 	const std::vector<MathVector>& reference_post_node_set(const size_t post_order);
 	const std::vector<std::vector<size_t>>& reference_connectivity(const size_t post_order);
@@ -41,8 +40,13 @@ public:
 	std::vector<FigureType> face_figure_type_set(void) const;
 	MathVector normal_vector(void) const;
 	FigureType simplex_figure_type(void) const;
-	VectorFunction<Monomial> transformation_monomial_vector(void) const;
 	
+	RowMajorMatrix transformation_monomial_matrix(void) const;
+	// public일 필요가 있나 ?
+	const std::vector<MathVector>& transformation_node_set(void);
+	VectorFunction<Monomial> transformation_monomial_vector(void) const;
+
+
 	// node index set을 받아서 알아서 처리하게 그러면 Reference Figure말고 Indexed Figure에 넣어놓는게 맞지 않나 ?
 	std::map<size_t, std::vector<size_t>> face_index_to_node_index_order_set(void) const;	
 	std::vector<size_t> vertex_node_index_order_set(void) const;
@@ -52,6 +56,8 @@ private:
 	size_t calculate_Required_Order(const size_t integrand_order) const;
 	size_t calculate_Num_Required_Point(const size_t required_order) const;
 	size_t support_element_order(void) const;
+
+
 };
 
 

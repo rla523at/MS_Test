@@ -47,6 +47,18 @@ RowMajorMatrix& RowMajorMatrix::operator*=(const RowMajorMatrix& other) {
 
 	return *this;
 }
+bool RowMajorMatrix::operator==(const RowMajorMatrix& other) const {
+	if (this->size() != other.size())
+		return false;
+
+	if (this->transpose_type_ != other.transpose_type_) {
+		auto tmp = other;
+		tmp.transpose_value();
+		return this->value_set_ == tmp.value_set_;
+	}
+	
+	return this->value_set_ == other.value_set_;
+}
 
 double& RowMajorMatrix::at(const size_t irow, const size_t jcolumn) {
 	this->inspect_range(irow, jcolumn);
@@ -62,6 +74,32 @@ double RowMajorMatrix::at(const size_t irow, const size_t jcolumn) const {
 		return this->value_set_[jcolumn * this->row_ + irow];
 	else
 		return this->value_set_[irow * this->column_ + jcolumn];
+}
+
+bool RowMajorMatrix::compare_with_finitie_precision(const RowMajorMatrix& other, const size_t ULP_precision) const {
+	if (this->size() != other.size())
+		return false;
+
+	if (this->transpose_type_ != other.transpose_type_) {
+		auto tmp = other;
+		tmp.transpose_value();
+		return this->value_set_.compare_with_finite_precision(tmp.value_set_,ULP_precision);
+	}
+
+	return this->value_set_.compare_with_finite_precision(other.value_set_,ULP_precision);
+}
+
+RowMajorMatrix& RowMajorMatrix::change_column(const size_t column_index, const MathVector& value) {
+	if (this->column_ <= column_index)
+		throw std::out_of_range("column index exceed range");
+
+	if (this->row_ != value.size())
+		throw std::length_error("vector size error");
+
+	for (size_t i = 0; i < this->row_; ++i) 
+		this->at(i, column_index) = value[i];
+
+	return *this;
 }
 
 RowMajorMatrix& RowMajorMatrix::inverse(void) {
@@ -202,12 +240,12 @@ namespace ms {
 		return result.transpose();
 	};
 
-	bool compare_double(const double d1, const double d2, const size_t ULP_factor) {
-		const auto lower_ULP = d1 - std::nextafter(d1, std::numeric_limits<double>::lowest());
-		const auto upper_ULP = std::nextafter(d1, std::numeric_limits<double>::max()) - d1;
+	//bool compare_double(const double d1, const double d2, const size_t ULP_factor) {
+	//	const auto lower_ULP = d1 - std::nextafter(d1, std::numeric_limits<double>::lowest());
+	//	const auto upper_ULP = std::nextafter(d1, std::numeric_limits<double>::max()) - d1;
 
-		return d1 - ULP_factor * lower_ULP <= d2 && d2 <= d1 + ULP_factor * upper_ULP;
-	}
+	//	return d1 - ULP_factor * lower_ULP <= d2 && d2 <= d1 + ULP_factor * upper_ULP;
+	//}
 }
 
 

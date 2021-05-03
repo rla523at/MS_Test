@@ -1,54 +1,98 @@
+
+
+//#include "../MS_Test/INC/Profiler.h"
+//#include "../MS_Test/INC/Polynomial.h"
+//
+//int main(void) {
+//
+//	Polynomial p1 = { {1,1},{{0},{1}} };
+//	Polynomial p2 = { {1,1},{{0},{0,0,0,0,0,0,1}} };
+//	std::cout << p1 << "\n";
+//	std::cout << p2 << "\n";
+//	
+//
+//	Polynomial p3 = p1 * p2;
+//	Polynomial p4 = p2 * p1;
+//	std::cout << p3 << "\n";
+//	std::cout << p4 << "\n";
+//
+//	std::cout << std::boolalpha;
+//	std::cout << p3.compare_v1(p4) << "\n";
+//	std::cout << p3.compare_v2(p4) << "\n";
+//
+//	//RECORD_CONSUMED_TIME;
+//	//for (size_t i = 0; i < 100; ++i)
+//	//	p3.compare_v1(p4);
+//	//PRINT_CONSUMED_TIME_NANO;
+//
+//	//RECORD_CONSUMED_TIME;
+//	//for (size_t i = 0; i < 100; ++i)
+//	//	p3.compare_v2(p4);
+//	//PRINT_CONSUMED_TIME_NANO;
+//}
+
+#include "../MS_Test/INC/Polynomial.h"
 #include <iostream>
-#include <vector>
-
-void func(const int m, const int n, std::vector<double>& A)
-{
-	static int l = 0;
-	if (m > 1) {
-		for (int i = 0; i <= n; i++) {
-			A[m - 1] = i;
-			//std::cout << i;
-			func(m - 1, n - i, A);
-		}
-	}
-	else if (m == 1) {
-		for (int i = 0; i <= n; i++) {
-			A[0] = i;
-			//std::cout << i << std::endl;
-			for (int j = 0; j < A.size(); j++)
-				std::cout << A[j];
-			std::cout << std::endl;
-		}
-	}
-	else std::cout << "Error: m = " << m << std::endl;
-}
-
 
 int main(void) {
-	int num_box = 3;
-	const size_t num_order = 3;
-	std::vector<double> A(num_box, 0);
+	const size_t polynomial_order = 1;
+	const size_t domain_order = 2;
 
-	//for (size_t i = 0; i <= num_order; ++i)
-	//	for (int j = 0; j <= 2 - i; ++j)
-	//		for (int k = 0; k <= 2 - i - j; ++k) {
-	//			std::cout << i << j << k << "\n";
-	//		}
+	size_t num_basis = ms::combination_with_repetition(polynomial_order + 1, domain_order);
 
-	//for (size_t i = 0; i < num_box; ++i) {
-	//	for (size_t j = 0; j < num_order; ++j) {
+	std::vector<MathVector> compare_node_set;
+	compare_node_set.reserve(num_basis);
 
-	//		const size_t sum = j;
+	MathVector compare_node(domain_order);
+	if (domain_order == 0) {
+		compare_node_set.push_back(compare_node);		
+		
+		for (const auto& node : compare_node_set)
+			std::cout << node << "\n";
+	}
 
-	//		std::vector<size_t> v(num_box);
+	while (true) {
+		auto iter = std::find(compare_node.begin(), compare_node.end(), polynomial_order);
+		if (iter != compare_node.end()) {
+			std::cout << compare_node << "\n";
+			compare_node_set.push_back(compare_node);
 
-	//	}
-	//}
+			if (iter == compare_node.begin())
+				break;
 
-	func(num_box, num_order, A);
+			std::fill(compare_node.begin(), compare_node.end(), 0);
+			(*(--iter))++;
 
+			if (compare_node.front() == polynomial_order) {
+				std::cout << compare_node << "\n";
+				compare_node_set.push_back(compare_node);
+				break;
+			}
+		}
+
+		double component_sum = 0;
+		for (const auto& val : compare_node)
+			component_sum += val;
+
+		if (component_sum == polynomial_order) {
+			std::cout << compare_node << "\n";
+			compare_node_set.push_back(compare_node);
+
+			const auto is_zero = [](const double i) {return i == 0; };
+			auto iter = std::find_if_not(compare_node.rbegin(), compare_node.rend(), is_zero);
+			*iter = 0;
+			(*(++iter))++;
+			continue;
+		}
+
+		std::cout << compare_node << "\n";
+		compare_node_set.push_back(compare_node);
+		compare_node.back()++;
+	}
+
+	//for (const auto& node : compare_node_set)
+	//	std::cout << node << "\n";	
 }
-
 
 //#include <array>
 //#include <vector>

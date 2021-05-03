@@ -19,9 +19,12 @@ public:
 
 	RowMajorMatrix& operator+=(const RowMajorMatrix& other);
 	RowMajorMatrix& operator*=(const RowMajorMatrix& other);
+	bool operator==(const RowMajorMatrix& other) const;
 
 	double& at(const size_t row, const size_t column);
 	double at(const size_t row, const size_t column) const;
+	bool compare_with_finitie_precision(const RowMajorMatrix& other, const size_t ULP_precision = 4) const;
+	RowMajorMatrix& change_column(const size_t column_index, const MathVector& value);
 	RowMajorMatrix& inverse(void);
 	std::pair<size_t, size_t> size(void) const;
 	RowMajorMatrix& transpose(void);
@@ -47,7 +50,7 @@ VectorFunction<T> operator*(const RowMajorMatrix& m, const VectorFunction<T> vec
 
 namespace ms {
 	RowMajorMatrix transpose(const RowMajorMatrix& A);
-	bool compare_double(const double d1, const double d2, const size_t ULP_factor = 4);
+	//bool compare_double(const double d1, const double d2, const size_t ULP_factor = 4);
 }
 
 

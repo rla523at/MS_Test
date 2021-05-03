@@ -9,9 +9,37 @@ ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figu
 	: figure_type_(figure_type), figure_order_(figure_order) {
 	if (figure_order == 0)
 		throw std::invalid_argument("figure order should be greater than 0");
+
+	auto key = std::make_pair(this->figure_type_, this->figure_order_);
+	if (ReferenceFigure::key_to_transformation_node_set_.find(key) == ReferenceFigure::key_to_transformation_node_set_.end()) {
+		if (this->figure_order_ > this->support_element_order())
+			throw std::runtime_error("exceed support element order");
+
+		const std::string read_file_path = "RSC/ReferenceFigures/" + ms::to_string(this->figure_type_) + "_P" + std::to_string(this->figure_order_) + ".msh";
+
+		Text transformation_node_set_text;
+		transformation_node_set_text.read(read_file_path);
+		transformation_node_set_text.remove_empty_line();
+
+		const auto num_nodes = ms::to_value<size_t>(transformation_node_set_text.front());
+		transformation_node_set_text.erase(transformation_node_set_text.begin());
+
+		std::vector<MathVector> node_set;
+		node_set.reserve(num_nodes);
+		for (const auto& sentence : transformation_node_set_text) {
+			const char delimiter = ' ';
+			auto parsed_str = ms::parse(sentence, delimiter);
+			auto point_value = ms::to_value_set<double>(parsed_str);
+
+			point_value.erase(point_value.begin());
+			node_set.emplace_back(std::move(point_value));
+		}
+
+		ReferenceFigure::key_to_transformation_node_set_.emplace(std::move(key), std::move(node_set));
+	}
 }
 
-const std::vector<MathVector>& ReferenceFigure::reference_transformation_node_set(void) {
+const std::vector<MathVector>& ReferenceFigure::transformation_node_set(void) {
 	auto key = std::make_pair(this->figure_type_, this->figure_order_);
 
 	if (ReferenceFigure::key_to_transformation_node_set_.find(key) == ReferenceFigure::key_to_transformation_node_set_.end()) {
@@ -298,6 +326,21 @@ FigureType ReferenceFigure::simplex_figure_type(void) const {
 	}
 }
 
+RowMajorMatrix ReferenceFigure::transformation_monomial_matrix(void) const {
+	const auto key = std::make_pair(this->figure_type_, this->figure_order_);
+
+	const auto& transformation_node_set = this->key_to_transformation_node_set_.at(key);
+	const auto transformation_monomial_vector = this->transformation_monomial_vector();
+
+	const auto num_column = transformation_monomial_vector.size();
+	RowMajorMatrix transformation_monomial_matrix(num_column);
+
+	for (size_t i = 0; i < num_column; ++i)
+		transformation_monomial_matrix.change_column(i, transformation_monomial_vector(transformation_node_set[i]));
+
+	return transformation_monomial_matrix;
+}
+
 VectorFunction<Monomial> ReferenceFigure::transformation_monomial_vector(void) const {
 	VectorFunction<Monomial> transformation_monomial_vector;
 
@@ -567,73 +610,67 @@ namespace ms {
 	}
 }
 
-//
-//Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set)
-//	: reference_figure_(figure_type, figure_order), node_set_(std::move(node_set)) {	
-//	const auto& reference_transformation_node_set = reference_figure_.reference_transformation_node_set();
-//
-//	const auto num_reference_node = reference_transformation_node_set.size();
-//	const auto num_transformed_node = this->node_set_.size();
-//	if (num_reference_node != num_transformed_node)
-//		throw std::runtime_error("reference node and transformed node does not 1:1 match");
-//
-//	//	X = CM
-//	//	C : transformation coefficient matrix	
-//	//	X : transformed point matrix			
-//	//	M : transformation monomial matrix	=> always same for same figure type => can be precalculated
-//	const auto transformation_monomial_set = this->calculate_Transformation_Monomial_Set();
-//	const auto num_transformation_monomial = transformation_monomial_set.size();
-//
-//	RowMajorMatrix M(MatrixType::Full, num_transformation_monomial, num_reference_node);
-//	for (size_t i = 0; i < num_transformation_monomial; ++i)
-//		for (size_t j = 0; j < num_reference_node; ++j)
-//			M.at(i, j) = transformation_monomial_set[i](reference_transformation_node_set[j]);
-//
-//	constexpr size_t num_coord = 3;
-//	RowMajorMatrix X(MatrixType::Full, num_coord, num_transformed_node);
-//	for (size_t i = 0; i < num_transformed_node; ++i)
-//		X.change_Column(i, *this->node_set_[i]);
-//
-//	const auto C = X * M.inverse();
-//	const auto first_coord_trasnformation_coeffcient_set = C.row(0);
-//	const auto second_coord_trasnformation_coeffcient_set = C.row(1);
-//	const auto third_coord_trasnformation_coeffcient_set = C.row(2);
-//
-//	this->transformation_function_.emplace_back(Polynomial(first_coord_trasnformation_coeffcient_set, transformation_monomial_set));
-//	this->transformation_function_.emplace_back(Polynomial(second_coord_trasnformation_coeffcient_set, transformation_monomial_set));
-//	this->transformation_function_.emplace_back(Polynomial(third_coord_trasnformation_coeffcient_set, transformation_monomial_set));
-//
-//	constexpr size_t num_variable = 3;
-//	this->transformation_Jacobian_matrix_ = Math::Jacobian(transformation_function_, num_variable);
-//
-//
-//	////linear transformation function
-//	//const auto linear_transformation_monomial_set = this->calculate_Linear_Transformation_Monomial_Set();
-//	//const auto num_linear_transformation_monomial = linear_transformation_monomial_set.size();
-//
-//	//RowMajorMatrix M_linear(MatrixType::Full, num_linear_transformation_monomial, num_original_point);
-//	//for (size_t i = 0; i < num_linear_transformation_monomial; ++i)
-//	//	for (size_t j = 0; j < num_original_point; ++j)
-//	//		M_linear.at(i, j) = linear_transformation_monomial_set[i](*this->node_set_[j]);
-//
-//	//// X_linear = C_linear * M_linear
-//	//// C_linear = X_linear * TRS(M_linear) * INV(M_linear * TRS(M_linear))
-//	//RowMajorMatrix X_linear(MatrixType::Full, num_coord, num_original_point);
-//	//for (size_t i = 0; i < num_original_point; ++i)
-//	//	X_linear.change_Column(i, reference_transformation_node_set[i]);
-//
-//	//const auto tmp = M_linear;
-//	//const auto& trs_M_linear = M_linear.transpose();
-//	//const auto C_linear = X_linear * trs_M_linear * ((tmp * trs_M_linear).inverse());
-//	//
-//	//const auto first_coord_linear_trasnformation_coeffcient_set = C_linear.row(0);
-//	//const auto second_coord_linear_trasnformation_coeffcient_set = C_linear.row(1);
-//	//const auto third_coord_linear_trasnformation_coeffcient_set = C_linear.row(2);
-//
-//	//this->linear_transformation_function_.emplace_back(Polynomial(first_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
-//	//this->linear_transformation_function_.emplace_back(Polynomial(second_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
-//	//this->linear_transformation_function_.emplace_back(Polynomial(third_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
-//};
+
+Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set)
+	: reference_figure_(figure_type, figure_order), node_set_(std::move(node_set)) {	
+	const auto& reference_transformation_node_set = this->reference_figure_.transformation_node_set();
+
+	const auto num_reference_node = reference_transformation_node_set.size();
+	const auto num_transformed_node = this->node_set_.size();
+	if (num_reference_node != num_transformed_node)
+		throw std::runtime_error("reference node and transformed node does not 1:1 match");
+
+	//	X = CM
+	//	C : transformation coefficient matrix	
+	//	X : transformed point matrix			
+	//	M : transformation monomial matrix	=> always same for same figure type => can be precalculated
+	RowMajorMatrix M = this->reference_figure_.transformation_monomial_matrix();
+	
+	constexpr size_t dimension = 3;
+	RowMajorMatrix X(dimension, num_transformed_node);
+	for (size_t i = 0; i < num_transformed_node; ++i)
+		X.change_column(i, *this->node_set_[i]);
+
+	const auto C = X * M.inverse();
+	const auto first_coord_trasnformation_coeffcient_set = C.row(0);
+	const auto second_coord_trasnformation_coeffcient_set = C.row(1);
+	const auto third_coord_trasnformation_coeffcient_set = C.row(2);
+
+	this->transformation_function_.emplace_back(Polynomial(first_coord_trasnformation_coeffcient_set, transformation_monomial_set));
+	this->transformation_function_.emplace_back(Polynomial(second_coord_trasnformation_coeffcient_set, transformation_monomial_set));
+	this->transformation_function_.emplace_back(Polynomial(third_coord_trasnformation_coeffcient_set, transformation_monomial_set));
+
+	constexpr size_t num_variable = 3;
+	this->transformation_Jacobian_matrix_ = Math::Jacobian(transformation_function_, num_variable);
+
+
+	////linear transformation function
+	//const auto linear_transformation_monomial_set = this->calculate_Linear_Transformation_Monomial_Set();
+	//const auto num_linear_transformation_monomial = linear_transformation_monomial_set.size();
+
+	//RowMajorMatrix M_linear(MatrixType::Full, num_linear_transformation_monomial, num_original_point);
+	//for (size_t i = 0; i < num_linear_transformation_monomial; ++i)
+	//	for (size_t j = 0; j < num_original_point; ++j)
+	//		M_linear.at(i, j) = linear_transformation_monomial_set[i](*this->node_set_[j]);
+
+	//// X_linear = C_linear * M_linear
+	//// C_linear = X_linear * TRS(M_linear) * INV(M_linear * TRS(M_linear))
+	//RowMajorMatrix X_linear(MatrixType::Full, num_coord, num_original_point);
+	//for (size_t i = 0; i < num_original_point; ++i)
+	//	X_linear.change_Column(i, reference_transformation_node_set[i]);
+
+	//const auto tmp = M_linear;
+	//const auto& trs_M_linear = M_linear.transpose();
+	//const auto C_linear = X_linear * trs_M_linear * ((tmp * trs_M_linear).inverse());
+	//
+	//const auto first_coord_linear_trasnformation_coeffcient_set = C_linear.row(0);
+	//const auto second_coord_linear_trasnformation_coeffcient_set = C_linear.row(1);
+	//const auto third_coord_linear_trasnformation_coeffcient_set = C_linear.row(2);
+
+	//this->linear_transformation_function_.emplace_back(Polynomial(first_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
+	//this->linear_transformation_function_.emplace_back(Polynomial(second_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
+	//this->linear_transformation_function_.emplace_back(Polynomial(third_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
+};
 //
 //std::vector<std::vector<double>> Figure::calculate_Connecitivity_Set(const size_t post_order, const size_t start_index) const {
 //	const auto& reference_connectivity = ReferenceFigure::ReferenceConnectivity::get(this->figure_type_, post_order);
