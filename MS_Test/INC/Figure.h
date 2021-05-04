@@ -4,6 +4,7 @@
 #include "Polynomial.h"
 #include "Text.h"
 
+
 enum class FigureType
 {
 	Point,
@@ -11,16 +12,21 @@ enum class FigureType
 	Triangle, Quadrilateral,
 };
 
+
 struct QuadratureRule
 {
 	std::vector<MathVector> quadrature_point_set;
 	std::vector<double> quadrature_weight_set;	
 };
 
+
 class ReferenceFigure
 {
 private:
 	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_transformation_node_set_;
+	static std::map<std::pair<FigureType, size_t>, VectorFunction<Monomial>> key_to_transformation_monomial_vector_;
+	static std::map<std::pair<FigureType, size_t>, RowMajorMatrix> key_to_inverse_transformation_monomial_matrix_;
+
 	static std::map<std::pair<FigureType, size_t>, QuadratureRule> key_to_quadrature_rule_;
 	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_post_node_set_;
 	static std::map<std::pair<FigureType, size_t>, std::vector<std::vector<size_t>>> key_to_connectivity_;
@@ -36,17 +42,13 @@ public:
 	const std::vector<MathVector>& reference_post_node_set(const size_t post_order);
 	const std::vector<std::vector<size_t>>& reference_connectivity(const size_t post_order);
 
+	VectorFunction<Polynomial> calculate_transformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
+
 	MathVector center_node(void) const;
 	std::vector<FigureType> face_figure_type_set(void) const;
 	MathVector normal_vector(void) const;
 	FigureType simplex_figure_type(void) const;
 	
-	RowMajorMatrix transformation_monomial_matrix(void) const;
-	// public일 필요가 있나 ?
-	const std::vector<MathVector>& transformation_node_set(void);
-	VectorFunction<Monomial> transformation_monomial_vector(void) const;
-
-
 	// node index set을 받아서 알아서 처리하게 그러면 Reference Figure말고 Indexed Figure에 넣어놓는게 맞지 않나 ?
 	std::map<size_t, std::vector<size_t>> face_index_to_node_index_order_set(void) const;	
 	std::vector<size_t> vertex_node_index_order_set(void) const;
@@ -80,6 +82,10 @@ public:
 private:
 	
 };
+
+
+VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Monomial> vector_function);
+
 
 //
 //class Figure : public ReferenceFigure

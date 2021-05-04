@@ -177,43 +177,45 @@ GTEST_TEST(MONOMIAL, TO_STRING) {
 	}
 }
 
-GTEST_TEST(MONOMIAL, MULTIPLICATION_ASSIGN) {
-	{
-		Monomial m1; 
-		Monomial m2;		
-		Monomial ref;		
+GTEST_TEST(MONOMIAL, MULTIPLICATION_ASSIGN_1) {
+	Monomial m1;
+	Monomial m2;
+	m1 *= m2;
 
-		EXPECT_EQ(m1 *= m2, ref);
-	}
-	{
-		Monomial m1{ 1,2,3,4 };
-		Monomial m2{ 1,2 };
-		Monomial ref{ 2,4,3,4 };
+	Monomial ref;
+	EXPECT_EQ(m1, ref);
+}
+GTEST_TEST(MONOMIAL, MULTIPLICATION_ASSIGN_2) {
+	Monomial m1;
+	Monomial m2 = { 3 };
+	m1 *= m2;
 
-		EXPECT_EQ(m1 *= m2, ref);
-	}
-	{
-		Monomial m1{ 1,2,3,4 };
-		Monomial m2{ 1,2,0,1 };
-		Monomial ref{ 2,4,3,5 };
+	Monomial ref = { 3 };
+	EXPECT_EQ(m1, ref);
+}
+GTEST_TEST(MONOMIAL, MULTIPLICATION_ASSIGN_3) {
+	Monomial m1 = { 1,2,3,4 };
+	Monomial m2 = { 1,2 };
+	m1 *= m2;
 
-		EXPECT_EQ(m1 *= m2, ref);
-	}
-	{
-		Monomial m1{ 1,2,3,4 };
-		Monomial m2{ 1,2,0,1,8,3 };
-		Monomial ref{ 2,4,3,5,8,3 };
+	Monomial ref{ 2,4,3,4 };
+	EXPECT_EQ(m1, ref);
+}
+GTEST_TEST(MONOMIAL, MULTIPLICATION_ASSIGN_4) {
+	Monomial m1{ 1,2,3,4 };
+	Monomial m2{ 1,2,0,1 };
+	m1 *= m2;
 
-		EXPECT_EQ(m1 *= m2, ref);
-	}
-	{
-		Monomial m1{ 1,2,3,4 };
-		Monomial m2{ 1,2,0,1,8,3 };
-		Monomial m3{ 1,2 };
-		Monomial ref{ 3,6,3,5,8,3 };
+	Monomial ref{ 2,4,3,5 };
+	EXPECT_EQ(m1, ref);
+}
+GTEST_TEST(MONOMIAL, MULTIPLICATION_ASSIGN_5) {
+	Monomial m1{ 1,2,3,4 };
+	Monomial m2{ 1,2,0,1,8,3 };
+	m1 *= m2;
 
-		EXPECT_EQ(m1 *= m2 *= m3, ref);
-	}
+	Monomial ref{ 2,4,3,5,8,3 };
+	EXPECT_EQ(m1, ref);
 }
 
 GTEST_TEST(MONOMIAL, MULTIPLICATION) {
@@ -254,6 +256,23 @@ GTEST_TEST(MONOMIAL, MULTIPLICATION) {
 		EXPECT_EQ(m1 * m2 * m3, ref);
 	}
 }
+
+
+GTEST_TEST(MONOMIAL, POWER1) {
+	Monomial m(0);
+	const auto result = m^3;
+
+	Monomial ref = { 3 };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MONOMIAL, POWER2) {
+	Monomial m(3);
+	const auto result = m^7;
+
+	Monomial ref = { 0,0,0,7 };
+	EXPECT_EQ(result, ref);
+}
+
 
 GTEST_TEST(MONOMIAL, FUNCTION_CALL_1) {
 	const Monomial m;
@@ -345,28 +364,36 @@ GTEST_TEST(POLYNOMIAL, COMPARE1) {
 
 
 GTEST_TEST(POLYNOMIAL, ADDITION_ASSIGN1) {
-	Polynomial p1 = { {1,1},{{2},{1}} };
-	Polynomial p2 = { {1,1},{{1},{0}} };
-	Polynomial ref = { {1,2,1},{{2},{1},{0}} };
+	Polynomial result = (X ^ 2) + X;
+	Polynomial p2 = X + 1;
+	result += p2;
 
-	p1 += p2;
-	EXPECT_EQ(p1, ref);
+	Polynomial ref = (X ^ 2) + 2 * X + 1;
+	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(POLYNOMIAL, ADDITION_ASSIGN2) {
-	Polynomial p1;
+	Polynomial result;
 	Polynomial p2;
-	Polynomial ref;
+	result += p2;
 
-	p1 += p2;
-	EXPECT_EQ(p1, ref);
+	Polynomial ref;
+	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(POLYNOMIAL, ADDITION_ASSIGN3) {
-	Polynomial p1{ {-12,45},{ {2,1},{1} } };
-	Polynomial p2{ {12,-45},{ {2,1},{1} } };
-	Polynomial ref;
+	Polynomial result = -12 * (X ^ 2) * Y + 45;
+	Polynomial p2 = 12 * (X ^ 2) * Y - 45;
+	result += p2;
 
-	p1 += p2;
-	EXPECT_EQ(p1, ref);
+	Polynomial ref;
+	EXPECT_EQ(result, ref);
+
+
+	//Polynomial p1{ {-12,45},{ {2,1},{1} } };
+	//Polynomial p2{ {12,-45},{ {2,1},{1} } };
+	//Polynomial ref;
+
+	//p1 += p2;
+	//EXPECT_EQ(p1, ref);
 }
 
 
@@ -402,7 +429,17 @@ GTEST_TEST(POLYNOMIAL, MULTIPLICATION_ASSIGN4) {
 	Polynomial ref;
 	EXPECT_EQ(p1, ref);
 }
+GTEST_TEST(POLYNOMIAL, MULTIPLICATION_ASSIGN5) {
+	Polynomial p1 = { {1,1,2},{X,Y,{0}} };
+	Polynomial p2 = { {1,1},{X,{0}} };
 
+	constexpr size_t variable_index = 1;
+	auto result = p1.differentiate(variable_index);
+	result *= p2;
+
+	Polynomial ref = { {1,1},{X,{0}} };
+	EXPECT_EQ(result, ref);
+}
 
 GTEST_TEST(POLYNOMIAL, POWER1) {
 	Polynomial p = { { 1,1 }, { {1},{0} } };
@@ -561,7 +598,7 @@ GTEST_TEST(POLYNOMIAL, DOMAIN_ORDER1) {
 
 	size_t variable_index = 1;
 	p3.differentiate(variable_index);
-	const auto result = p3.domain_order();
+	const auto result = p3.domain_dimension();
 
 	const size_t ref = 1;
 	EXPECT_EQ(result, ref);
@@ -619,6 +656,9 @@ GTEST_TEST(POLYNOMIAL, DIFFERENTIATE6) {
 	size_t variable_index = 1;
 	result.differentiate(variable_index);
 
+	std::cout << result << "\n";
+	std::cout << result.extend() << "\n";
+
 	Polynomial ref({ 1,1 }, { {1},{0} });
 	EXPECT_EQ(result, ref);
 }
@@ -671,15 +711,131 @@ GTEST_TEST(POLYNOMIAL, DIFFERENTIATE11) {
 	Polynomial ref({ 1,1 }, { {1},{0} });
 	EXPECT_EQ(result, ref);
 }
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE12) {
+	Polynomial p1({ 1,1 }, { {1},{0} });
+	Polynomial p2({ 1,1 }, { {0,1},{0} });
+	auto result = p1 * p2;
+
+	size_t variable_index = 2;
+	result.differentiate(variable_index);
+
+	Polynomial ref;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE13) {
+	Polynomial p1 = { {1,1,2},{X,Y,{0}} };
+	constexpr size_t variable_index = 1;
+	const auto result = p1.differentiate(variable_index);
+
+	Polynomial ref = 1;
+	EXPECT_EQ(result, ref);
+}
 
 
+GTEST_TEST(POLYNOMIAL, EXTEND1) {
+	Polynomial p1 = { {1,1,2},{X,Y,{0}} };
+	Polynomial p2 = { {1,1},{X,{0}} };
+
+	constexpr size_t variable_index = 1;
+	p1.differentiate(variable_index);
+	p1 *= p2;
+	const auto result = p1.extend();
+
+	Polynomial ref = { {1,1},{X,{0}} };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, EXTEND2) {
+	Polynomial p1({ 1,1 }, { {1},{0} });
+	Polynomial p2({ 1,1 }, { {0,1},{0} });
+	auto p3 = (p1 + p2) * p1;
+
+	size_t variable_index = 1;
+	p3.differentiate(variable_index);
+	const auto result = p3.extend();
+
+	Polynomial ref = { { 1,1 }, { {1},{0} } };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, EXTEND3) {
+	Polynomial p2 = { {1,1},{X,{0}} };
+	const auto result = p2.extend();
+
+	Polynomial ref = { {1,1},{X,{0}} };
+	EXPECT_EQ(p2, ref);
+}
+
+GTEST_TEST(POLYNOMIAL, MULTIPLICATION) {
+	Polynomial p1 = 1;
+	Polynomial p2 = { {1,1},{X,{0}} };
+	p1.multiplication(p2);
+
+	Polynomial ref = { {1,1},{X,{0}} };
+	EXPECT_EQ(p1, ref);
+}
 
 
+GTEST_TEST(POLYNOMIAL, GRADIENT1) {
+	Polynomial p = { {1,1,1},{{0},{1},{0,1}} };
+	auto result = p.gradient();
+
+	VectorFunction<Polynomial> ref = { { { 1 }, { {0} } }, { { 1 }, { {0} } } };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, GRADIENT2) {
+	Polynomial p = { {1,1,1},{{0},{2},{1,1}} };
+	auto result = p.gradient();
+
+	VectorFunction<Polynomial> ref = { { { 2,1 }, { {1},{0,1} } }, { { 1 }, { {1} } } };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, GRADIENT3) {
+	Polynomial p = { {1,1,1},{{0},{2},{1,1}} };
+	const size_t domain_dimension = 3;
+	auto result = p.gradient(domain_dimension);
+
+	VectorFunction<Polynomial> ref = { { { 2,1 }, { {1},{0,1} } }, { { 1 }, { {1} } },{ {0},{ {0} } } };
+	EXPECT_EQ(result, ref);
+}
 
 
+GTEST_TEST(POLYNOMIAL, SCALAR_PLUS_MONOMIAL1) {
+	const double scalar = 3;
+	Monomial m = { 3 };
+	const auto result = scalar + m;
+
+	const Polynomial ref = { {1,scalar},{m,{0}} };
+	EXPECT_EQ(result, ref);
+}
 
 
+GTEST_TEST(POLYNOMIAL, SCALAR_MULTIPLY_MONOMIAL1) {
+	const double scalar = 3;
+	Monomial m = { 3 };
+	const auto result = scalar * m;
 
+	const Polynomial ref(scalar,m);
+	EXPECT_EQ(result, ref);
+}
+
+
+GTEST_TEST(POLYNOMIAL, MONOMIAL_PLUS_MONOMIAL) {
+	Monomial m1 = { 0,0,1 };
+	Monomial m2 = { 1 };
+	const auto result = m1 + m2;
+
+	const Polynomial ref = { { 1,1 }, { m1,m2 } };
+	EXPECT_EQ(result, ref);
+}
+
+
+GTEST_TEST(POLYNOMIAL, MONOMIAL_PLUS_POLYNOMIAL) {
+	Monomial m = { 1 };
+	Polynomial p = X + 1;
+	const auto result = m + p;
+
+	const Polynomial ref = { {2,1}, {{1},{0}} };
+	EXPECT_EQ(result, ref);
+}
 
 
 

@@ -1,6 +1,9 @@
 #include "../INC/Figure.h"
 
 std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> ReferenceFigure::key_to_transformation_node_set_;
+std::map<std::pair<FigureType, size_t>, VectorFunction<Monomial>> ReferenceFigure::key_to_transformation_monomial_vector_;
+std::map<std::pair<FigureType, size_t>, RowMajorMatrix> ReferenceFigure::key_to_inverse_transformation_monomial_matrix_;
+
 std::map<std::pair<FigureType, size_t>, QuadratureRule> ReferenceFigure::key_to_quadrature_rule_;
 std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> ReferenceFigure::key_to_post_node_set_;
 std::map<std::pair<FigureType, size_t>, std::vector<std::vector<size_t>>> ReferenceFigure::key_to_connectivity_;
@@ -8,10 +11,12 @@ std::map<std::pair<FigureType, size_t>, std::vector<std::vector<size_t>>> Refere
 ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figure_order)
 	: figure_type_(figure_type), figure_order_(figure_order) {
 	if (figure_order == 0)
-		throw std::invalid_argument("figure order should be greater than 0");
+		throw std::invalid_argument("figure order should be greater than 1");
 
 	auto key = std::make_pair(this->figure_type_, this->figure_order_);
 	if (ReferenceFigure::key_to_transformation_node_set_.find(key) == ReferenceFigure::key_to_transformation_node_set_.end()) {
+
+		// build transformation node set		
 		if (this->figure_order_ > this->support_element_order())
 			throw std::runtime_error("exceed support element order");
 
@@ -24,52 +29,77 @@ ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figu
 		const auto num_nodes = ms::to_value<size_t>(transformation_node_set_text.front());
 		transformation_node_set_text.erase(transformation_node_set_text.begin());
 
-		std::vector<MathVector> node_set;
-		node_set.reserve(num_nodes);
+		std::vector<MathVector> transformation_node_set;
+		transformation_node_set.reserve(num_nodes);
 		for (const auto& sentence : transformation_node_set_text) {
 			const char delimiter = ' ';
 			auto parsed_str = ms::parse(sentence, delimiter);
 			auto point_value = ms::to_value_set<double>(parsed_str);
 
 			point_value.erase(point_value.begin());
-			node_set.emplace_back(std::move(point_value));
+			transformation_node_set.emplace_back(std::move(point_value));
+		}
+		ReferenceFigure::key_to_transformation_node_set_.emplace(key, transformation_node_set);
+
+		//build transformation monomial vector
+		VectorFunction<Monomial> transformation_monomial_vector;
+		switch (this->figure_type_) {
+		case FigureType::Line: {
+			const size_t num_monomial = this->figure_order_ + 1;
+			transformation_monomial_vector.reserve(num_monomial);
+
+			for (size_t a = 0; a <= this->figure_order_; ++a)
+				transformation_monomial_vector.push_back(Monomial{ a });
+
+			break;	// 1 r r^2 ...
 		}
 
-		ReferenceFigure::key_to_transformation_node_set_.emplace(std::move(key), std::move(node_set));
-	}
-}
+		case FigureType::Triangle: {
+			const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 2) * (this->figure_order_ + 1) * 0.5);
+			transformation_monomial_vector.reserve(num_monomial);
 
-const std::vector<MathVector>& ReferenceFigure::transformation_node_set(void) {
-	auto key = std::make_pair(this->figure_type_, this->figure_order_);
+			for (size_t a = 0; a <= this->figure_order_; ++a)
+				for (size_t b = 0; b <= a; ++b)
+					transformation_monomial_vector.push_back(Monomial{ a - b, b });
 
-	if (ReferenceFigure::key_to_transformation_node_set_.find(key) == ReferenceFigure::key_to_transformation_node_set_.end()) {
-		if (this->figure_order_ > this->support_element_order())
-			throw std::runtime_error("exceed support element order");
-
-		const std::string read_file_path = "RSC/ReferenceFigures/" + ms::to_string(this->figure_type_) + "_P" + std::to_string(this->figure_order_) + ".msh";
-
-		Text transformation_node_set_text;
-		transformation_node_set_text.read(read_file_path);
-		transformation_node_set_text.remove_empty_line();
-
-		const auto num_nodes = ms::to_value<size_t>(transformation_node_set_text.front());
-		transformation_node_set_text.erase(transformation_node_set_text.begin());
-
-		std::vector<MathVector> node_set;
-		node_set.reserve(num_nodes);
-		for (const auto& sentence : transformation_node_set_text) {
-			const char delimiter = ' ';
-			auto parsed_str = ms::parse(sentence, delimiter);
-			auto point_value = ms::to_value_set<double>(parsed_str);
-
-			point_value.erase(point_value.begin());
-			node_set.emplace_back(std::move(point_value));
+			break;	// 1 r s r^2 rs s^2 ...
 		}
 
-		ReferenceFigure::key_to_transformation_node_set_.emplace(std::move(key), std::move(node_set));
-	}
+		case FigureType::Quadrilateral: {
+			const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 1) * (this->figure_order_ + 1));
+			transformation_monomial_vector.reserve(num_monomial);
 
-	return key_to_transformation_node_set_.at(key);
+			for (size_t a = 0; a <= this->figure_order_; ++a) {
+				for (size_t b = 0; b <= a; ++b)
+					transformation_monomial_vector.push_back(Monomial{ a, b });
+
+				if (a == 0)
+					continue;
+
+				size_t index = a;
+				while (true) {
+					transformation_monomial_vector.push_back(Monomial{ --index, a });
+					if (index == 0)
+						break;
+				}
+			}
+
+			break;	// 1 r rs s r^2 r^2s r^2s^2 rs^2 s^2...
+		}
+		default:
+			throw std::runtime_error("wrong figure type");			
+		}
+		ReferenceFigure::key_to_transformation_monomial_vector_.emplace(key, transformation_monomial_vector);
+
+		//build inverse transformation monomial matrix
+		const auto num_column = transformation_monomial_vector.size();
+		RowMajorMatrix transformation_monomial_matrix(num_column);
+
+		for (size_t i = 0; i < num_column; ++i)
+			transformation_monomial_matrix.change_column(i, transformation_monomial_vector(transformation_node_set[i]));
+
+		ReferenceFigure::key_to_inverse_transformation_monomial_matrix_.emplace(std::move(key), std::move(transformation_monomial_matrix.inverse()));
+	}
 }
 
 const QuadratureRule& ReferenceFigure::reference_quadrature_rule(const size_t integrand_order) {
@@ -326,71 +356,31 @@ FigureType ReferenceFigure::simplex_figure_type(void) const {
 	}
 }
 
-RowMajorMatrix ReferenceFigure::transformation_monomial_matrix(void) const {
+VectorFunction<Polynomial> ReferenceFigure::calculate_transformation_function(const std::vector<const MathVector*>& transformed_node_set) const {
 	const auto key = std::make_pair(this->figure_type_, this->figure_order_);
+	
+	const auto& reference_transformation_node_set = ReferenceFigure::key_to_transformation_node_set_.at(key);
+	
+	const auto num_reference_node = reference_transformation_node_set.size();
+	const auto num_transformed_node = transformed_node_set.size();
+	if (num_reference_node != num_transformed_node)
+		throw std::runtime_error("reference node and transformed node does not 1:1 match");
 
-	const auto& transformation_node_set = this->key_to_transformation_node_set_.at(key);
-	const auto transformation_monomial_vector = this->transformation_monomial_vector();
+	//	T = CM
+	//	T : transformed node matrix			
+	//	C : transformation coefficient matrix	
+	//	M : transformation monomial matrix	=> always same for same figure type
+	constexpr size_t range_dimension = 3;
+	RowMajorMatrix T(range_dimension, num_transformed_node);
+	for (size_t i = 0; i < num_transformed_node; ++i)
+		T.change_column(i, *transformed_node_set[i]);
 
-	const auto num_column = transformation_monomial_vector.size();
-	RowMajorMatrix transformation_monomial_matrix(num_column);
+	const auto& inv_M = ReferenceFigure::key_to_inverse_transformation_monomial_matrix_.at(key);
+	const auto C = T * inv_M;
 
-	for (size_t i = 0; i < num_column; ++i)
-		transformation_monomial_matrix.change_column(i, transformation_monomial_vector(transformation_node_set[i]));
+	const auto& transformation_monomial_vector = ReferenceFigure::key_to_transformation_monomial_vector_.at(key);
 
-	return transformation_monomial_matrix;
-}
-
-VectorFunction<Monomial> ReferenceFigure::transformation_monomial_vector(void) const {
-	VectorFunction<Monomial> transformation_monomial_vector;
-
-	switch (this->figure_type_) {
-	case FigureType::Line: {
-		const size_t num_monomial = this->figure_order_ + 1;
-		transformation_monomial_vector.reserve(num_monomial);
-
-		for (size_t a = 0; a <= this->figure_order_; ++a)
-			transformation_monomial_vector.push_back(Monomial{ a });
-
-		return transformation_monomial_vector;	// 1 r r^2 ...
-	}
-
-	case FigureType::Triangle: {
-		const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 2) * (this->figure_order_ + 1) * 0.5);
-		transformation_monomial_vector.reserve(num_monomial);
-
-		for (size_t a = 0; a <= this->figure_order_; ++a)
-			for (size_t b = 0; b <= a; ++b)
-				transformation_monomial_vector.push_back(Monomial{ a - b, b });
-
-		return transformation_monomial_vector;	// 1 r s r^2 rs s^2 ...
-	}
-
-	case FigureType::Quadrilateral: {
-		const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 1) * (this->figure_order_ + 1));
-		transformation_monomial_vector.reserve(num_monomial);
-
-		for (size_t a = 0; a <= this->figure_order_; ++a) {
-			for (size_t b = 0; b <= a; ++b)
-				transformation_monomial_vector.push_back(Monomial{ a, b });
-
-			if (a == 0)
-				continue;
-
-			size_t index = a;
-			while (true) {
-				transformation_monomial_vector.push_back(Monomial{ --index, a });
-				if (index == 0)
-					break;
-			}
-		}
-
-		return transformation_monomial_vector;	// 1 r rs s r^2 r^2s r^2s^2 rs^2 s^2...
-	}
-	default:
-		throw std::runtime_error("wrong figure type");
-		return transformation_monomial_vector;
-	}
+	return C * transformation_monomial_vector;
 }
 
 size_t ReferenceFigure::calculate_Required_Order(const size_t integrand_order) const {
@@ -613,35 +603,9 @@ namespace ms {
 
 Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set)
 	: reference_figure_(figure_type, figure_order), node_set_(std::move(node_set)) {	
-	const auto& reference_transformation_node_set = this->reference_figure_.transformation_node_set();
-
-	const auto num_reference_node = reference_transformation_node_set.size();
-	const auto num_transformed_node = this->node_set_.size();
-	if (num_reference_node != num_transformed_node)
-		throw std::runtime_error("reference node and transformed node does not 1:1 match");
-
-	//	X = CM
-	//	C : transformation coefficient matrix	
-	//	X : transformed point matrix			
-	//	M : transformation monomial matrix	=> always same for same figure type => can be precalculated
-	RowMajorMatrix M = this->reference_figure_.transformation_monomial_matrix();
 	
-	constexpr size_t dimension = 3;
-	RowMajorMatrix X(dimension, num_transformed_node);
-	for (size_t i = 0; i < num_transformed_node; ++i)
-		X.change_column(i, *this->node_set_[i]);
-
-	const auto C = X * M.inverse();
-	const auto first_coord_trasnformation_coeffcient_set = C.row(0);
-	const auto second_coord_trasnformation_coeffcient_set = C.row(1);
-	const auto third_coord_trasnformation_coeffcient_set = C.row(2);
-
-	this->transformation_function_.emplace_back(Polynomial(first_coord_trasnformation_coeffcient_set, transformation_monomial_set));
-	this->transformation_function_.emplace_back(Polynomial(second_coord_trasnformation_coeffcient_set, transformation_monomial_set));
-	this->transformation_function_.emplace_back(Polynomial(third_coord_trasnformation_coeffcient_set, transformation_monomial_set));
-
-	constexpr size_t num_variable = 3;
-	this->transformation_Jacobian_matrix_ = Math::Jacobian(transformation_function_, num_variable);
+	this->transformation_function_ = this->reference_figure_.calculate_transformation_function(this->node_set_);
+	this->transformation_Jacobian_matrix_ = JacobianMatrix(transformation_function_);
 
 
 	////linear transformation function
@@ -671,6 +635,23 @@ Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vec
 	//this->linear_transformation_function_.emplace_back(Polynomial(second_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
 	//this->linear_transformation_function_.emplace_back(Polynomial(third_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
 };
+
+
+VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Monomial> vector_function) {
+	const auto [num_row, num_column] = m.size();
+
+	if (num_column != vector_function.size())
+		throw std::length_error("length does not match");
+
+	VectorFunction<Polynomial> result;
+	result.reserve(num_row);
+	for (size_t i = 0; i < num_row; ++i)
+		result.push_back(Polynomial{ m.row(i) ,vector_function });
+
+	return result;
+}
+
+
 //
 //std::vector<std::vector<double>> Figure::calculate_Connecitivity_Set(const size_t post_order, const size_t start_index) const {
 //	const auto& reference_connectivity = ReferenceFigure::ReferenceConnectivity::get(this->figure_type_, post_order);

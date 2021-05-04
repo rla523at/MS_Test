@@ -196,6 +196,88 @@ GTEST_TEST(MATRIX, MULTIPLY_ASSIGNMENT9) {
 			EXPECT_DOUBLE_EQ(m1.at(i, j), ref.at(i, j));
 }
 
+
+GTEST_TEST(MATRIX, MULTIPLY1) {
+	RowMajorMatrix m1(2, 2, { 1,2,3,4 });
+	RowMajorMatrix m2(2, 2, { 1,3,4,5 });
+	const auto result = m1 * m2;
+
+	RowMajorMatrix ref(2, 2, { 9,13,19,29 });
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MATRIX, MULTIPLY2) {
+	RowMajorMatrix m1(2, 8, { 1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1 });
+	RowMajorMatrix m2(8, 2, { 1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8 });
+	const auto result = m1 * m2;
+
+	RowMajorMatrix ref(2, 2, { 204,204,120,120 });
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MATRIX, MULTIPLY3) {
+	RowMajorMatrix m1(2, 2, { 1,2,3,4 });
+	RowMajorMatrix m2(2, 2, { 1,3,4,5 });
+	m1.transpose();
+	const auto result = m1 * m2;
+
+	RowMajorMatrix ref(2, 2, { 13,18,18,26 });
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MATRIX, MULTIPLY4) {
+	RowMajorMatrix m1(2, 2, { 1,2,3,4 });
+	RowMajorMatrix m2(2, 2, { 1,3,4,5 });
+	m2.transpose();
+	const auto result = m1 * m2;
+
+	RowMajorMatrix ref(2, 2, { 7,14,15,32 });
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MATRIX, MULTIPLY5) {
+	RowMajorMatrix m1(2, 2, { 1,2,3,4 });
+	RowMajorMatrix m2(2, 2, { 1,3,4,5 });
+	m1.transpose();
+	m2.transpose();
+	const auto result = m1 * m2;
+
+	RowMajorMatrix ref(2, 2, { 10,19,14,28 });
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MATRIX, MULTIPLY6) {
+	RowMajorMatrix m1(2, 3, { 1,2,3,4,5,6 });
+	RowMajorMatrix m2(2, 3, { 1,2,3,3,2,1 });
+	m2.transpose();
+	const auto result = m1 * m2;
+
+	RowMajorMatrix ref(2, 2, { 14,10,32,28 });
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MATRIX, MULTIPLY7) {
+	RowMajorMatrix m1(2, 3, { 1,2,3,4,5,6 });
+	RowMajorMatrix m2(2, 3, { 1,2,3,3,2,1 });
+	m1.transpose();
+	const auto result = m1 * m2;
+
+	RowMajorMatrix ref(3, 3, { 13,10,7,17,14,11,21,18,15 });
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MATRIX, MULTIPLY8) {
+	RowMajorMatrix m1(2, 3, { 1.5479,2.4567123,3.414878,4.41487,5.121,6.15789 });
+	RowMajorMatrix m2(2, 3, { 1.1244,2.48711,3.12314,3.789413,2.9135491,1.264863 });
+	m1.transpose();
+	const auto result = m1 * m2;
+
+	RowMajorMatrix ref(3, 3, { 18.470224531309999,  16.712738084116999,  10.418514118810000,  22.167911283120002,  21.030398669553001,  14.150019875622000,  27.174477241769999,  26.434492089979003,  18.454029295989997 });
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MATRIX, MULTIPLY9) {
+	RowMajorMatrix m1(2, 3, { 1.5479,2.4567123,3.414878,4.41487,5.121,6.15789 });
+	RowMajorMatrix m2(2, 3, { 1.1244,2.48711,3.12314,3.789413,2.9135491,1.264863 });
+	m2.transpose();
+	const auto result = m1 * m2;
+
+	RowMajorMatrix ref(2, 2, { 18.515714565372999,  17.342737125037932, 36.932522712599997 , 39.438937931479998 });
+	EXPECT_EQ(result, ref);
+}
+
 GTEST_TEST(MATRIX, INVERSE1) {
 	RowMajorMatrix m(2, 2, { 1,2,3,4 });
 	m.inverse();
@@ -225,29 +307,9 @@ GTEST_TEST(MATRIX, INVERSE3) {
 	const double epsilon = 1.0E-15;
 	for (size_t i = 0; i < rows; ++i)
 		for (size_t j = 0; j < cols; ++j)
-			EXPECT_NEAR(m.at(i, j), ref.at(i, j), epsilon); 	
+			EXPECT_NEAR(m.at(i, j), ref.at(i, j), epsilon); // suffering by extreme machine error!
 	
-	// suffering by machine error!
-	//const size_t ULP_factor = 10000000;
-	//for (size_t i = 0; i < rows; ++i) {
-	//	for (size_t j = 0; j < cols; ++j) {
-	//		if (!ms::compare_double(m.at(i, j), ref.at(i, j), ULP_factor)) {
-	//			const auto lower_ULP = m.at(i, j) - std::nextafter(m.at(i, j), std::numeric_limits<double>::lowest());
-	//			const auto upper_ULP = std::nextafter(m.at(i, j), std::numeric_limits<double>::max()) - m.at(i, j);
-
-	//			const auto lower_bound = m.at(i, j) - ULP_factor * lower_ULP;
-	//			const auto upper_bound = m.at(i, j) + ULP_factor * upper_ULP;
-
-	//			std::cout << std::setprecision(20);
-	//			std::cout << "value of m : " << m.at(i, j) << "\n";
-	//			std::cout << "lower ULP : " << lower_ULP << "\n";
-	//			std::cout << "upper ULP : " << upper_ULP << "\n";
-	//			std::cout << "lower bound : " << lower_bound << "\n";
-	//			std::cout << "upper bound : " << upper_bound << "\n";
-	//			std::cout << "value : " << ref.at(i, j) << "\n";
-	//		}
-	//	}
-	//}
+	
 }
 GTEST_TEST(MATRIX, INVERSE4) {
 	RowMajorMatrix m(5, 5, { 1, 2, 3, 4, 5,  2, 3, 4, 1, 6, 1, 6, 5, 4, 3, 4, 1, 2, 7, 8, 9, 8, 7, 6, 5 });
@@ -258,6 +320,5 @@ GTEST_TEST(MATRIX, INVERSE4) {
 	const double epsilon = 1.0E-15;
 	for (size_t i = 0; i < rows; ++i)
 		for (size_t j = 0; j < cols; ++j)
-			EXPECT_NEAR(m.at(i, j), ref.at(i, j), epsilon);// suffering by machine error!
-			//EXPECT_DOUBLE_EQ(m.at(i, j), ref.at(i, j));
+			EXPECT_NEAR(m.at(i, j), ref.at(i, j), epsilon); // suffering by extreme machine error!
 }

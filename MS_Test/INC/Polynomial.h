@@ -7,6 +7,10 @@
 // if need highly optimized code
 // make Monomial3D 
 
+#define X Monomial(0)
+#define Y Monomial(1)
+#define Z Monomial(2)
+
 class Monomial
 {
 private:
@@ -21,6 +25,7 @@ public:
 
 	Monomial& operator*=(const Monomial& other);
 	Monomial operator*(const Monomial& other) const;
+	Monomial operator^(const size_t power) const;
 	double operator()(void) const;
 	double operator()(const MathVector& variable_vector) const;
 	bool operator<(const Monomial& other) const;
@@ -32,9 +37,10 @@ public:
 	Monomial& reduce_order(const size_t variable_index);
 	std::string to_string(void) const;
 
-private:
+//private:
 	void remove_meaningless_zero(void);
 };
+
 
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
 
@@ -57,8 +63,8 @@ private:
 
 public:
 	explicit Polynomial(void);
-	explicit Polynomial(const double coefficient);
-	explicit Polynomial(const Monomial& monomial);
+	Polynomial(const double coefficient);
+	Polynomial(const Monomial& monomial);
 	Polynomial(const double coefficient, const Monomial& monomial);
 	Polynomial(const std::vector<double>& coefficient_set, const std::vector<Monomial>& monomial_set);
 	
@@ -69,24 +75,27 @@ public:
 	Polynomial operator+(const Polynomial& other) const;
 	Polynomial operator-(const Polynomial& other) const;
 	Polynomial operator*(const double scalar) const;
-	Polynomial operator*(const Polynomial& other) const;	
+	Polynomial operator*(const Polynomial& other) const;
 	double operator()(const MathVector& variable_vector) const;
 	bool operator==(const Polynomial& other) const;
 	bool operator!=(const Polynomial& other) const;
 
 	Polynomial& differentiate(const size_t variable_index);
+	Polynomial extend(void) const;
+	VectorFunction<Polynomial> gradient(void) const;
+	VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
 	Polynomial& power(const size_t power_index);
 	std::string to_string(void) const;
 
 	size_t polynomial_order(void) const;
-	size_t domain_order(void) const;
+	size_t domain_dimension(void) const;
 
 	//performance test
 	bool compare_v1(const Polynomial& other) const;
 	bool compare_v2(const Polynomial& other) const;
-	
 
-private:
+
+//private:
 	std::vector<MathVector> build_compare_node_set(void) const;
 	
 	double calculate(const MathVector& variable_vector) const;
@@ -99,7 +108,6 @@ private:
 	size_t simple_domain_order(void) const;
 	size_t simple_polynomial_order(void) const;
 
-	Polynomial extend(void) const;
 	void insert(const double coefficient, const Monomial& monomial);
 	bool is_zero(void) const;
 	bool is_simple_polynomial(void) const;
@@ -107,9 +115,16 @@ private:
 	std::string to_poly_string(void) const;
 };
 
-std::ostream& operator<<(std::ostream& ostream, const Polynomial& monomial);
+
+Polynomial operator+(const double scalar, const Monomial& monomial);
+Polynomial operator+(const Monomial& monomial, const Polynomial& polynomial);
+Polynomial operator*(const double scalar, const Monomial& monomial);
+
+std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
+
 
 namespace ms {
 	size_t combination(const size_t n, const size_t k);
 	size_t combination_with_repetition(const size_t n, const size_t k);
+	Polynomial differentiate(const Polynomial& other, const size_t variable_index);
 }

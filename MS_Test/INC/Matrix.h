@@ -1,14 +1,15 @@
 #pragma once
 #include "MathVector.h"
 
+#include <algorithm>
 
 class RowMajorMatrix
 {
 private:	
 	CBLAS_TRANSPOSE transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
-	size_t row_ = 0;
-	size_t column_ = 0;
-	MathVector value_set_;
+	size_t num_row_ = 0;
+	size_t num_column_ = 0;
+	MathVector value_vector_;
 
 public:
 	explicit RowMajorMatrix(void) = default;
@@ -19,6 +20,7 @@ public:
 
 	RowMajorMatrix& operator+=(const RowMajorMatrix& other);
 	RowMajorMatrix& operator*=(const RowMajorMatrix& other);
+	RowMajorMatrix operator*(const RowMajorMatrix& other) const;
 	bool operator==(const RowMajorMatrix& other) const;
 
 	double& at(const size_t row, const size_t column);
@@ -26,6 +28,7 @@ public:
 	bool compare_with_finitie_precision(const RowMajorMatrix& other, const size_t ULP_precision = 4) const;
 	RowMajorMatrix& change_column(const size_t column_index, const MathVector& value);
 	RowMajorMatrix& inverse(void);
+	MathVector row(const size_t row_index) const;
 	std::pair<size_t, size_t> size(void) const;
 	RowMajorMatrix& transpose(void);
 	std::string to_string(void) const;
@@ -44,13 +47,10 @@ private:
 
 
 std::ostream& operator<<(std::ostream& os, const RowMajorMatrix& x);
-template <typename T>
-VectorFunction<T> operator*(const RowMajorMatrix& m, const VectorFunction<T> vector_function);
 
 
 namespace ms {
 	RowMajorMatrix transpose(const RowMajorMatrix& A);
-	//bool compare_double(const double d1, const double d2, const size_t ULP_factor = 4);
 }
 
 
@@ -58,16 +58,21 @@ template <typename T>
 class JacobianMatrix
 {
 private:
-	std::vector<std::vector<T>> function_set_;
+	std::vector<VectorFunction<T>> gradient_set_;
 
 public:
 	JacobianMatrix(void) = default;
-	JacobianMatrix(const VectorFunction<T>& vector_function, const size_t num_variable);
+	JacobianMatrix(const VectorFunction<T>& vector_function);
+	JacobianMatrix(const VectorFunction<T>& vector_function, const size_t domain_dimension);
+	JacobianMatrix(std::initializer_list<VectorFunction<T>> list) : gradient_set_(list) {};
+	//JacobianMatrix(const std::vector<VectorFunction<T>>& gradient_set_) : gradient_set_(gradient_set_) {};
+	//JacobianMatrix(std::vector<VectorFunction<T>>&& gradient_set_) : gradient_set_(std::move(gradient_set_)) {};
 
 	RowMajorMatrix operator()(const MathVector& variable_vector) const;
+	bool operator==(const JacobianMatrix& other) const;
 
-	T& at(const size_t i_index, const size_t j_index);
-	const T& at(const size_t i_index, const size_t j_index) const;
+	T& at(const size_t row_index, const size_t column_index);
+	const T& at(const size_t row_index, const size_t column_index) const;
 	std::pair<size_t, size_t> size(void) const;
 	std::string to_string(void) const;
 };
@@ -81,32 +86,25 @@ std::ostream& operator<<(std::ostream& os, const JacobianMatrix<T>& Jacobian_mat
 
 //template definition part
 template <typename T>
-VectorFunction<T> operator*(const RowMajorMatrix& m, const VectorFunction<T> vector_function) {
-	const auto [num_row, num_column] = m.size();
-
-	if (num_row != vector_function.size())
-		throw std::length_error("length does not match");
-
-	VectorFunction<T> result(num_row);
-	for (size_t i = 0; i < num_row; ++i)
-		for (size_t j = 0; j < num_column; ++j)
-			result[i] += m.at(i, j) * vector_function[j];
-
-	return result;
+JacobianMatrix<T>::JacobianMatrix(const VectorFunction<T>& vector_function) {
+	const size_t num_function = vector_function.size();
+	
+	std::vector<size_t> domain_dimension_set(num_function);
+	for (size_t i = 0; i < num_function; ++i)
+		domain_dimension_set[i] = vector_function[i].domain_dimension();
+	
+	const size_t max_domain_dimension = *std::max_element(domain_dimension_set.begin(), domain_dimension_set.end());
+	
+	*this = JacobianMatrix(vector_function, max_domain_dimension);
 }
 
-
 template <typename T>
-JacobianMatrix<T>::JacobianMatrix(const VectorFunction<T>& vector_function, const size_t num_variable) {
-	const auto num_function = vector_function.size();
+JacobianMatrix<T>::JacobianMatrix(const VectorFunction<T>& vector_function, const size_t domain_dimension) {
+	const auto range_dimension = vector_function.size();
+	this->gradient_set_.reserve(range_dimension);
 
-	this->function_set_.resize(num_function);
-	for (auto& set : this->function_set_)
-		set.resize(num_variable);
-
-	//for (size_t i = 0; i < num_function; ++i)
-	//	for (size_t j = 0; j < num_variable; ++j)
-	//		this->function_set_[i][j] = ms::differentiate(vector_function.at(i), j);
+	for (const auto& function : vector_function)
+		gradient_set_.push_back(function.gradient(domain_dimension));
 }
 
 template <typename T>
@@ -116,24 +114,32 @@ RowMajorMatrix JacobianMatrix<T>::operator()(const MathVector& variable_vector) 
 	RowMajorMatrix value(num_row, num_column);
 	for (size_t i = 0; i < num_row; ++i)
 		for (size_t j = 0; j < num_column; ++j)
-			value.at(i, j) = this->function_set_[i][j](variable_vector);
+			value.at(i, j) = this->gradient_set_[i][j](variable_vector);
 
 	return value;
 }
 
 template <typename T>
+bool JacobianMatrix<T>::operator==(const JacobianMatrix& other) const {
+	if (this->size() != other.size())
+		return false;
+	else
+		return this->gradient_set_ == other.gradient_set_;
+}
+
+template <typename T>
 T& JacobianMatrix<T>::at(const size_t i_index, const size_t j_index) {
-	return this->function_set_[i_index][j_index];
+	return this->gradient_set_[i_index][j_index];
 }
 
 template <typename T>
 const T& JacobianMatrix<T>::at(const size_t i_index, const size_t j_index) const {
-	return this->function_set_[i_index][j_index];
+	return this->gradient_set_[i_index][j_index];
 }
 
 template <typename T>
 std::pair<size_t, size_t> JacobianMatrix<T>::size(void) const {
-	return { this->function_set_.size(), this->function_set_.front().size() };
+	return { this->gradient_set_.size(), this->gradient_set_.front().size() };
 }
 
 template <typename T>
