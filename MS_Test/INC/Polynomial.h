@@ -4,24 +4,21 @@
 #include <algorithm> //for min max
 #include <map>
 
-// if need highly optimized code
-// make Monomial3D 
 
 #define X Monomial(0)
 #define Y Monomial(1)
 #define Z Monomial(2)
 
+
 class Monomial
 {
 private:
 	std::vector<size_t> exponent_set_;
-	bool is_constant_ = false;
 
 public:
-	explicit Monomial(void);
-	explicit Monomial(const size_t variable_index);			// Monomial(0) => x_0	/ Monomial(2) => x_2
-	Monomial(const std::initializer_list<size_t> list);		// Monomial{0} => 1		/ Monomial{2} => x^2 , without explicit m = {1,2,3} work!
-	Monomial(std::vector<size_t>&& exponent_set);
+	explicit Monomial(void) = default;
+	explicit Monomial(const size_t variable_index);			// Monomial(0) => x0	/ Monomial(2) => x2
+	Monomial(const std::initializer_list<size_t> list);		// Monomial{0} => 1		/ Monomial{2} => x0^2 , without explicit m = {1,2,3} work!
 
 	Monomial& operator*=(const Monomial& other);
 	Monomial operator*(const Monomial& other) const;
@@ -33,12 +30,13 @@ public:
 
 	size_t exponent(size_t variable_index) const;
 	size_t monomial_order(void) const;
-	size_t domain_order(void) const;
+	size_t domain_dimension(void) const;
 	Monomial& reduce_order(const size_t variable_index);
 	std::string to_string(void) const;
 
-//private:
+	//private: // for testing
 	void remove_meaningless_zero(void);
+	bool is_constant(void) const;
 };
 
 
@@ -56,13 +54,12 @@ class Polynomial
 
 private:
 	MathVector coefficient_vector_;
-	std::vector<Monomial> monomial_set_;	
+	VectorFunction<Monomial> monomial_vector_function_;
 	
-	size_t power_index_ = 1;
 	std::vector<CalculatedPolynomial> calculated_polynomial_set_; // to minimize truncation error
 
 public:
-	explicit Polynomial(void);
+	explicit Polynomial(void) = default;
 	Polynomial(const double coefficient);
 	Polynomial(const Monomial& monomial);
 	Polynomial(const double coefficient, const Monomial& monomial);
@@ -72,10 +69,12 @@ public:
 	Polynomial& operator-=(const Polynomial& other);
 	Polynomial& operator*=(const double scalar);
 	Polynomial& operator*=(const Polynomial& other);
+
 	Polynomial operator+(const Polynomial& other) const;
 	Polynomial operator-(const Polynomial& other) const;
 	Polynomial operator*(const double scalar) const;
 	Polynomial operator*(const Polynomial& other) const;
+
 	double operator()(const MathVector& variable_vector) const;
 	bool operator==(const Polynomial& other) const;
 	bool operator!=(const Polynomial& other) const;
@@ -98,27 +97,27 @@ public:
 //private:
 	std::vector<MathVector> build_compare_node_set(void) const;
 	
-	double calculate(const MathVector& variable_vector) const;
-	Polynomial& differentiate_simple_poly(const size_t variable_index);
-
-	void addition(const Polynomial& other);
-	void scalar_multiplication(const double scalar);
-	void multiplication(const Polynomial& other);
-	
-	size_t simple_domain_order(void) const;
-	size_t simple_polynomial_order(void) const;
-
 	void insert(const double coefficient, const Monomial& monomial);
+	Polynomial& be_zero(void);
 	bool is_zero(void) const;
 	bool is_simple_polynomial(void) const;
 
-	std::string to_poly_string(void) const;
+	void simple_polynomial_addition(const Polynomial& other);
+	void simple_polynomial_scalar_multiplication(const double scalar);
+	void multiplication(const Polynomial& other);
+	double simple_polynomial_calculation(const MathVector& variable_vector) const;
+
+	Polynomial& simple_polynomial_differentiate(const size_t variable_index);
+	size_t simple_polynomial_domain_dimension(void) const;
+	size_t simple_polynomial_order(void) const;
+	std::string simple_polynomial_string(void) const;
 };
 
 
-Polynomial operator+(const double scalar, const Monomial& monomial);
+Polynomial operator+(const double scalar, const Polynomial& polynomial);
 Polynomial operator+(const Monomial& monomial, const Polynomial& polynomial);
-Polynomial operator*(const double scalar, const Monomial& monomial);
+Polynomial operator-(const Monomial& monomial, const Polynomial& polynomial);
+Polynomial operator*(const double scalar, const Polynomial& monomial);
 
 std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
 
