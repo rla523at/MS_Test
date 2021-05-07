@@ -12,7 +12,7 @@ class MathVector : public std::vector<double>
 {
 public:
 	template <typename ... Vals>
-	explicit MathVector(Vals&&... values) :std::vector<double>(std::forward<Vals>(values)...) {};
+	MathVector(Vals&&... values) :std::vector<double>(std::forward<Vals>(values)...) {};
 	MathVector(std::initializer_list<double> list) :std::vector<double>(list) {};
 	MathVector(const double) = delete;
 	

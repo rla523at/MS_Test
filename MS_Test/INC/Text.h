@@ -10,7 +10,7 @@ class Text : public std::vector<std::string>
 {
 public:
 	template <typename ... Vals>
-	explicit Text(Vals&&... values) : std::vector<std::string>(std::forward<Vals>(values)...) {};
+	Text(Vals&&... values) : std::vector<std::string>(std::forward<Vals>(values)...) {};
 	Text(std::initializer_list<std::string> list) : std::vector<std::string>( list ) {};
 
 	Text& read(const std::string& read_file_path);
