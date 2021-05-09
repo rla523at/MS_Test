@@ -208,6 +208,9 @@ Polynomial& Polynomial::operator*=(const Polynomial& other) {
 	if (other == 1)
 		return *this;
 
+	if (this->is_simple_polynomial() && other.is_single_term())
+		return this->simple_polynomial_multiplication(other);
+
 	this->calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
 	return *this;
 }
@@ -226,10 +229,6 @@ Polynomial Polynomial::operator*(const double scalar) const {
 	Polynomial result(*this);
 	return result *= scalar;
 }
-
-//Polynomial Polynomial::operator*(const Monomial& monomial) const {
-//	return *this * Polynomial(monomial);
-//}
 
 Polynomial Polynomial::operator*(const Polynomial& other) const {
 	Polynomial result(*this);
@@ -256,34 +255,8 @@ double Polynomial::operator()(const MathVector& variable_vector) const {
 }
 
 bool Polynomial::operator==(const Polynomial& other) const {
-	const auto extended_this_poly = this->extend();
-	const auto extended_other_poly = other.extend();
-
-	const auto num_term = extended_this_poly.coefficient_vector_.size();
-	if (num_term != extended_other_poly.coefficient_vector_.size())
-		return false;
-
-	std::map<Monomial, double> ordered_this_polynomial;
-	std::map<Monomial, double> ordered_other_polynomial;
-	for (size_t i = 0; i < num_term; ++i) {
-		ordered_this_polynomial.try_emplace(extended_this_poly.monomial_vector_function_[i], extended_this_poly.coefficient_vector_[i]);
-		ordered_other_polynomial.try_emplace(extended_other_poly.monomial_vector_function_[i], extended_other_poly.coefficient_vector_[i]);
-	}
-
-	return ordered_this_polynomial == ordered_other_polynomial;
-
-	
-	//if (this->polynomial_order() != other.polynomial_order() || this->domain_dimension() != other.domain_dimension())
-	//	return false;
-	//
-	//auto compare_node_set = this->build_compare_node_set();
-
-	//for (const auto& compare_node : compare_node_set) {
-	//	if (!ms::compare_double((*this)(compare_node), other(compare_node)))
-	//		return false;
-	//}
-
-	//return true;
+	//return this->compare_v1(other);
+	return this->compare_v2(other);
 }
 
 bool Polynomial::operator!=(const Polynomial& other) const {
@@ -304,9 +277,9 @@ Polynomial& Polynomial::differentiate(const size_t variable_index) {
 			*this += polynomial;
 			break;
 		}
+
 		case BinaryOperator::multiplication: {
-			auto tmp_poly = *this;
-			tmp_poly.differentiate(variable_index);
+			auto tmp_poly = ms::differentiate(*this, variable_index);
 			tmp_poly *= polynomial;
 
 			polynomial.differentiate(variable_index);
@@ -314,6 +287,9 @@ Polynomial& Polynomial::differentiate(const size_t variable_index) {
 			*this += tmp_poly;
 			break;
 		}
+
+		default:
+			throw std::runtime_error("wrong binary operator");
 		}
 
 		return *this;
@@ -336,9 +312,9 @@ VectorFunction<Polynomial> Polynomial::gradient(const size_t domain_dimension) c
 }
 
 Polynomial& Polynomial::power(const size_t power_index) {
-	const auto tmp = *this;
+	const auto current_polynomial = *this;
 	for (size_t i = 1; i < power_index; ++i)
-		*this *= tmp;
+		*this *= current_polynomial;
 	return *this;
 }
 
@@ -376,25 +352,29 @@ size_t Polynomial::domain_dimension(void) const {
 }
 
 bool Polynomial::compare_v1(const Polynomial& other) const {
-	const auto extended_this_poly = this->extend();
-	const auto extended_other_poly = other.extend();
+	//유리함수는 to simple polynomial이 안됨!
+	const auto simplified_this_polynomial = this->to_simple_polynomial();
+	const auto simplified_other_polynomial = other.to_simple_polynomial();
 
-	const auto num_term = extended_this_poly.coefficient_vector_.size();
-	if (num_term != extended_other_poly.coefficient_vector_.size())
+	const auto num_term = simplified_this_polynomial.coefficient_vector_.size();
+	if (num_term != simplified_other_polynomial.coefficient_vector_.size())
 		return false;
 
 	std::map<Monomial, double> ordered_this_polynomial;
 	std::map<Monomial, double> ordered_other_polynomial;
 	for (size_t i = 0; i < num_term; ++i) {
-		ordered_this_polynomial.try_emplace(extended_this_poly.monomial_vector_function_[i], extended_this_poly.coefficient_vector_[i]);
-		ordered_other_polynomial.try_emplace(extended_other_poly.monomial_vector_function_[i], extended_other_poly.coefficient_vector_[i]);
+		ordered_this_polynomial.try_emplace(simplified_this_polynomial.monomial_vector_function_[i], simplified_this_polynomial.coefficient_vector_[i]);
+		ordered_other_polynomial.try_emplace(simplified_other_polynomial.monomial_vector_function_[i], simplified_other_polynomial.coefficient_vector_[i]);
 	}
 
 	return ordered_this_polynomial == ordered_other_polynomial;
 }
 
 bool Polynomial::compare_v2(const Polynomial& other) const {
-	auto compare_node_set = this->build_compare_node_set();
+	//유리함수의 basis는 뭐지 ??? ??? ?? ?? ????
+	const auto max_polynomial_order = std::max(this->polynomial_order(), other.polynomial_order());
+	const auto max_domain_dimension = std::max(this->domain_dimension(), other.domain_dimension());
+	const auto compare_node_set = ms::build_compare_node_set(max_polynomial_order,max_domain_dimension);
 
 	for (const auto& compare_node : compare_node_set) {
 		if (!ms::compare_double((*this)(compare_node), other(compare_node)))
@@ -403,59 +383,6 @@ bool Polynomial::compare_v2(const Polynomial& other) const {
 
 	return true;
 }
-
-std::vector<MathVector> Polynomial::build_compare_node_set(void) const {
-	const auto polynomial_order = this->polynomial_order();
-	const auto domain_order = this->domain_dimension();	
-	size_t num_basis = ms::combination_with_repetition(polynomial_order + 1, domain_order);
-	
-	std::vector<MathVector> compare_node_set;
-	compare_node_set.reserve(num_basis);
-	
-	MathVector compare_node(domain_order);
-	if (domain_order == 0) {
-		compare_node_set.push_back(compare_node);
-		return compare_node_set;
-	}
-
-	while (true) {
-		auto iter = std::find(compare_node.begin(), compare_node.end(), polynomial_order);
-		if (iter != compare_node.end()) {
-			compare_node_set.push_back(compare_node);
-
-			if (iter == compare_node.begin())
-				break;
-
-			std::fill(compare_node.begin(), compare_node.end(), 0);
-			(*(--iter))++;
-
-			if (compare_node.front() == polynomial_order) {
-				compare_node_set.push_back(compare_node);
-				break;
-			}
-
-		}
-
-		double component_sum = 0;
-		for (const auto& val : compare_node)
-			component_sum += val;
-
-		if (component_sum == polynomial_order) {
-			compare_node_set.push_back(compare_node);
-			const auto is_zero = [](const double i) {return i == 0; };
-			auto iter = std::find_if_not(compare_node.rbegin(), compare_node.rend(), is_zero);
-			*iter = 0;
-			(*(++iter))++;
-			continue;
-		}
-
-		compare_node_set.push_back(compare_node);
-		compare_node.back()++;
-	}
-
-	return compare_node_set;
-}
-
 
 size_t Polynomial::polynomial_order(void) const {
 	if (this->is_simple_polynomial())
@@ -519,7 +446,7 @@ void Polynomial::simple_polynomial_scalar_multiplication(const double scalar) {
 		coefficient *= scalar;
 }
 
-void Polynomial::multiplication(const Polynomial& other) {
+Polynomial& Polynomial::simple_polynomial_multiplication(const Polynomial& other) {
 	const auto num_this_term = this->coefficient_vector_.size();
 	const auto num_other_term = other.coefficient_vector_.size();
 
@@ -536,7 +463,7 @@ void Polynomial::multiplication(const Polynomial& other) {
 			result.insert(result_coefficient, result_monomial);
 		}
 	}
-	*this = std::move(result);
+	return *this = std::move(result);
 }
 
 bool Polynomial::is_zero(void) const {
@@ -545,6 +472,13 @@ bool Polynomial::is_zero(void) const {
 
 bool Polynomial::is_simple_polynomial(void) const {
 	return this->calculated_polynomial_set_.empty();
+}
+
+bool Polynomial::is_single_term(void) const {
+	if (!this->is_simple_polynomial())
+		return false;
+	else
+		return this->coefficient_vector_.size() == 1;
 }
 
 std::string Polynomial::simple_polynomial_string(void) const {
@@ -612,14 +546,20 @@ size_t Polynomial::simple_polynomial_order(void) const {
 	return *std::max_element(monomial_order_set.begin(), monomial_order_set.end());
 }
 
-Polynomial Polynomial::extend(void) const {
+Polynomial Polynomial::to_simple_polynomial(void) const {
 	Polynomial result(this->coefficient_vector_,this->monomial_vector_function_);
 
 	for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
-		if (binary_operator == BinaryOperator::addition)
-			result.simple_polynomial_addition(polynomial.extend());
-		else
-			result.multiplication(polynomial.extend());
+		switch (binary_operator) {
+		case  BinaryOperator::addition:
+			result.simple_polynomial_addition(polynomial.to_simple_polynomial());
+			break;
+		case BinaryOperator::multiplication:
+			result.simple_polynomial_multiplication(polynomial.to_simple_polynomial());
+			break;
+		default:
+			throw std::runtime_error("it can not be a simple polynomial");
+		}
 	}
 	
 	return result;
@@ -653,6 +593,56 @@ Polynomial& Polynomial::be_zero(void) {
 
 
 namespace ms {
+	std::vector<MathVector> build_compare_node_set(const size_t polynomial_order, const size_t domain_dimension) {
+		const auto num_node = ms::combination_with_repetition(polynomial_order + 1, domain_dimension);
+
+		std::vector<MathVector> compare_node_set;
+		compare_node_set.reserve(num_node);
+
+		MathVector compare_node(domain_dimension);
+		if (domain_dimension == 0) {
+			compare_node_set.push_back(compare_node);
+			return compare_node_set;
+		}
+
+		while (true) {
+			auto iter = std::find(compare_node.begin(), compare_node.end(), polynomial_order);
+			if (iter != compare_node.end()) {
+				compare_node_set.push_back(compare_node);
+
+				if (iter == compare_node.begin())
+					break;
+
+				std::fill(compare_node.begin(), compare_node.end(), 0);
+				(*(--iter))++;
+
+				if (compare_node.front() == polynomial_order) {
+					compare_node_set.push_back(compare_node);
+					break;
+				}
+
+			}
+
+			double component_sum = 0;
+			for (const auto& val : compare_node)
+				component_sum += val;
+
+			if (component_sum == polynomial_order) {
+				compare_node_set.push_back(compare_node);
+				const auto is_zero = [](const double i) {return i == 0; };
+				auto iter = std::find_if_not(compare_node.rbegin(), compare_node.rend(), is_zero);
+				*iter = 0;
+				(*(++iter))++;
+				continue;
+			}
+
+			compare_node_set.push_back(compare_node);
+			compare_node.back()++;
+		}
+
+		return compare_node_set;
+	}
+
 	size_t combination(const size_t n, const size_t k) {
 		//calculate nCk
 		//the combination of n things taken k at a time without repetition.
@@ -668,8 +658,24 @@ namespace ms {
 		return combination(n + k - 1, k);
 	}
 
-	Polynomial differentiate(const Polynomial& other, const size_t variable_index) {
-		auto result = other;
+	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index) {
+		auto result = polynomial;
 		return result.differentiate(variable_index);
+	}
+
+	MathVector Newton_Raphson(const VectorFunction<Polynomial> vector_function) {
+		//solve vector_function = 0 by Newton-Raphson algorithm
+
+		JacobianMatrix
+
+		const auto num_function = vector_function.size();
+		std::vector<size_t> domain_dimension_set(num_function);
+		for (size_t i = 0; i < num_function; ++i)
+			domain_dimension_set[i] = vector_function[i].domain_dimension();
+
+		const auto domain_dimension = *std::max_element(domain_dimension_set.begin(), domain_dimension_set.end());
+		
+
+
 	}
 }

@@ -60,7 +60,7 @@ public:
 		MathVector result;
 		result.reserve(this->size());
 		for (const auto& function : *this)
-			result.emplace_back(function(variable_vector));
+			result.push_back(function(variable_vector));
 		return result;
 	}
 };

@@ -80,7 +80,6 @@ public:
 	bool operator!=(const Polynomial& other) const;
 
 	Polynomial& differentiate(const size_t variable_index);
-	Polynomial extend(void) const;
 	VectorFunction<Polynomial> gradient(void) const;
 	VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
 	Polynomial& power(const size_t power_index);
@@ -89,23 +88,21 @@ public:
 	size_t polynomial_order(void) const;
 	size_t domain_dimension(void) const;
 
-	//performance test
+//private:
 	bool compare_v1(const Polynomial& other) const;
 	bool compare_v2(const Polynomial& other) const;
 
-
-//private:
-	std::vector<MathVector> build_compare_node_set(void) const;
-	
 	void insert(const double coefficient, const Monomial& monomial);
 	Polynomial& be_zero(void);
 	bool is_zero(void) const;
 	bool is_simple_polynomial(void) const;
+	bool is_single_term(void) const;
 
 	void simple_polynomial_addition(const Polynomial& other);
 	void simple_polynomial_scalar_multiplication(const double scalar);
-	void multiplication(const Polynomial& other);
+	Polynomial& simple_polynomial_multiplication(const Polynomial& other);
 	double simple_polynomial_calculation(const MathVector& variable_vector) const;
+	Polynomial to_simple_polynomial(void) const;
 
 	Polynomial& simple_polynomial_differentiate(const size_t variable_index);
 	size_t simple_polynomial_domain_dimension(void) const;
@@ -123,7 +120,9 @@ std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
 
 
 namespace ms {
+	std::vector<MathVector> build_compare_node_set(const size_t polynomial_order, const size_t domain_dimension);
 	size_t combination(const size_t n, const size_t k);
 	size_t combination_with_repetition(const size_t n, const size_t k);
-	Polynomial differentiate(const Polynomial& other, const size_t variable_index);
+	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
+	MathVector Newton_Raphson(const VectorFunction<Polynomial> vector_function);
 }
