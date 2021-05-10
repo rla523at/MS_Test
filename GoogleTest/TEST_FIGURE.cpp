@@ -625,16 +625,104 @@ GTEST_TEST(FIGURE, MULTIPLY_MATRIX_VECTOR_FUNCTION1) {
 	EXPECT_EQ(result, ref);
 }
 
-GTEST_TEST(FIGURE, JACOBIAN1) {
+
+GTEST_TEST(VECTORFUNCTION, OPERATOR_CALL1) {
+	Polynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
+	Polynomial p2 = X + Y + Z - 3;
+	Polynomial p3 = (Y ^ 2) * Z + X * Z - 2;
+	VectorFunction<Polynomial> f = { p1,p2,p3 };
+	MathVector node = { 1,1,1 };
+	const auto result = f(node);
+
+	MathVector ref = { 0,0,0 };
+	EXPECT_EQ(result, ref);
+}
+
+
+GTEST_TEST(JACOBIAN, CONSTRUCTOR1) {
 	Polynomial p1 = { {1,1,1},{{0},{1},{0,1}} };
 	Polynomial p2 = { {1},{{1,0,1}} };
 	Polynomial p3 = { {1},{{0,3}} };
 	VectorFunction<Polynomial> f = { p1,p2,p3 };
-	const auto result = JacobianMatrix(f);
+	const auto result = JacobianFunction(f);
 
 	VectorFunction<Polynomial> vp1 = { {{1}, { {0} }}, {{1}, { {0} }}, {{0}, { {0} }} };
 	VectorFunction<Polynomial> vp2 = { {{1}, { {0,0,1} }}, {{0}, { {0} }}, {{1}, { {1} }} };
 	VectorFunction<Polynomial> vp3 = { {{0}, { {0} }}, {{3}, { {0,2} }}, {{0}, { {0} }} };
-	JacobianMatrix ref = { vp1,vp2,vp3 };
+	JacobianFunction ref = { vp1,vp2,vp3 };
 	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(JACOBIAN, CONSTRUCTOR2) {
+	Polynomial p1 = 1 + X + Y;
+	Polynomial p2 = X*Z;
+	Polynomial p3 = Z^3;
+	VectorFunction<Polynomial> f = { p1,p2,p3 };
+	const auto result = JacobianFunction(f);
+
+	VectorFunction<Polynomial> vp1 = { 1,1,0 };
+	VectorFunction<Polynomial> vp2 = { Z,0,X };
+	VectorFunction<Polynomial> vp3 = { 0,0,3 * (Z ^ 2) };
+	JacobianFunction ref = { vp1,vp2,vp3 };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(JACOBIAN, CONSTRUCTOR3) {
+	Polynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
+	Polynomial p2 = X + Y + Z - 3;
+	Polynomial p3 = (Y ^ 2) * Z + X * Z - 2;
+	VectorFunction<Polynomial> f = { p1,p2,p3 };
+	const auto result = JacobianFunction(f);
+
+	VectorFunction<Polynomial> vp1 = { 2 * X + 6 * X * Y,3 * (X ^ 2) + 3 * (Y ^ 2),2 * Z };
+	VectorFunction<Polynomial> vp2 = { 1,1,1 };
+	VectorFunction<Polynomial> vp3 = { Z,2 * Y * Z,(Y ^ 2) + X };
+	JacobianFunction ref = { vp1,vp2,vp3 };
+	EXPECT_EQ(result, ref);
+}
+
+
+GTEST_TEST(JACOBIAN, NEWTON_RAPHSON1) {
+	Polynomial p1 = X + Y - 1;
+	Polynomial p2 = X - Y - 3;
+	VectorFunction<Polynomial> f = { p1,p2 };
+	MathVector initial_guess = { 0,0 };
+	const auto result = ms::Newton_Raphson(f, initial_guess);
+
+	MathVector ref = { 2,-1 };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(JACOBIAN, NEWTON_RAPHSON2) {
+	Polynomial p1 = (X ^ 2) + X + Y - 7;
+	Polynomial p2 = X - Y - 1;
+	VectorFunction<Polynomial> f = { p1,p2 };
+	MathVector initial_guess = { 0,0 };
+	const auto result = ms::Newton_Raphson(f, initial_guess);
+
+	MathVector ref = { 2,1 };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(JACOBIAN, NEWTON_RAPHSON3) {
+	Polynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
+	Polynomial p2 = X + Y + Z - 3;
+	Polynomial p3 = (Y ^ 2) * Z + X * Z - 2;
+	VectorFunction<Polynomial> f = { p1,p2,p3 };
+	MathVector initial_guess = { 1.1,1.1,1.1 };
+	const double convergence_criteria = 1.0E-13;
+	const auto solution = ms::Newton_Raphson(f,initial_guess,convergence_criteria);
+	const auto result = f(solution).L2_Norm();
+	
+	const auto ref = 1.0E-15;
+	EXPECT_LE(result, ref);
+}
+GTEST_TEST(JACOBIAN, NEWTON_RAPHSON4) {
+	Polynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
+	Polynomial p2 = X + Y + Z - 3;
+	Polynomial p3 = (Y ^ 2) * Z + X * Z - 2;
+	VectorFunction<Polynomial> f = { p1,p2,p3 };
+	//MathVector initial_guess = { 0,0,0 }; bad initial guess
+	MathVector initial_guess = { 0.5,0.5,0.5 };
+	const auto solution = ms::Newton_Raphson(f, initial_guess);
+	const auto result = f(solution).L2_Norm();
+
+	const auto ref = 1.0E-14; // 1.0E-15º¸´Ù Å­
+	EXPECT_LE(result, ref);
 }

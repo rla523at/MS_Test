@@ -30,69 +30,69 @@
 //	//	p3.compare_v2(p4);
 //	//PRINT_CONSUMED_TIME_NANO;
 //}
-
-#include "../MS_Test/INC/Polynomial.h"
-#include <iostream>
-
-int main(void) {
-	const size_t polynomial_order = 1;
-	const size_t domain_order = 2;
-
-	size_t num_basis = ms::combination_with_repetition(polynomial_order + 1, domain_order);
-
-	std::vector<MathVector> compare_node_set;
-	compare_node_set.reserve(num_basis);
-
-	MathVector compare_node(domain_order);
-	if (domain_order == 0) {
-		compare_node_set.push_back(compare_node);		
-		
-		for (const auto& node : compare_node_set)
-			std::cout << node << "\n";
-	}
-
-	while (true) {
-		auto iter = std::find(compare_node.begin(), compare_node.end(), polynomial_order);
-		if (iter != compare_node.end()) {
-			std::cout << compare_node << "\n";
-			compare_node_set.push_back(compare_node);
-
-			if (iter == compare_node.begin())
-				break;
-
-			std::fill(compare_node.begin(), compare_node.end(), 0);
-			(*(--iter))++;
-
-			if (compare_node.front() == polynomial_order) {
-				std::cout << compare_node << "\n";
-				compare_node_set.push_back(compare_node);
-				break;
-			}
-		}
-
-		double component_sum = 0;
-		for (const auto& val : compare_node)
-			component_sum += val;
-
-		if (component_sum == polynomial_order) {
-			std::cout << compare_node << "\n";
-			compare_node_set.push_back(compare_node);
-
-			const auto is_zero = [](const double i) {return i == 0; };
-			auto iter = std::find_if_not(compare_node.rbegin(), compare_node.rend(), is_zero);
-			*iter = 0;
-			(*(++iter))++;
-			continue;
-		}
-
-		std::cout << compare_node << "\n";
-		compare_node_set.push_back(compare_node);
-		compare_node.back()++;
-	}
-
-	//for (const auto& node : compare_node_set)
-	//	std::cout << node << "\n";	
-}
+//
+//#include "../MS_Test/INC/Polynomial.h"
+//#include <iostream>
+//
+//int main(void) {
+//	const size_t polynomial_order = 1;
+//	const size_t domain_order = 2;
+//
+//	size_t num_basis = ms::combination_with_repetition(polynomial_order + 1, domain_order);
+//
+//	std::vector<MathVector> compare_node_set;
+//	compare_node_set.reserve(num_basis);
+//
+//	MathVector compare_node(domain_order);
+//	if (domain_order == 0) {
+//		compare_node_set.push_back(compare_node);		
+//		
+//		for (const auto& node : compare_node_set)
+//			std::cout << node << "\n";
+//	}
+//
+//	while (true) {
+//		auto iter = std::find(compare_node.begin(), compare_node.end(), polynomial_order);
+//		if (iter != compare_node.end()) {
+//			std::cout << compare_node << "\n";
+//			compare_node_set.push_back(compare_node);
+//
+//			if (iter == compare_node.begin())
+//				break;
+//
+//			std::fill(compare_node.begin(), compare_node.end(), 0);
+//			(*(--iter))++;
+//
+//			if (compare_node.front() == polynomial_order) {
+//				std::cout << compare_node << "\n";
+//				compare_node_set.push_back(compare_node);
+//				break;
+//			}
+//		}
+//
+//		double component_sum = 0;
+//		for (const auto& val : compare_node)
+//			component_sum += val;
+//
+//		if (component_sum == polynomial_order) {
+//			std::cout << compare_node << "\n";
+//			compare_node_set.push_back(compare_node);
+//
+//			const auto is_zero = [](const double i) {return i == 0; };
+//			auto iter = std::find_if_not(compare_node.rbegin(), compare_node.rend(), is_zero);
+//			*iter = 0;
+//			(*(++iter))++;
+//			continue;
+//		}
+//
+//		std::cout << compare_node << "\n";
+//		compare_node_set.push_back(compare_node);
+//		compare_node.back()++;
+//	}
+//
+//	//for (const auto& node : compare_node_set)
+//	//	std::cout << node << "\n";	
+//}
 
 //#include <array>
 //#include <vector>
@@ -252,34 +252,25 @@ int main(void) {
 
 
 
-//#include <iostream>
-//class A
-//{
-//public:
-//	A() { std::cout << "constructor\n"; };
-//	A(const A& a) { std::cout << "copy constructor \n"; };
-//
-//	A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
-//	A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
-//};
-//
-//A func(void) {
-//	return A();
-//}
-//
-//#include <map>
-//
-//int main(void){
-//	std::map<int, int> m;
-//
-//	//m.emplace(1, 1);
-//	//m.emplace(2, 2);
-//	//m.emplace(3, 3);
-//
-//	m[1] = 1;
-//	m[2] = 2;
-//
-//	for (const auto& [key, value] : m)
-//		std::cout << key << " " << value << "\n";
-//
-//}
+#include <iostream>
+#include <vector>
+class A
+{
+public:
+	A() { std::cout << "constructor\n"; };
+	A(const A& a) { std::cout << "copy constructor \n"; };
+	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
+
+	A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
+	A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
+};
+
+void func(const A& a) {
+	return;
+}
+
+int main(void){
+	std::vector<double> v = { 1,2,3 };
+	func(v); // implicit inversion을 위해 임시 객체를 생성함!
+
+}

@@ -605,7 +605,7 @@ Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vec
 	: reference_figure_(figure_type, figure_order), node_set_(std::move(node_set)) {	
 	
 	this->transformation_function_ = this->reference_figure_.calculate_transformation_function(this->node_set_);
-	this->transformation_Jacobian_matrix_ = JacobianMatrix(transformation_function_);
+	this->transformation_Jacobian_matrix_ = JacobianFunction(transformation_function_);
 
 
 	////linear transformation function

@@ -124,5 +124,4 @@ namespace ms {
 	size_t combination(const size_t n, const size_t k);
 	size_t combination_with_repetition(const size_t n, const size_t k);
 	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
-	MathVector Newton_Raphson(const VectorFunction<Polynomial> vector_function);
 }

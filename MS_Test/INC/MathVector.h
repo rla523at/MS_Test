@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <fstream>
 #include <iomanip>	//set precision
 #include <mkl.h>
@@ -43,7 +44,7 @@ MathVector operator*(const double scalar, const MathVector& x);
 namespace ms {
 	MathVector abs(const MathVector& x);
 	MathVector normalize(const MathVector& x);
-	std::string double_to_string(const double val, const size_t precision = 15);
+	std::string double_to_string(const double val, const size_t precision = 17);
 	bool compare_double(const double d1, const double d2, const size_t ULP_precision = 4);
 }
 
@@ -62,5 +63,15 @@ public:
 		for (const auto& function : *this)
 			result.push_back(function(variable_vector));
 		return result;
+	}
+
+	size_t domain_dimension(void) const {
+		const size_t num_function = this->size();
+
+		std::vector<size_t> domain_dimension_set(num_function);
+		for (size_t i = 0; i < num_function; ++i)
+			domain_dimension_set[i] = (*this)[i].domain_dimension();
+
+		return *std::max_element(domain_dimension_set.begin(), domain_dimension_set.end());
 	}
 };

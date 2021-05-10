@@ -21,6 +21,7 @@ public:
 	RowMajorMatrix& operator+=(const RowMajorMatrix& other);
 	RowMajorMatrix& operator*=(const RowMajorMatrix& other);
 	RowMajorMatrix operator*(const RowMajorMatrix& other) const;
+	MathVector operator*(const MathVector& x) const;
 	bool operator==(const RowMajorMatrix& other) const;
 
 	double& at(const size_t row, const size_t column);
@@ -34,11 +35,11 @@ public:
 	std::string to_string(void) const;
 
 private:
-	MathVector multiply_value(const RowMajorMatrix& other) const;
-
 	size_t leading_dimension(void) const;
+	MathVector multiply_value(const RowMajorMatrix& other) const;
 	std::vector<int> PLU_decomposition(void);
 	RowMajorMatrix& transpose_value(void);
+
 	bool is_square_matrix(void) const;
 	bool is_transposed(void) const;
 	void inspect_range(const size_t irow, const size_t jcolumn) const;
@@ -55,51 +56,46 @@ namespace ms {
 
 
 template <typename T>
-class JacobianMatrix
+class JacobianFunction
 {
 private:
 	std::vector<VectorFunction<T>> gradient_set_;
 
 public:
-	JacobianMatrix(void) = default;
-	JacobianMatrix(const VectorFunction<T>& vector_function);
-	JacobianMatrix(const VectorFunction<T>& vector_function, const size_t domain_dimension);
-	JacobianMatrix(std::initializer_list<VectorFunction<T>> list) : gradient_set_(list) {};
-	//JacobianMatrix(const std::vector<VectorFunction<T>>& gradient_set_) : gradient_set_(gradient_set_) {};
-	//JacobianMatrix(std::vector<VectorFunction<T>>&& gradient_set_) : gradient_set_(std::move(gradient_set_)) {};
+	JacobianFunction(void) = default;
+	JacobianFunction(const VectorFunction<T>& vector_function);
+	JacobianFunction(const VectorFunction<T>& vector_function, const size_t domain_dimension);
+	JacobianFunction(std::initializer_list<VectorFunction<T>> list) : gradient_set_(list) {};
 
 	RowMajorMatrix operator()(const MathVector& variable_vector) const;
-	bool operator==(const JacobianMatrix& other) const;
+	bool operator==(const JacobianFunction& other) const;
 
-	T& at(const size_t row_index, const size_t column_index);
-	const T& at(const size_t row_index, const size_t column_index) const;
 	std::pair<size_t, size_t> size(void) const;
 	std::string to_string(void) const;
 };
 
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const JacobianMatrix<T>& Jacobian_matrix);
+std::ostream& operator<<(std::ostream& os, const JacobianFunction<T>& Jacobian_matrix);
 
+namespace ms {
+	template <typename T>
+	MathVector Newton_Raphson(const VectorFunction<T>& vector_function, const double convergence_criteria = 1.0E-10);
+
+	template <typename T>
+	MathVector Newton_Raphson(const VectorFunction<T>& vector_function, const MathVector& initial_guess, const double convergence_criteria = 1.0E-10);
+}
 
 
 
 //template definition part
 template <typename T>
-JacobianMatrix<T>::JacobianMatrix(const VectorFunction<T>& vector_function) {
-	const size_t num_function = vector_function.size();
-	
-	std::vector<size_t> domain_dimension_set(num_function);
-	for (size_t i = 0; i < num_function; ++i)
-		domain_dimension_set[i] = vector_function[i].domain_dimension();
-	
-	const size_t max_domain_dimension = *std::max_element(domain_dimension_set.begin(), domain_dimension_set.end());
-	
-	*this = JacobianMatrix(vector_function, max_domain_dimension);
+JacobianFunction<T>::JacobianFunction(const VectorFunction<T>& vector_function) {
+	*this = JacobianFunction(vector_function, vector_function.domain_dimension());
 }
 
 template <typename T>
-JacobianMatrix<T>::JacobianMatrix(const VectorFunction<T>& vector_function, const size_t domain_dimension) {
+JacobianFunction<T>::JacobianFunction(const VectorFunction<T>& vector_function, const size_t domain_dimension) {
 	const auto range_dimension = vector_function.size();
 	this->gradient_set_.reserve(range_dimension);
 
@@ -108,7 +104,7 @@ JacobianMatrix<T>::JacobianMatrix(const VectorFunction<T>& vector_function, cons
 }
 
 template <typename T>
-RowMajorMatrix JacobianMatrix<T>::operator()(const MathVector& variable_vector) const {
+RowMajorMatrix JacobianFunction<T>::operator()(const MathVector& variable_vector) const {
 	const auto [num_row, num_column] = this->size();
 
 	RowMajorMatrix value(num_row, num_column);
@@ -120,7 +116,7 @@ RowMajorMatrix JacobianMatrix<T>::operator()(const MathVector& variable_vector) 
 }
 
 template <typename T>
-bool JacobianMatrix<T>::operator==(const JacobianMatrix& other) const {
+bool JacobianFunction<T>::operator==(const JacobianFunction& other) const {
 	if (this->size() != other.size())
 		return false;
 	else
@@ -128,36 +124,44 @@ bool JacobianMatrix<T>::operator==(const JacobianMatrix& other) const {
 }
 
 template <typename T>
-T& JacobianMatrix<T>::at(const size_t i_index, const size_t j_index) {
-	return this->gradient_set_[i_index][j_index];
-}
-
-template <typename T>
-const T& JacobianMatrix<T>::at(const size_t i_index, const size_t j_index) const {
-	return this->gradient_set_[i_index][j_index];
-}
-
-template <typename T>
-std::pair<size_t, size_t> JacobianMatrix<T>::size(void) const {
+std::pair<size_t, size_t> JacobianFunction<T>::size(void) const {
 	return { this->gradient_set_.size(), this->gradient_set_.front().size() };
 }
 
 template <typename T>
-std::string JacobianMatrix<T>::to_string(void) const {
+std::string JacobianFunction<T>::to_string(void) const {
 	std::string str;
 
 	const auto [num_row, num_column] = this->size();
 	for (size_t i = 0; i < num_row; ++i)
 		for (size_t j = 0; j < num_column; ++j)
-			str += "[" + std::to_string(i) + "," + std::to_string(j) + "]  :  " + this->at(i, j).to_string() + "\n";
+			str += "[" + std::to_string(i) + "," + std::to_string(j) + "]  :  " + this->gradient_set_[i][j].to_string() + "\n";
 
 	return str;
 }
 
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const JacobianMatrix<T>& Jacobian_matrix) {
+std::ostream& operator<<(std::ostream& os, const JacobianFunction<T>& Jacobian_matrix) {
 	return os << Jacobian_matrix.to_string();
+}
+
+
+namespace ms {
+	template <typename T>
+	MathVector Newton_Raphson(const VectorFunction<T>& vector_function, const MathVector& initial_guess, const double convergence_criteria) {
+		// solve vector function = 0
+		JacobianFunction<T> Jacobian(vector_function);
+
+		auto solution = initial_guess;
+		for (;;) {
+			const auto solution_delta = Jacobian(solution).inverse() * vector_function(solution);
+			solution -= solution_delta;
+
+			if (solution_delta.L2_Norm() <= convergence_criteria)
+				return solution;		
+		}
+	}
 }
 
 

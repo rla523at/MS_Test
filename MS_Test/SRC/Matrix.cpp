@@ -48,6 +48,34 @@ RowMajorMatrix& RowMajorMatrix::operator*=(const RowMajorMatrix& other) {
 	return *this;
 }
 
+MathVector RowMajorMatrix::operator*(const MathVector& x) const {
+	if (this->num_column_ != x.size())
+		throw std::length_error("matrix vector size is not match");
+
+	const auto layout = CBLAS_LAYOUT::CblasRowMajor;
+	const auto trans = this->transpose_type_;
+	MKL_INT m;
+	MKL_INT n;
+	if (trans == CBLAS_TRANSPOSE::CblasNoTrans) {
+		m = static_cast<int>(this->num_row_);
+		n = static_cast<int>(this->num_column_);
+	}
+	else {
+		m = static_cast<int>(this->num_column_);
+		n = static_cast<int>(this->num_row_);
+	}
+	const double alpha = 1;
+	const MKL_INT lda = n;
+	const MKL_INT incx = 1;
+	const MKL_INT beta = 0;
+	const MKL_INT incy = 1;
+
+	MathVector y(this->num_row_);
+	cblas_dgemv(layout, trans, m, n, alpha, this->value_vector_.data(), lda, x.data(), incx, beta, y.data(), incy);
+
+	return y;
+}
+
 RowMajorMatrix RowMajorMatrix::operator*(const RowMajorMatrix& other) const {
 	return RowMajorMatrix(this->num_row_, other.num_column_, this->multiply_value(other));
 }
@@ -214,9 +242,8 @@ std::vector<int> RowMajorMatrix::PLU_decomposition(void) {
 RowMajorMatrix& RowMajorMatrix::transpose_value(void) {
 	auto [rows, cols] = this->size();
 
-	if (this->is_transposed()) {
+	if (this->is_transposed()) 
 		std::swap(rows,cols);
-	}
 		
 	const char odering = 'R';
 	const char trans = 'T';	
@@ -255,14 +282,38 @@ namespace ms {
 		auto result = A;
 		return result.transpose();
 	};
-
-	//bool compare_double(const double d1, const double d2, const size_t ULP_factor) {
-	//	const auto lower_ULP = d1 - std::nextafter(d1, std::numeric_limits<double>::lowest());
-	//	const auto upper_ULP = std::nextafter(d1, std::numeric_limits<double>::max()) - d1;
-
-	//	return d1 - ULP_factor * lower_ULP <= d2 && d2 <= d1 + ULP_factor * upper_ULP;
-	//}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1331,33 +1382,33 @@ namespace ms {
 //}
 //
 //MathVector RowMajorMatrix::multiply_Full_Matrix_Vector(const MathVector& x) const {// y = alpha Ax + beta y	
-//	if (this->matrix_type_ != MatrixType::Full)
-//		FATAL_TYPE_ERROR;
-//	if (this->column_ != x.size())
-//		FATAL_SIZE_ERROR;
-//
-//	const auto layout = CBLAS_LAYOUT::CblasRowMajor;
-//	const auto trans = this->transpose_type_;
-//	MKL_INT m;
-//	MKL_INT n;
-//	if (trans == CBLAS_TRANSPOSE::CblasNoTrans) {
-//		m = static_cast<int>(this->row_);
-//		n = static_cast<int>(this->column_);
-//	}
-//	else {
-//		m = static_cast<int>(this->column_);
-//		n = static_cast<int>(this->row_);
-//	}
-//	const double alpha = 1;
-//	const MKL_INT lda = n;
-//	const MKL_INT incx = 1;
-//	const MKL_INT beta = 0;
-//	const MKL_INT incy = 1;
-//
-//	MathVector y(this->row_);
-//	cblas_dgemv(layout, trans, m, n, alpha, this->data(), lda, x.data(), incx, beta, y.data(), incy);
-//
-//	return y;
+	//if (this->matrix_type_ != MatrixType::Full)
+	//	FATAL_TYPE_ERROR;
+	//if (this->column_ != x.size())
+	//	FATAL_SIZE_ERROR;
+
+	//const auto layout = CBLAS_LAYOUT::CblasRowMajor;
+	//const auto trans = this->transpose_type_;
+	//MKL_INT m;
+	//MKL_INT n;
+	//if (trans == CBLAS_TRANSPOSE::CblasNoTrans) {
+	//	m = static_cast<int>(this->row_);
+	//	n = static_cast<int>(this->column_);
+	//}
+	//else {
+	//	m = static_cast<int>(this->column_);
+	//	n = static_cast<int>(this->row_);
+	//}
+	//const double alpha = 1;
+	//const MKL_INT lda = n;
+	//const MKL_INT incx = 1;
+	//const MKL_INT beta = 0;
+	//const MKL_INT incy = 1;
+
+	//MathVector y(this->row_);
+	//cblas_dgemv(layout, trans, m, n, alpha, this->data(), lda, x.data(), incx, beta, y.data(), incy);
+
+	//return y;
 //}
 //
 //MathVector RowMajorMatrix::multiply_Full_Triangle_Matrix_Vector(const MathVector& vec) const {//x = Ax 

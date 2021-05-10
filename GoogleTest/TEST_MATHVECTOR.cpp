@@ -154,3 +154,19 @@ GTEST_TEST(MATHVECTOR, ABS2) {
 	MathVector ref = { 1,2,3 };
 	EXPECT_EQ(v1, ref);
 }
+
+
+GTEST_TEST(MATHVECTOR, L2NORM1) {
+	MathVector v = { 3,4 };
+	const auto result = v.L2_Norm();
+
+	const double ref = 5;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MATHVECTOR, L2NORM2) {
+	MathVector v = { 0.1 };
+	const auto result = v.L2_Norm();
+
+	const double ref = 0.1;
+	EXPECT_EQ(result, ref);
+}

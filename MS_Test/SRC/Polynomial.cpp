@@ -662,20 +662,4 @@ namespace ms {
 		auto result = polynomial;
 		return result.differentiate(variable_index);
 	}
-
-	MathVector Newton_Raphson(const VectorFunction<Polynomial> vector_function) {
-		//solve vector_function = 0 by Newton-Raphson algorithm
-
-		JacobianMatrix
-
-		const auto num_function = vector_function.size();
-		std::vector<size_t> domain_dimension_set(num_function);
-		for (size_t i = 0; i < num_function; ++i)
-			domain_dimension_set[i] = vector_function[i].domain_dimension();
-
-		const auto domain_dimension = *std::max_element(domain_dimension_set.begin(), domain_dimension_set.end());
-		
-
-
-	}
 }

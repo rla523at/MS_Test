@@ -74,7 +74,7 @@ private:
 	ReferenceFigure reference_figure_;
 	std::vector<const MathVector*> node_set_;
 	VectorFunction<Polynomial> transformation_function_;
-	JacobianMatrix<Polynomial> transformation_Jacobian_matrix_;
+	JacobianFunction<Polynomial> transformation_Jacobian_matrix_;
 
 public:
 	explicit Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set);
