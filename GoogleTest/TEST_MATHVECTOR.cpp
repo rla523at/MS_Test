@@ -2,6 +2,14 @@
 #include "gtest/gtest.h"
 #include "../MS_Test/INC/MathVector.h"
 
+GTEST_TEST(MATHVECTOR, CONSTRUCTOR1) {
+	std::vector<double> v = { 1,2,3,4,5 };
+	MathVector result = v;
+
+	MathVector ref = { 1,2,3,4,5 };
+	EXPECT_EQ(result, ref);
+}
+
 GTEST_TEST(MATHVECTOR, CONSTRUCTOR) {
 	{
 		MathVector v1 = { 1E-1,2E-1,3E-1,4E-1,5E-1,6E-1,7E-1,8E-1,9E-1,10E-1 };

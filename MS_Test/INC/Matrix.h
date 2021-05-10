@@ -80,9 +80,6 @@ std::ostream& operator<<(std::ostream& os, const JacobianFunction<T>& Jacobian_m
 
 namespace ms {
 	template <typename T>
-	MathVector Newton_Raphson(const VectorFunction<T>& vector_function, const double convergence_criteria = 1.0E-10);
-
-	template <typename T>
 	MathVector Newton_Raphson(const VectorFunction<T>& vector_function, const MathVector& initial_guess, const double convergence_criteria = 1.0E-10);
 }
 

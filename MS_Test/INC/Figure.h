@@ -5,16 +5,14 @@
 #include "Text.h"
 
 
-enum class FigureType
-{
+enum class FigureType{
 	Point,
 	Line,
 	Triangle, Quadrilateral,
 };
 
 
-struct QuadratureRule
-{
+struct QuadratureRule{
 	std::vector<MathVector> quadrature_point_set;
 	std::vector<double> quadrature_weight_set;	
 };
@@ -22,7 +20,8 @@ struct QuadratureRule
 
 class ReferenceFigure
 {
-private:
+//private:
+public: // for test
 	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_transformation_node_set_;
 	static std::map<std::pair<FigureType, size_t>, VectorFunction<Monomial>> key_to_transformation_monomial_vector_;
 	static std::map<std::pair<FigureType, size_t>, RowMajorMatrix> key_to_inverse_transformation_monomial_matrix_;
@@ -38,14 +37,17 @@ private:
 public:
 	ReferenceFigure(const FigureType figure_type, const size_t figure_order);
 
-	const QuadratureRule& reference_quadrature_rule(const size_t integrand_order);
+
+	//const QuadratureRule& reference_quadrature_rule(const size_t integrand_order);
 	const std::vector<MathVector>& reference_post_node_set(const size_t post_order);
 	const std::vector<std::vector<size_t>>& reference_connectivity(const size_t post_order);
 
 	VectorFunction<Polynomial> calculate_transformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
+	QuadratureRule calculate_quadrature_rule(const VectorFunction<Polynomial>& trasnformation_function, const size_t integrand_order) const;
 
 	MathVector center_node(void) const;
 	std::vector<FigureType> face_figure_type_set(void) const;
+	size_t figure_dimension(void) const;
 	MathVector normal_vector(void) const;
 	FigureType simplex_figure_type(void) const;
 	
@@ -58,8 +60,6 @@ private:
 	size_t calculate_Required_Order(const size_t integrand_order) const;
 	size_t calculate_Num_Required_Point(const size_t required_order) const;
 	size_t support_element_order(void) const;
-
-
 };
 
 
@@ -74,11 +74,14 @@ private:
 	ReferenceFigure reference_figure_;
 	std::vector<const MathVector*> node_set_;
 	VectorFunction<Polynomial> transformation_function_;
-	JacobianFunction<Polynomial> transformation_Jacobian_matrix_;
+	JacobianFunction<Polynomial> transformation_Jacobian_function_;
 
 public:
 	explicit Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set);
 
+	MathVector calculate_center_node(void) const;
+	VectorFunction<Polynomial> calculate_orthonormal_basis_vector(const size_t polynomial_order) const;
+	QuadratureRule calculate_quadrature_rule(const size_t integrand_roder) const;
 private:
 	
 };
@@ -86,6 +89,19 @@ private:
 
 VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Monomial> vector_function);
 
+
+namespace ms {
+	//std::vector<Polynomial> calculate_Initial_Basis_Function_Set(const Figure& figure, const size_t polynomial_order);
+	//std::vector<Polynomial> calculate_Orthonormal_Basis_Function_Set(const Figure& figure, const size_t polynomial_order);
+	double integrate(const Polynomial& integrand, const QuadratureRule& quadrature_rule);
+	double integrate(const Polynomial& integrand, const Figure& figure);
+	double inner_product(const Polynomial& f1, const Polynomial& f2, const QuadratureRule& quadrature_rule);
+	double inner_product(const Polynomial& f1, const Polynomial& f2, const Figure& figure);
+	double L2_Norm(const Polynomial& polynomial, const QuadratureRule& quadrature_rule);
+	double L2_Norm(const Polynomial& polynomial, const Figure& figure);
+	//std::vector<Polynomial> Gram_Schmidt_Process(const std::vector<Polynomial>& initial_polynomial_set, const QuadratureRule& quadrature_rule);
+	std::vector<Polynomial> Gram_Schmidt_Process(const std::vector<Polynomial>& initial_polynomial_set, const Figure& figure);
+}
 
 //
 //class Figure : public ReferenceFigure

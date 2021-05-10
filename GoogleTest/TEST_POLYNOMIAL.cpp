@@ -662,6 +662,55 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN5) {
 	Polynomial ref = { {1,1},{X,{0}} };
 	EXPECT_EQ(result, ref);
 }
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN6) {
+	Polynomial p1 = X - 1;
+	Polynomial p2 = Y - 1;
+	const auto result = (p1 ^ 1) * (p2 ^ 0);
+		
+	Polynomial ref = X - 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN7) {
+	VectorFunction<Polynomial> result;
+	const MathVector center_node = { 1,1 };
+	for (size_t a = 0; a <= 1; ++a)
+		for (size_t b = 0; b <= a; ++b)
+			result.push_back(((X - center_node[0]) ^ (a - b)) * ((Y - center_node[1]) ^ b));
+
+	VectorFunction<Polynomial> ref = { 1,X - 1,Y - 1 };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN8) {
+	Polynomial result = (X - 1) ^ 1;
+
+	Polynomial ref = X - 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN9) {
+	Polynomial result = ((X - 1) ^ 1) * ((Y - 1) ^ 0);
+
+	Polynomial ref = X - 1;
+	EXPECT_EQ(result, ref);
+}
+
+
+GTEST_TEST(POLYNOMIAL, OPERATOR_POWER1) {
+	Polynomial p1 = X + 1;
+	const auto result = p1^2;
+
+	Polynomial ref = (X ^ 2) + 2 * X + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_POWER2) {
+	const auto p1 = X + 1;
+	const auto p2 = X + 2;
+	const auto p3 = X + 3;
+	const auto p4 = p1 * p2 + p3;
+	const auto result = p4^2;
+
+	Polynomial ref = (X ^ 4) + 8 * (X ^ 3) + 26 * (X ^ 2) + 40 * X + 25;
+	EXPECT_EQ(result, ref);
+}
 
 
 GTEST_TEST(POLYNOMIAL, POWER1) {
@@ -1130,8 +1179,12 @@ GTEST_TEST(POLYNOMIAL, TO_SIMPLE_POLYNOMIAL6) {
 
 
 GTEST_TEST(POLYNOMIAL, IS_SIMPLE_POLYNOMIAL1) {
-	Polynomial p1 = -12 * (X ^ 2) * Y + 45;
-	EXPECT_TRUE(p1.is_simple_polynomial());
+	Polynomial p = -12 * (X ^ 2) * Y + 45;
+	EXPECT_TRUE(p.is_simple_polynomial());
+}
+GTEST_TEST(POLYNOMIAL, IS_SIMPLE_POLYNOMIAL2) {
+	Polynomial p = (X ^ 4) + 8 * (X ^ 3) + 26 * (X ^ 2) + 40 * X + 25;
+	EXPECT_TRUE(p.is_simple_polynomial());
 }
 
 

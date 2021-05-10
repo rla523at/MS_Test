@@ -36,7 +36,10 @@ Monomial Monomial::operator*(const Monomial& other) const {
 Monomial Monomial::operator^(const size_t power) const {
 	if (this->is_constant())
 		return *this;
-
+		
+	if (power == 0)
+		return Monomial();
+	
 	Monomial result(*this);
 	for (auto& exponent : result.exponent_set_)
 		exponent *= power;
@@ -208,6 +211,9 @@ Polynomial& Polynomial::operator*=(const Polynomial& other) {
 	if (other == 1)
 		return *this;
 
+	if (*this == 1)
+		return *this = other;
+
 	if (this->is_simple_polynomial() && other.is_single_term())
 		return this->simple_polynomial_multiplication(other);
 
@@ -233,6 +239,11 @@ Polynomial Polynomial::operator*(const double scalar) const {
 Polynomial Polynomial::operator*(const Polynomial& other) const {
 	Polynomial result(*this);
 	return result *= other;
+}
+
+Polynomial Polynomial::operator^(const size_t power_index) const {
+	Polynomial result(*this);
+	return result.power(power_index);
 }
 
 double Polynomial::operator()(const MathVector& variable_vector) const {
@@ -312,6 +323,9 @@ VectorFunction<Polynomial> Polynomial::gradient(const size_t domain_dimension) c
 }
 
 Polynomial& Polynomial::power(const size_t power_index) {
+	if (power_index == 0)
+		return *this = 1;
+	
 	const auto current_polynomial = *this;
 	for (size_t i = 1; i < power_index; ++i)
 		*this *= current_polynomial;

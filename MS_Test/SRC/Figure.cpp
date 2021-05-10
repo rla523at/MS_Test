@@ -49,7 +49,7 @@ ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figu
 			transformation_monomial_vector.reserve(num_monomial);
 
 			for (size_t a = 0; a <= this->figure_order_; ++a)
-				transformation_monomial_vector.push_back(Monomial{ a });
+				transformation_monomial_vector.push_back(X ^ a);
 
 			break;	// 1 r r^2 ...
 		}
@@ -60,7 +60,7 @@ ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figu
 
 			for (size_t a = 0; a <= this->figure_order_; ++a)
 				for (size_t b = 0; b <= a; ++b)
-					transformation_monomial_vector.push_back(Monomial{ a - b, b });
+					transformation_monomial_vector.push_back((X^(a-b))*(Y^b));
 
 			break;	// 1 r s r^2 rs s^2 ...
 		}
@@ -71,14 +71,14 @@ ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figu
 
 			for (size_t a = 0; a <= this->figure_order_; ++a) {
 				for (size_t b = 0; b <= a; ++b)
-					transformation_monomial_vector.push_back(Monomial{ a, b });
+					transformation_monomial_vector.push_back((X^a)*(Y^b));
 
 				if (a == 0)
 					continue;
 
 				size_t index = a;
 				while (true) {
-					transformation_monomial_vector.push_back(Monomial{ --index, a });
+					transformation_monomial_vector.push_back((X^(--index))*(Y^a));
 					if (index == 0)
 						break;
 				}
@@ -102,41 +102,6 @@ ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figu
 	}
 }
 
-const QuadratureRule& ReferenceFigure::reference_quadrature_rule(const size_t integrand_order) {
-	auto key = std::make_pair(this->figure_type_, integrand_order);
-
-	if (ReferenceFigure::key_to_quadrature_rule_.find(key) == ReferenceFigure::key_to_quadrature_rule_.end()) {
-		const auto required_order = ReferenceFigure::calculate_Required_Order(integrand_order);
-		const auto num_required_point = ReferenceFigure::calculate_Num_Required_Point(required_order);
-
-		const std::string read_file_path = "RSC/Quadrature/Standard/" + ms::to_string(this->figure_type_) + "/P" + std::to_string(required_order) + "_n" + std::to_string(num_required_point) + ".txt";
-
-		Text reference_quadrature_text;
-		reference_quadrature_text.read(read_file_path);
-		reference_quadrature_text.remove_empty_line();
-
-		const auto num_quadrature_point = reference_quadrature_text.size();
-		std::vector<MathVector> quadrature_point_set;
-		std::vector<double> quadrature_weight_set;
-		quadrature_point_set.reserve(num_quadrature_point);
-		quadrature_weight_set.reserve(num_quadrature_point);
-
-		for (const auto& sentence : reference_quadrature_text) {
-			const char denominator = ' ';
-			const auto parsed_sentence = ms::parse(sentence, denominator);
-
-			auto quadrature_value_set = ms::to_value_set<double>(parsed_sentence);
-
-			quadrature_weight_set.emplace_back(quadrature_value_set.back());
-			quadrature_value_set.pop_back();
-			quadrature_point_set.emplace_back(std::move(quadrature_value_set));
-		}
-
-		ReferenceFigure::key_to_quadrature_rule_.emplace(std::move(key), QuadratureRule{ quadrature_point_set, quadrature_weight_set });
-	}
-
-	return key_to_quadrature_rule_.at(key);
-}
 
 const std::vector<MathVector>& ReferenceFigure::reference_post_node_set(const size_t post_order) {
 	auto key = std::make_pair(this->figure_type_, post_order);
@@ -329,6 +294,19 @@ std::vector<FigureType> ReferenceFigure::face_figure_type_set(void) const {
 	return face_figure_type_set;
 }
 
+size_t ReferenceFigure::figure_dimension(void) const {
+	switch (this->figure_type_) {
+	case FigureType::Line:
+		return 1;
+	case FigureType::Triangle:
+	case FigureType::Quadrilateral:
+		return 2;
+	default:
+		throw std::runtime_error("wrong figure type");
+		return NULL;
+	}
+}
+
 MathVector ReferenceFigure::normal_vector(void) const {
 	switch (this->figure_type_) {
 	case FigureType::Line:
@@ -357,8 +335,7 @@ FigureType ReferenceFigure::simplex_figure_type(void) const {
 }
 
 VectorFunction<Polynomial> ReferenceFigure::calculate_transformation_function(const std::vector<const MathVector*>& transformed_node_set) const {
-	const auto key = std::make_pair(this->figure_type_, this->figure_order_);
-	
+	const auto key = std::make_pair(this->figure_type_, this->figure_order_);	
 	const auto& reference_transformation_node_set = ReferenceFigure::key_to_transformation_node_set_.at(key);
 	
 	const auto num_reference_node = reference_transformation_node_set.size();
@@ -379,8 +356,56 @@ VectorFunction<Polynomial> ReferenceFigure::calculate_transformation_function(co
 	const auto C = T * inv_M;
 
 	const auto& transformation_monomial_vector = ReferenceFigure::key_to_transformation_monomial_vector_.at(key);
-
 	return C * transformation_monomial_vector;
+}
+
+QuadratureRule ReferenceFigure::calculate_quadrature_rule(const VectorFunction<Polynomial>& transformation_function, const size_t integrand_order) const {
+	auto key = std::make_pair(this->figure_type_, integrand_order);
+	if (ReferenceFigure::key_to_quadrature_rule_.find(key) == ReferenceFigure::key_to_quadrature_rule_.end()) {
+		const auto required_order = ReferenceFigure::calculate_Required_Order(integrand_order);
+		const auto num_required_point = ReferenceFigure::calculate_Num_Required_Point(required_order);
+
+		const std::string read_file_path = "RSC/Quadrature/Standard/" + ms::to_string(this->figure_type_) + "/P" + std::to_string(required_order) + "_n" + std::to_string(num_required_point) + ".txt";
+
+		Text reference_quadrature_text;
+		reference_quadrature_text.read(read_file_path);
+		reference_quadrature_text.remove_empty_line();
+
+		const auto num_quadrature_point = reference_quadrature_text.size();
+		std::vector<MathVector> quadrature_point_set;
+		std::vector<double> quadrature_weight_set;
+		quadrature_point_set.reserve(num_quadrature_point);
+		quadrature_weight_set.reserve(num_quadrature_point);
+
+		for (const auto& sentence : reference_quadrature_text) {
+			const char denominator = ' ';
+			const auto parsed_sentence = ms::parse(sentence, denominator);
+
+			auto quadrature_value_set = ms::to_value_set<double>(parsed_sentence);
+
+			quadrature_weight_set.emplace_back(quadrature_value_set.back());
+			quadrature_value_set.pop_back();
+			quadrature_point_set.emplace_back(std::move(quadrature_value_set));
+		}
+
+		ReferenceFigure::key_to_quadrature_rule_.emplace(key, QuadratureRule{ quadrature_point_set, quadrature_weight_set });
+	}
+
+	const auto reference_quadrature_rule = ReferenceFigure::key_to_quadrature_rule_.at(key);
+	const auto transformed_QP = transformation_function(reference_quadrature_rule.quadrature_point_set);
+
+	return QuadratureRule();
+	//const auto integrand_order = polynomial_order + this->calculate_Transformation_Scale_Function_Order();
+	//const auto num_QP = reference_QP.size();
+	//std::vector<double> transformed_QW(num_QP);
+	//for (size_t ipoint = 0; ipoint < num_QP; ++ipoint) {
+	//	const auto& node = reference_QP[ipoint];
+	//	const auto trasnformation_scale = this->calculate_Transformation_Scale(node);
+
+	//	transformed_QW[ipoint] = reference_QW[ipoint] * trasnformation_scale;
+	//}
+
+	//return QuadratureRule{ transformed_QP, transformed_QW };
 }
 
 size_t ReferenceFigure::calculate_Required_Order(const size_t integrand_order) const {
@@ -605,7 +630,7 @@ Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vec
 	: reference_figure_(figure_type, figure_order), node_set_(std::move(node_set)) {	
 	
 	this->transformation_function_ = this->reference_figure_.calculate_transformation_function(this->node_set_);
-	this->transformation_Jacobian_matrix_ = JacobianFunction(transformation_function_);
+	this->transformation_Jacobian_function_ = JacobianFunction(transformation_function_);
 
 
 	////linear transformation function
@@ -636,6 +661,60 @@ Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vec
 	//this->linear_transformation_function_.emplace_back(Polynomial(third_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
 };
 
+MathVector Figure::calculate_center_node(void) const {
+	return this->transformation_function_(this->reference_figure_.center_node());
+}
+
+VectorFunction<Polynomial> Figure::calculate_orthonormal_basis_vector(const size_t polynomial_order) const {
+	//initial basis
+	const auto figure_dimension = this->reference_figure_.figure_dimension();
+	const auto num_basis = ms::combination_with_repetition(1 + figure_dimension, polynomial_order);
+
+	VectorFunction<Polynomial> initial_basis_set;
+	initial_basis_set.reserve(num_basis);
+
+	if (figure_dimension == 2) {
+		//const auto& linear_transformation_function = figure.linear_transformation_function();
+		//const auto& x0 = linear_transformation_function[0];
+		//const auto& x1 = linear_transformation_function[1];
+
+		//for (size_t a = 0; a <= order; ++a) {
+		//	for (size_t b = 0; b <= a; ++b) {
+		//		Polynomial initial_basis(1);
+
+		//		for (size_t count = 0; count < a - b; ++count)
+		//			initial_basis *= x0;
+
+		//		for (size_t count = 0; count < b; ++count)
+		//			initial_basis *= x1;
+
+		//		initial_basis_set.emplace_back(std::move(initial_basis));
+		//	}
+		//}
+		
+		//// 1 x y x^2 xy y^2
+		//for (size_t a = 0; a <= polynomial_order; ++a)
+		//	for (size_t b = 0; b <= a; ++b)
+		//		initial_basis_set.push_back((X^(a-b))*(Y^b));
+
+		//1 (x - x_c) (y - y_c)  ...
+		const auto center_node = this->calculate_center_node();
+		for (size_t a = 0; a <= polynomial_order; ++a)
+			for (size_t b = 0; b <= a; ++b)
+				initial_basis_set.push_back(((X-center_node[0])^(a-b))*((Y-center_node[1])^b));
+	}
+	else
+		throw std::runtime_error("wrong figure type");
+
+
+
+	return initial_basis_set;
+}
+
+QuadratureRule Figure::calculate_quadrature_rule(const size_t integrand_roder) const {
+	return this->reference_figure_.calculate_quadrature_rule(this->transformation_function_, integrand_roder);
+}
+
 
 VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Monomial> vector_function) {
 	const auto [num_row, num_column] = m.size();
@@ -651,6 +730,52 @@ VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFuncti
 	return result;
 }
 
+namespace ms {
+	std::vector<Polynomial> Gram_Schmidt_Process(const VectorFunction<Polynomial>& initial_polynomial_set, const Figure& figure) {
+		auto normalized_polynomial_set = initial_polynomial_set;
+
+		for (size_t i = 0; i < initial_polynomial_set.size(); ++i) {
+			for (size_t j = 0; j < i; ++j)
+				normalized_polynomial_set[i] -= ms::inner_product(normalized_polynomial_set[i], normalized_polynomial_set[j], figure) * normalized_polynomial_set[j];
+
+			normalized_polynomial_set[i] *= 1.0 / ms::L2_Norm(normalized_polynomial_set[i], figure);
+		}
+
+		return normalized_polynomial_set;
+	}
+
+	double integrate(const Polynomial& integrand, const QuadratureRule& quadrature_rule) {
+		const auto& QP_set = quadrature_rule.quadrature_point_set;
+		const auto& QW_set = quadrature_rule.quadrature_weight_set;
+
+		double result = 0.0;
+		for (size_t i = 0; i < QP_set.size(); ++i) 
+			result += integrand(QP_set[i]) * QW_set[i];
+
+		return result;
+	}
+
+	double integrate(const Polynomial& integrand, const Figure& figure) {
+		const auto quadrature_rule = figure.calculate_quadrature_rule(integrand.polynomial_order());
+		return ms::integrate(integrand, quadrature_rule);
+	}
+
+	double inner_product(const Polynomial& f1, const Polynomial& f2, const QuadratureRule& quadrature_rule) {
+		return ms::integrate(f1 * f2, quadrature_rule);
+	}
+
+	double inner_product(const Polynomial& f1, const Polynomial& f2, const Figure& figure) {
+		return ms::integrate(f1 * f2, figure);
+	}
+
+	double L2_Norm(const Polynomial& polynomial, const QuadratureRule& quadrature_rule) {
+		return std::sqrt(ms::inner_product(polynomial, polynomial, quadrature_rule));
+	}
+
+	double L2_Norm(const Polynomial& polynomial, const Figure& figure) {
+		return std::sqrt(ms::inner_product(polynomial, polynomial, figure));
+	}
+}
 
 //
 //std::vector<std::vector<double>> Figure::calculate_Connecitivity_Set(const size_t post_order, const size_t start_index) const {
@@ -671,23 +796,23 @@ VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFuncti
 //}
 //
 //QuadratureRule Figure::calculate_Quadrature_Rule(const size_t polynomial_order) const {
-//	const auto integrand_order = polynomial_order + this->calculate_Transformation_Scale_Function_Order();
-//	const auto& reference_quadrature_rule = ReferenceFigure::ReferenceQuadratureRule::get(this->figure_type_, integrand_order);
-//	const auto& reference_QP = reference_quadrature_rule.quadrature_point_set;
-//	const auto& reference_QW = reference_quadrature_rule.quadrature_weight_set;
-//
-//	const auto transformed_QP = this->transformation_function_(reference_QP);
-//
-//	const auto num_QP = reference_QP.size();
-//	std::vector<double> transformed_QW(num_QP);
-//	for (size_t ipoint = 0; ipoint < num_QP; ++ipoint) {
-//		const auto& node = reference_QP[ipoint];
-//		const auto trasnformation_scale = this->calculate_Transformation_Scale(node);
-//
-//		transformed_QW[ipoint] = reference_QW[ipoint] * trasnformation_scale;
-//	}
-//
-//	return QuadratureRule{ transformed_QP, transformed_QW };
+	//const auto integrand_order = polynomial_order + this->calculate_Transformation_Scale_Function_Order();
+	//const auto& reference_quadrature_rule = ReferenceFigure::ReferenceQuadratureRule::get(this->figure_type_, integrand_order);
+	//const auto& reference_QP = reference_quadrature_rule.quadrature_point_set;
+	//const auto& reference_QW = reference_quadrature_rule.quadrature_weight_set;
+
+	//const auto transformed_QP = this->transformation_function_(reference_QP);
+
+	//const auto num_QP = reference_QP.size();
+	//std::vector<double> transformed_QW(num_QP);
+	//for (size_t ipoint = 0; ipoint < num_QP; ++ipoint) {
+	//	const auto& node = reference_QP[ipoint];
+	//	const auto trasnformation_scale = this->calculate_Transformation_Scale(node);
+
+	//	transformed_QW[ipoint] = reference_QW[ipoint] * trasnformation_scale;
+	//}
+
+	//return QuadratureRule{ transformed_QP, transformed_QW };
 //}
 //
 //Figure Figure::build_Face_Figure(const size_t face_index) const {
@@ -1093,67 +1218,67 @@ VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFuncti
 //
 //namespace Math {
 //	std::vector<Polynomial> calculate_Initial_Basis_Function_Set(const Figure& figure, const size_t order) {
-//		//const auto figure_dimension = figure.dimension();
-//
-//		//const auto num_basis = Math::combination_with_repetition(1 + figure_dimension, order);
-//		//std::vector<Polynomial> initial_basis_set;
-//		//initial_basis_set.reserve(num_basis);
-//
-//		//if (figure_dimension == 2) {
-//		//	const auto& linear_transformation_function = figure.linear_transformation_function();
-//		//	const auto& x0 = linear_transformation_function[0];
-//		//	const auto& x1 = linear_transformation_function[1];
-//
-//		//	for (size_t a = 0; a <= order; ++a) {
-//		//		for (size_t b = 0; b <= a; ++b) {
-//		//			Polynomial initial_basis(1);
-//
-//		//			for (size_t count = 0; count < a - b; ++count)
-//		//				initial_basis *= x0;
-//
-//		//			for (size_t count = 0; count < b; ++count)
-//		//				initial_basis *= x1;
-//
-//		//			initial_basis_set.emplace_back(std::move(initial_basis));
-//		//		}
-//		//	}
-//		//}
-//
-//		//const auto figure_dimension = figure.dimension();
-//
-//		//const auto num_basis = Math::combination_with_repetition(1 + figure_dimension, order);
-//		//std::vector<Polynomial> initial_basis_set;
-//		//initial_basis_set.reserve(num_basis);
-//
-//		//if (figure_dimension == 2) {
-//		//	// 1 x y x^2 xy y^2
-//		//	for (size_t a = 0; a <= order; ++a)
-//		//		for (size_t b = 0; b <= a; ++b)
-//		//			initial_basis_set.emplace_back(Monomial{ a - b, b });
-//		//}
-//
-//
-//		const auto figure_dimension = figure.dimension();
-//		const auto center_node = figure.calculate_Center_Node();
-//
-//		const auto num_basis = Math::combination_with_repetition(1 + figure_dimension, order);
-//		std::vector<Polynomial> initial_basis_set;
-//		initial_basis_set.reserve(num_basis);
-//
-//		if (figure_dimension == 2) {
-//			// 1 (x - x_c) ( y - y_c )  ...
-//			for (size_t a = 0; a <= order; ++a)
-//				for (size_t b = 0; b <= a; ++b)
-//					initial_basis_set.emplace_back(Monomial{ a - b, b });
-//
-//			for (auto& basis : initial_basis_set) 
-//				Math::translate(basis, center_node);
-//			
-//		}
-//		else
-//			throw std::runtime_error("wrong figure type");
-//
-//		return initial_basis_set;
+		//const auto figure_dimension = figure.dimension();
+
+		//const auto num_basis = Math::combination_with_repetition(1 + figure_dimension, order);
+		//std::vector<Polynomial> initial_basis_set;
+		//initial_basis_set.reserve(num_basis);
+
+		//if (figure_dimension == 2) {
+		//	const auto& linear_transformation_function = figure.linear_transformation_function();
+		//	const auto& x0 = linear_transformation_function[0];
+		//	const auto& x1 = linear_transformation_function[1];
+
+		//	for (size_t a = 0; a <= order; ++a) {
+		//		for (size_t b = 0; b <= a; ++b) {
+		//			Polynomial initial_basis(1);
+
+		//			for (size_t count = 0; count < a - b; ++count)
+		//				initial_basis *= x0;
+
+		//			for (size_t count = 0; count < b; ++count)
+		//				initial_basis *= x1;
+
+		//			initial_basis_set.emplace_back(std::move(initial_basis));
+		//		}
+		//	}
+		//}
+
+		//const auto figure_dimension = figure.dimension();
+
+		//const auto num_basis = Math::combination_with_repetition(1 + figure_dimension, order);
+		//std::vector<Polynomial> initial_basis_set;
+		//initial_basis_set.reserve(num_basis);
+
+		//if (figure_dimension == 2) {
+		//	// 1 x y x^2 xy y^2
+		//	for (size_t a = 0; a <= order; ++a)
+		//		for (size_t b = 0; b <= a; ++b)
+		//			initial_basis_set.emplace_back(Monomial{ a - b, b });
+		//}
+
+
+		//const auto figure_dimension = figure.dimension();
+		//const auto center_node = figure.calculate_Center_Node();
+
+		//const auto num_basis = Math::combination_with_repetition(1 + figure_dimension, order);
+		//std::vector<Polynomial> initial_basis_set;
+		//initial_basis_set.reserve(num_basis);
+
+		//if (figure_dimension == 2) {
+		//	 1 (x - x_c) ( y - y_c )  ...
+		//	for (size_t a = 0; a <= order; ++a)
+		//		for (size_t b = 0; b <= a; ++b)
+		//			initial_basis_set.emplace_back(Monomial{ a - b, b });
+
+		//	for (auto& basis : initial_basis_set) 
+		//		Math::translate(basis, center_node);
+		//	
+		//}
+		//else
+		//	throw std::runtime_error("wrong figure type");
+
+		//return initial_basis_set;
 //	}
 //
 //	std::vector<Polynomial> calculate_Orthonormal_Basis_Function_Set(const Figure& figure, const size_t polynomial_order) {
@@ -1161,52 +1286,52 @@ VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFuncti
 //		return Math::Gram_Schmidt_Process(initial_basis_function_set, figure);
 //	}
 //
-//	double integrate(const Polynomial& integrand, const QuadratureRule& quadrature_rule) {
-//		const auto& QP_set = quadrature_rule.quadrature_point_set;
-//		const auto& QW_set = quadrature_rule.quadrature_weight_set;
-//
-//		////debug
-//		//std::cout << std::setprecision(15);
-//		////debug
-//
-//		double result = 0.0;		
-//		for (size_t i = 0; i < QP_set.size(); ++i) {
-//
-//
-//			result += integrand(QP_set[i]) * QW_set[i];
-//			////debug			
-//			//std::cout << "QP : " << QP_set[i] << "\n";
-//			//std::cout << "QW : " << QW_set[i] << "\n";
-//			//std::cout << "f(QP) : " << integrand(QP_set[i]) << "\n";
-//			//std::cout << "f(QP)*QW : " << integrand(QP_set[i]) * QW_set[i] << "\n";
-//			////debug
-//		}
-//
-//		return result;
-//	}
-//
-//	double integrate(const Polynomial& integrand, const Figure& figure) {
-//		const auto quadrature_rule = figure.calculate_Quadrature_Rule(integrand.order());
-//		return Math::integrate(integrand, quadrature_rule);
-//	}
-//
-//	double inner_product(const Polynomial& f1, const Polynomial& f2, const QuadratureRule& quadrature_rule) {
-//		return Math::integrate(f1 * f2, quadrature_rule);
-//	}
-//
-//	double inner_product(const Polynomial& f1, const Polynomial& f2, const Figure& geometry) {
-//		const auto quadrature_rule = geometry.calculate_Quadrature_Rule(f1.order() + f2.order());
-//		return Math::inner_product(f1, f2, quadrature_rule);
-//	}
-//
-//	double L2_Norm(const Polynomial& function, const QuadratureRule& quadrature_rule) {
-//		return std::sqrt(Math::inner_product(function, function, quadrature_rule));
-//	}
-//
-//	double L2_Norm(const Polynomial& polynomial, const Figure& geometry) {
-//		const auto quadrature_rule = geometry.calculate_Quadrature_Rule(polynomial.order() * 2);
-//		return Math::L2_Norm(polynomial, quadrature_rule);
-//	}
+	//double integrate(const Polynomial& integrand, const QuadratureRule& quadrature_rule) {
+	//	const auto& QP_set = quadrature_rule.quadrature_point_set;
+	//	const auto& QW_set = quadrature_rule.quadrature_weight_set;
+
+	//	////debug
+	//	//std::cout << std::setprecision(15);
+	//	////debug
+
+	//	double result = 0.0;		
+	//	for (size_t i = 0; i < QP_set.size(); ++i) {
+
+
+	//		result += integrand(QP_set[i]) * QW_set[i];
+	//		////debug			
+	//		//std::cout << "QP : " << QP_set[i] << "\n";
+	//		//std::cout << "QW : " << QW_set[i] << "\n";
+	//		//std::cout << "f(QP) : " << integrand(QP_set[i]) << "\n";
+	//		//std::cout << "f(QP)*QW : " << integrand(QP_set[i]) * QW_set[i] << "\n";
+	//		////debug
+	//	}
+
+	//	return result;
+	//}
+
+	//double integrate(const Polynomial& integrand, const Figure& figure) {
+	//	const auto quadrature_rule = figure.calculate_Quadrature_Rule(integrand.order());
+	//	return Math::integrate(integrand, quadrature_rule);
+	//}
+
+	//double inner_product(const Polynomial& f1, const Polynomial& f2, const QuadratureRule& quadrature_rule) {
+	//	return Math::integrate(f1 * f2, quadrature_rule);
+	//}
+
+	//double inner_product(const Polynomial& f1, const Polynomial& f2, const Figure& geometry) {
+	//	const auto quadrature_rule = geometry.calculate_Quadrature_Rule(f1.order() + f2.order());
+	//	return Math::inner_product(f1, f2, quadrature_rule);
+	//}
+
+	//double L2_Norm(const Polynomial& function, const QuadratureRule& quadrature_rule) {
+	//	return std::sqrt(Math::inner_product(function, function, quadrature_rule));
+	//}
+
+	//double L2_Norm(const Polynomial& polynomial, const Figure& geometry) {
+	//	const auto quadrature_rule = geometry.calculate_Quadrature_Rule(polynomial.order() * 2);
+	//	return Math::L2_Norm(polynomial, quadrature_rule);
+	//}
 //
 //	std::vector<Polynomial> Gram_Schmidt_Process(const std::vector<Polynomial>& initial_polynomial_set, const QuadratureRule& quadrature_rule) {
 //		auto normalized_polynomial_set = initial_polynomial_set;
@@ -1259,56 +1384,56 @@ VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFuncti
 //
 //	std::vector<Polynomial> Gram_Schmidt_Process(const std::vector<Polynomial>& initial_polynomial_set, const Figure& geometry) {
 //		
-//		auto normalized_polynomial_set = initial_polynomial_set;
-//
-//		for (size_t i = 0; i < initial_polynomial_set.size(); ++i) {
-//			//for (size_t j = 0; j < i; ++j)
-//			//	normalized_polynomial_set[i] -= Math::inner_product(normalized_polynomial_set[i], normalized_polynomial_set[j], geometry) * normalized_polynomial_set[j];
-//
-//			//debug
-//			std::cout << std::setprecision(16);
-//			for (size_t j = 0; j < i; ++j) {
-//				auto inner_product = Math::inner_product(normalized_polynomial_set[i], normalized_polynomial_set[j], geometry);
-//				normalized_polynomial_set[i] -= inner_product * normalized_polynomial_set[j];
-//				std::cout << i << j << " inner product : " << inner_product << "\n";
-//				//std::cout << "orthogonalized basis : " << normalized_polynomial_set[i] <<"\n";
-//			}
-//
-//
-//			//std::cout << "\nbefore normalize orthogonality check\n";
-//			//for (size_t j = 0; j < i; ++j)
-//			//	std::cout << i << "," << j << " : " << Math::inner_product(normalized_polynomial_set[i], normalized_polynomial_set[j], geometry) << "\n";
-//
-//
-//			//auto debug = normalized_polynomial_set[i];
-//			//std::cout << "befor normalized " << i << "basis : " << normalized_polynomial_set[i] << "\n";
-//			
-//			//std::cout << "1/L2_Norm Value : " << 1.0 / Math::L2_Norm(normalized_polynomial_set[i], geometry) << "\n";
-//			//std::cout << "Normalized basis : " << (debug *= 1.0 / Math::L2_Norm(normalized_polynomial_set[i], geometry)) << "\n";
-//
-//			//std::cout << "\nafter normalize orthogonality check\n";
-//			//for (size_t j = 0; j < i; ++j)
-//			//	std::cout << i << "," << j << " : " << Math::inner_product(debug, normalized_polynomial_set[j], geometry) << "\n";
-//			//debug
-//
-//			normalized_polynomial_set[i] *= 1.0 / Math::L2_Norm(normalized_polynomial_set[i], geometry);
-//			//std::cout << i << " orthonormalized basis : " << normalized_polynomial_set[i] << "\n";
-//		}
-//
-//		return normalized_polynomial_set;
-//
-//		//std::vector<size_t> order_set;
-//		//order_set.reserve(initial_polynomial_set.size());
-//
-//		//for (const auto& polynomial : initial_polynomial_set)
-//		//	order_set.emplace_back(polynomial.order());
-//
-//		//const auto maximum_order = *std::max_element(order_set.begin(), order_set.end());
-//		//const auto integrand_order = maximum_order * 2;
-//
-//		//const auto quadrature_rule = geometry.calculate_Quadrature_Rule(integrand_order);
-//		//return Math::Gram_Schmidt_Process(initial_polynomial_set, quadrature_rule);
-//	}
+	//	auto normalized_polynomial_set = initial_polynomial_set;
+
+	//	for (size_t i = 0; i < initial_polynomial_set.size(); ++i) {
+	//		//for (size_t j = 0; j < i; ++j)
+	//		//	normalized_polynomial_set[i] -= Math::inner_product(normalized_polynomial_set[i], normalized_polynomial_set[j], geometry) * normalized_polynomial_set[j];
+
+	//		//debug
+	//		std::cout << std::setprecision(16);
+	//		for (size_t j = 0; j < i; ++j) {
+	//			auto inner_product = Math::inner_product(normalized_polynomial_set[i], normalized_polynomial_set[j], geometry);
+	//			normalized_polynomial_set[i] -= inner_product * normalized_polynomial_set[j];
+	//			std::cout << i << j << " inner product : " << inner_product << "\n";
+	//			//std::cout << "orthogonalized basis : " << normalized_polynomial_set[i] <<"\n";
+	//		}
+
+
+	//		//std::cout << "\nbefore normalize orthogonality check\n";
+	//		//for (size_t j = 0; j < i; ++j)
+	//		//	std::cout << i << "," << j << " : " << Math::inner_product(normalized_polynomial_set[i], normalized_polynomial_set[j], geometry) << "\n";
+
+
+	//		//auto debug = normalized_polynomial_set[i];
+	//		//std::cout << "befor normalized " << i << "basis : " << normalized_polynomial_set[i] << "\n";
+	//		
+	//		//std::cout << "1/L2_Norm Value : " << 1.0 / Math::L2_Norm(normalized_polynomial_set[i], geometry) << "\n";
+	//		//std::cout << "Normalized basis : " << (debug *= 1.0 / Math::L2_Norm(normalized_polynomial_set[i], geometry)) << "\n";
+
+	//		//std::cout << "\nafter normalize orthogonality check\n";
+	//		//for (size_t j = 0; j < i; ++j)
+	//		//	std::cout << i << "," << j << " : " << Math::inner_product(debug, normalized_polynomial_set[j], geometry) << "\n";
+	//		//debug
+
+	//		normalized_polynomial_set[i] *= 1.0 / Math::L2_Norm(normalized_polynomial_set[i], geometry);
+	//		//std::cout << i << " orthonormalized basis : " << normalized_polynomial_set[i] << "\n";
+	//	}
+
+	//	return normalized_polynomial_set;
+
+	//	//std::vector<size_t> order_set;
+	//	//order_set.reserve(initial_polynomial_set.size());
+
+	//	//for (const auto& polynomial : initial_polynomial_set)
+	//	//	order_set.emplace_back(polynomial.order());
+
+	//	//const auto maximum_order = *std::max_element(order_set.begin(), order_set.end());
+	//	//const auto integrand_order = maximum_order * 2;
+
+	//	//const auto quadrature_rule = geometry.calculate_Quadrature_Rule(integrand_order);
+	//	//return Math::Gram_Schmidt_Process(initial_polynomial_set, quadrature_rule);
+	//}
 //}
 //
 //

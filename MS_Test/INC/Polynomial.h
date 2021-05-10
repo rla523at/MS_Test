@@ -74,6 +74,7 @@ public:
 	Polynomial operator-(const Polynomial& other) const;
 	Polynomial operator*(const double scalar) const;
 	Polynomial operator*(const Polynomial& other) const;
+	Polynomial operator^(const size_t power_index) const;
 
 	double operator()(const MathVector& variable_vector) const;
 	bool operator==(const Polynomial& other) const;

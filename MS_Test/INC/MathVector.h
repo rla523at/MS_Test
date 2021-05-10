@@ -15,6 +15,7 @@ public:
 	template <typename ... Vals>
 	explicit MathVector(Vals&&... values) :std::vector<double>(std::forward<Vals>(values)...) {};
 	MathVector(std::initializer_list<double> list) :std::vector<double>(list) {};
+	MathVector(const std::vector<double>& vec) :std::vector<double>(vec) {};
 	MathVector(const double) = delete;
 	
 
@@ -65,6 +66,14 @@ public:
 		return result;
 	}
 
+	std::vector<MathVector> operator()(const std::vector<MathVector>& variable_vector_set) const {
+		std::vector<MathVector> result;
+		result.reserve(variable_vector_set.size());
+		for (const auto& variable_vector : variable_vector_set)
+			result.push_back((*this)(variable_vector));
+		return result;
+	}
+
 	size_t domain_dimension(void) const {
 		const size_t num_function = this->size();
 
@@ -74,4 +83,19 @@ public:
 
 		return *std::max_element(domain_dimension_set.begin(), domain_dimension_set.end());
 	}
+
+	std::string to_string(void) const {
+		std::string result = "{ ";
+		for (const auto& func : *this)
+			result += func.to_string() + ", ";
+		result.erase(result.end() - 2, result.end());
+		result += " }";
+		return result;
+	}
+};
+
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const VectorFunction<T>& x) {
+	return os << x.to_string();
 };
