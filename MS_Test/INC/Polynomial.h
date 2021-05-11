@@ -57,6 +57,7 @@ private:
 	VectorFunction<Monomial> monomial_vector_function_;
 	
 	std::vector<CalculatedPolynomial> calculated_polynomial_set_; // to minimize truncation error
+	double power_index_ = 1.0;
 
 public:
 	explicit Polynomial(void) = default;
@@ -74,7 +75,7 @@ public:
 	Polynomial operator-(const Polynomial& other) const;
 	Polynomial operator*(const double scalar) const;
 	Polynomial operator*(const Polynomial& other) const;
-	Polynomial operator^(const size_t power_index) const;
+	Polynomial operator^(const double power_index) const;
 
 	double operator()(const MathVector& variable_vector) const;
 	bool operator==(const Polynomial& other) const;
@@ -83,11 +84,11 @@ public:
 	Polynomial& differentiate(const size_t variable_index);
 	VectorFunction<Polynomial> gradient(void) const;
 	VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
-	Polynomial& power(const size_t power_index);
+	Polynomial& power(const double power_index);
 	std::string to_string(void) const;
 
-	size_t polynomial_order(void) const;
 	size_t domain_dimension(void) const;
+	size_t polynomial_order(void) const;
 
 //private:
 	bool compare_v1(const Polynomial& other) const;
@@ -96,6 +97,7 @@ public:
 	void insert(const double coefficient, const Monomial& monomial);
 	Polynomial& be_zero(void);
 	bool is_zero(void) const;
+	bool is_one(void) const;
 	bool is_simple_polynomial(void) const;
 	bool is_single_term(void) const;
 
@@ -125,4 +127,5 @@ namespace ms {
 	size_t combination(const size_t n, const size_t k);
 	size_t combination_with_repetition(const size_t n, const size_t k);
 	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
+	Polynomial sqrt(const Polynomial& polynomial);
 }

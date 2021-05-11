@@ -182,11 +182,19 @@ Polynomial& Polynomial::operator+=(const Polynomial& other) {
 	if (other.is_zero())
 		return *this;
 
-	if (this->is_simple_polynomial() && other.is_simple_polynomial())
-		this->simple_polynomial_addition(other);
-	else
-		this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
-	return *this;
+	if (this->power_index_ == 1.0) {
+		if (this->is_simple_polynomial() && other.is_simple_polynomial())
+			this->simple_polynomial_addition(other);
+		else
+			this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
+		return *this;
+	}
+	else {
+		Polynomial tmp = 1;		
+		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, *this);
+		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
+		return *this = std::move(tmp);
+	}
 }
 
 Polynomial& Polynomial::operator-=(const Polynomial& other) {
@@ -195,30 +203,44 @@ Polynomial& Polynomial::operator-=(const Polynomial& other) {
 }
 
 Polynomial& Polynomial::operator*=(const double scalar) {
-	this->simple_polynomial_scalar_multiplication(scalar);
-	for (auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
-		if (binary_operator == BinaryOperator::addition)
-			polynomial.simple_polynomial_scalar_multiplication(scalar);
+	if (this->power_index_ == 1.0) {
+		this->simple_polynomial_scalar_multiplication(scalar);
+		for (auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
+			if (binary_operator == BinaryOperator::addition)
+				polynomial.simple_polynomial_scalar_multiplication(scalar);
+		}
+		return *this;
 	}
-
-	return *this;
+	else {
+		Polynomial tmp = scalar;
+		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, *this);
+		return *this = std::move(tmp);
+	}
 }
 
 Polynomial& Polynomial::operator*=(const Polynomial& other) {	
 	if (this->is_zero() || other.is_zero())
 		return this->be_zero();
 
-	if (other == 1)
+	if (other.is_one())
 		return *this;
 
-	if (*this == 1)
+	if (this->is_one())
 		return *this = other;
 
-	if (this->is_simple_polynomial() && other.is_single_term())
-		return this->simple_polynomial_multiplication(other);
+	if (this->power_index_ == 1.0) {
+		if (this->is_simple_polynomial() && other.is_single_term())
+			return this->simple_polynomial_multiplication(other);
 
-	this->calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
-	return *this;
+		this->calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
+		return *this;
+	}
+	else {
+		Polynomial tmp = 1;
+		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, *this);
+		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
+		return *this = std::move(tmp);
+	}
 }
 
 Polynomial Polynomial::operator+(const Polynomial& other) const {
@@ -241,16 +263,16 @@ Polynomial Polynomial::operator*(const Polynomial& other) const {
 	return result *= other;
 }
 
-Polynomial Polynomial::operator^(const size_t power_index) const {
+Polynomial Polynomial::operator^(const double power_index) const {
 	Polynomial result(*this);
 	return result.power(power_index);
 }
 
 double Polynomial::operator()(const MathVector& variable_vector) const {
+	auto result = this->simple_polynomial_calculation(variable_vector);
 	if (this->is_simple_polynomial())
-		return this->simple_polynomial_calculation(variable_vector);
-	else {
-		auto result = this->simple_polynomial_calculation(variable_vector);
+		return std::pow(result,this->power_index_);
+	else {		
 		for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
 			switch (binary_operator) {
 			case  BinaryOperator::addition:
@@ -261,7 +283,7 @@ double Polynomial::operator()(const MathVector& variable_vector) const {
 				break;
 			}
 		}
-		return result;
+		return std::pow(result,this->power_index_);
 	}
 }
 
@@ -275,35 +297,46 @@ bool Polynomial::operator!=(const Polynomial& other) const {
 }
 
 Polynomial& Polynomial::differentiate(const size_t variable_index) {
-	if (this->is_simple_polynomial())
-		return this->simple_polynomial_differentiate(variable_index);
+	if (this->power_index_ == 1.0) {
+		if (this->is_simple_polynomial())
+			return this->simple_polynomial_differentiate(variable_index);
+		else {
+			auto [binary_operator, polynomial] = this->calculated_polynomial_set_.back();
+			this->calculated_polynomial_set_.pop_back();
+
+			switch (binary_operator) {
+			case  BinaryOperator::addition: {
+				this->differentiate(variable_index);
+				polynomial.differentiate(variable_index);
+				*this += polynomial;
+				break;
+			}
+
+			case BinaryOperator::multiplication: {
+				auto tmp_poly = ms::differentiate(*this, variable_index);
+				tmp_poly *= polynomial;
+
+				polynomial.differentiate(variable_index);
+				*this *= polynomial;
+				*this += tmp_poly;
+				break;
+			}
+
+			default:
+				throw std::runtime_error("wrong binary operator");
+			}
+
+			return *this;
+		}
+	}
 	else {
-		auto [binary_operator, polynomial] = this->calculated_polynomial_set_.back();
-		this->calculated_polynomial_set_.pop_back();
+		auto tmp_poly = *this;
+		tmp_poly.power_index_ = 1.0;
+		tmp_poly *= this->power_index_;
+		tmp_poly.differentiate(variable_index);
 
-		switch (binary_operator) {
-		case  BinaryOperator::addition: {
-			this->differentiate(variable_index);
-			polynomial.differentiate(variable_index);
-			*this += polynomial;
-			break;
-		}
-
-		case BinaryOperator::multiplication: {
-			auto tmp_poly = ms::differentiate(*this, variable_index);
-			tmp_poly *= polynomial;
-
-			polynomial.differentiate(variable_index);
-			*this *= polynomial;
-			*this += tmp_poly;
-			break;
-		}
-
-		default:
-			throw std::runtime_error("wrong binary operator");
-		}
-
-		return *this;
+		--this->power_index_;
+		return *this *= tmp_poly;
 	}
 }
 
@@ -322,22 +355,22 @@ VectorFunction<Polynomial> Polynomial::gradient(const size_t domain_dimension) c
 	return result;
 }
 
-Polynomial& Polynomial::power(const size_t power_index) {
+Polynomial& Polynomial::power(const double power_index) {
 	if (power_index == 0)
 		return *this = 1;
-	
-	const auto current_polynomial = *this;
-	for (size_t i = 1; i < power_index; ++i)
-		*this *= current_polynomial;
+
+	if (this->is_zero()||this->is_one())
+		return *this;
+
+	this->power_index_ *= power_index;
 	return *this;
 }
 
 std::string Polynomial::to_string(void) const {
+	auto str = this->simple_polynomial_string();
 	if (this->is_simple_polynomial())
-		return this->simple_polynomial_string();
+		return str;
 	else {
-		auto str = this->simple_polynomial_string();
-
 		for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
 			switch (binary_operator) {
 			case  BinaryOperator::addition:
@@ -349,7 +382,9 @@ std::string Polynomial::to_string(void) const {
 			}
 			str += polynomial.to_string() + "]";
 		}
-		str.pop_back();
+		if (this->power_index_ != 1.0)
+			str += "^(" + ms::double_to_string(this->power_index_) + ")";
+
 		return str;
 	}
 }
@@ -385,7 +420,8 @@ bool Polynomial::compare_v1(const Polynomial& other) const {
 }
 
 bool Polynomial::compare_v2(const Polynomial& other) const {
-	//유리함수의 basis는 뭐지 ??? ??? ?? ?? ????
+	//유리함수의 basis는 뭐지 ??????????????
+	//power가 있을때 비교 어떻게 하지 ???????????
 	const auto max_polynomial_order = std::max(this->polynomial_order(), other.polynomial_order());
 	const auto max_domain_dimension = std::max(this->domain_dimension(), other.domain_dimension());
 	const auto compare_node_set = ms::build_compare_node_set(max_polynomial_order,max_domain_dimension);
@@ -398,22 +434,22 @@ bool Polynomial::compare_v2(const Polynomial& other) const {
 	return true;
 }
 
-size_t Polynomial::polynomial_order(void) const {
-	if (this->is_simple_polynomial())
-		return this->simple_polynomial_order();
-	else {
-		auto result = this->simple_polynomial_order();
+size_t Polynomial::polynomial_order(void) const {	
+	auto result = this->simple_polynomial_order();
+	if (this->is_simple_polynomial()) 
+		return result * static_cast<size_t>(std::ceil(this->power_index_));
+	else {		
 		for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
 			switch (binary_operator) {
 			case  BinaryOperator::addition:
-				result = std::max(result,polynomial.polynomial_order());
+				result = std::max(result, polynomial.polynomial_order());
 				break;
 			case BinaryOperator::multiplication:
 				result += polynomial.polynomial_order();
 				break;
 			}
 		}
-		return result;
+		return result * static_cast<size_t>(std::ceil(this->power_index_));
 	}
 }
 
@@ -481,11 +517,24 @@ Polynomial& Polynomial::simple_polynomial_multiplication(const Polynomial& other
 }
 
 bool Polynomial::is_zero(void) const {
-	return this->coefficient_vector_.empty() && this->monomial_vector_function_.empty();
+	return this->coefficient_vector_.empty() && this->monomial_vector_function_.empty() && this->is_simple_polynomial();
+}
+
+bool Polynomial::is_one(void) const {
+	if (!this->is_simple_polynomial())
+		return false;
+
+	if (this->coefficient_vector_.size() != 1 || this->monomial_vector_function_.size() != 1)
+		return false;
+
+	if (this->coefficient_vector_.front() == 1 && this->monomial_vector_function_.front() == Monomial())
+		return true;
+	else
+		return false;
 }
 
 bool Polynomial::is_simple_polynomial(void) const {
-	return this->calculated_polynomial_set_.empty();
+	return this->power_index_ == 1.0 && this->calculated_polynomial_set_.empty();
 }
 
 bool Polynomial::is_single_term(void) const {
@@ -561,6 +610,9 @@ size_t Polynomial::simple_polynomial_order(void) const {
 }
 
 Polynomial Polynomial::to_simple_polynomial(void) const {
+	if (this->power_index_ != 1.0)
+		throw std::runtime_error("polynomial with power can not be simple polynomial in general.");
+
 	Polynomial result(this->coefficient_vector_,this->monomial_vector_function_);
 
 	for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
@@ -675,5 +727,9 @@ namespace ms {
 	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index) {
 		auto result = polynomial;
 		return result.differentiate(variable_index);
+	}
+
+	Polynomial sqrt(const Polynomial& polynomial) {
+		return polynomial^(0.5);		
 	}
 }

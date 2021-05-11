@@ -55,6 +55,7 @@ namespace ms {
 }
 
 
+
 template <typename T>
 class JacobianFunction
 {
@@ -156,7 +157,7 @@ namespace ms {
 			solution -= solution_delta;
 
 			if (solution_delta.L2_Norm() <= convergence_criteria)
-				return solution;		
+				return solution;
 		}
 	}
 }

@@ -13,15 +13,14 @@ enum class FigureType{
 
 
 struct QuadratureRule{
-	std::vector<MathVector> quadrature_point_set;
-	std::vector<double> quadrature_weight_set;	
+	std::vector<MathVector> node_set;
+	std::vector<double> weight_set;	
 };
 
 
 class ReferenceFigure
 {
-//private:
-public: // for test
+private:
 	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_transformation_node_set_;
 	static std::map<std::pair<FigureType, size_t>, VectorFunction<Monomial>> key_to_transformation_monomial_vector_;
 	static std::map<std::pair<FigureType, size_t>, RowMajorMatrix> key_to_inverse_transformation_monomial_matrix_;
@@ -37,8 +36,6 @@ private:
 public:
 	ReferenceFigure(const FigureType figure_type, const size_t figure_order);
 
-
-	//const QuadratureRule& reference_quadrature_rule(const size_t integrand_order);
 	const std::vector<MathVector>& reference_post_node_set(const size_t post_order);
 	const std::vector<std::vector<size_t>>& reference_connectivity(const size_t post_order);
 
@@ -56,10 +53,18 @@ public:
 	std::vector<size_t> vertex_node_index_order_set(void) const;
 	std::vector<std::vector<size_t>> vertex_simplex_node_index_order_family(void) const;
 
-private:
+//private:
+public: //for test
 	size_t calculate_Required_Order(const size_t integrand_order) const;
 	size_t calculate_Num_Required_Point(const size_t required_order) const;
 	size_t support_element_order(void) const;
+
+	Polynomial calculate_trasnformation_scale_function(const VectorFunction<Polynomial>& transformation_function) const;
+
+	std::vector<MathVector> transformation_node_set(void) const;
+	VectorFunction<Monomial> transformation_monomial_vector(void) const;
+	RowMajorMatrix inverse_transformation_monomial_matrix(void) const;
+	QuadratureRule reference_quadrature_rule(const size_t integrand_order) const;
 };
 
 
@@ -74,7 +79,7 @@ private:
 	ReferenceFigure reference_figure_;
 	std::vector<const MathVector*> node_set_;
 	VectorFunction<Polynomial> transformation_function_;
-	JacobianFunction<Polynomial> transformation_Jacobian_function_;
+	//JacobianFunction<Polynomial> transformation_Jacobian_function_;
 
 public:
 	explicit Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set);
