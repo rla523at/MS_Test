@@ -54,10 +54,10 @@ class Polynomial
 
 private:
 	MathVector coefficient_vector_;
-	VectorFunction<Monomial> monomial_vector_function_;
-	
+	VectorFunction<Monomial> monomial_vector_function_;	
 	std::vector<CalculatedPolynomial> calculated_polynomial_set_; // to minimize truncation error
 	double power_index_ = 1.0;
+	bool absoulte_flag = false;
 
 public:
 	explicit Polynomial(void) = default;
@@ -101,7 +101,7 @@ public:
 	bool is_simple_polynomial(void) const;
 	bool is_single_term(void) const;
 
-	void simple_polynomial_addition(const Polynomial& other);
+	Polynomial& simple_polynomial_addition(const Polynomial& other);
 	void simple_polynomial_scalar_multiplication(const double scalar);
 	Polynomial& simple_polynomial_multiplication(const Polynomial& other);
 	double simple_polynomial_calculation(const MathVector& variable_vector) const;
@@ -128,4 +128,5 @@ namespace ms {
 	size_t combination_with_repetition(const size_t n, const size_t k);
 	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
 	Polynomial sqrt(const Polynomial& polynomial);
+	bool is_positive_odd_number(const double val);
 }

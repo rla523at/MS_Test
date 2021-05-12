@@ -697,7 +697,15 @@ MathVector Figure::calculate_center_node(void) const {
 }
 
 VectorFunction<Polynomial> Figure::calculate_orthonormal_basis_vector(const size_t polynomial_order) const {
-	//initial basis
+	const auto initial_basis_set = this->calculate_initial_basis_vector(polynomial_order);	
+	return ms::Gram_Schmidt_Process(initial_basis_set, *this);
+}
+
+QuadratureRule Figure::calculate_quadrature_rule(const size_t integrand_roder) const {
+	return this->reference_figure_.calculate_quadrature_rule(this->transformation_function_, integrand_roder);
+}
+
+VectorFunction<Polynomial> Figure::calculate_initial_basis_vector(const size_t polynomial_order) const {
 	const auto figure_dimension = this->reference_figure_.figure_dimension();
 	const auto num_basis = ms::combination_with_repetition(1 + figure_dimension, polynomial_order);
 
@@ -722,7 +730,7 @@ VectorFunction<Polynomial> Figure::calculate_orthonormal_basis_vector(const size
 		//		initial_basis_set.emplace_back(std::move(initial_basis));
 		//	}
 		//}
-		
+
 		//// 1 x y x^2 xy y^2
 		//for (size_t a = 0; a <= polynomial_order; ++a)
 		//	for (size_t b = 0; b <= a; ++b)
@@ -730,18 +738,16 @@ VectorFunction<Polynomial> Figure::calculate_orthonormal_basis_vector(const size
 
 		//1 (x - x_c) (y - y_c)  ...
 		const auto center_node = this->calculate_center_node();
+		const auto x_c = center_node[0];
+		const auto y_c = center_node[1];
 		for (double a = 0; a <= polynomial_order; ++a)
 			for (double b = 0; b <= a; ++b)
-				initial_basis_set.push_back(((X-center_node[0])^(a-b))*((Y-center_node[1])^b));
+				initial_basis_set.push_back(((X - x_c) ^ (a - b)) * ((Y - y_c) ^ b));
 	}
 	else
 		throw std::runtime_error("wrong figure type");
 
 	return initial_basis_set;
-}
-
-QuadratureRule Figure::calculate_quadrature_rule(const size_t integrand_roder) const {
-	return this->reference_figure_.calculate_quadrature_rule(this->transformation_function_, integrand_roder);
 }
 
 
@@ -759,10 +765,23 @@ VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFuncti
 	return result;
 }
 
+
 namespace ms {
+	std::vector<Polynomial> Gram_Schmidt_Process(const std::vector<Polynomial>& initial_set, const QuadratureRule& quadrature_rule) {
+		auto orthonormal_set = initial_set;
+		for (size_t i = 0; i < initial_set.size(); ++i) {
+			for (size_t j = 0; j < i; ++j)
+				orthonormal_set[i] -= ms::inner_product(orthonormal_set[i], orthonormal_set[j], quadrature_rule) * orthonormal_set[j];
+
+			orthonormal_set[i] *= 1.0 / ms::L2_Norm(orthonormal_set[i], quadrature_rule);
+		}
+
+		return orthonormal_set;
+
+	}
+
 	std::vector<Polynomial> Gram_Schmidt_Process(const VectorFunction<Polynomial>& initial_polynomial_set, const Figure& figure) {
 		auto normalized_polynomial_set = initial_polynomial_set;
-
 		for (size_t i = 0; i < initial_polynomial_set.size(); ++i) {
 			for (size_t j = 0; j < i; ++j)
 				normalized_polynomial_set[i] -= ms::inner_product(normalized_polynomial_set[i], normalized_polynomial_set[j], figure) * normalized_polynomial_set[j];

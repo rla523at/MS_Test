@@ -744,6 +744,47 @@ GTEST_TEST(REFERENCE_FIGURE, TRANSFORMATION_FUNCTION_3) {
 	EXPECT_EQ(p2, result(rp2));
 	EXPECT_EQ(p3, result(rp3));
 }
+GTEST_TEST(REFERENCE_FIGURE, TRANSFORMATION_FUNCTION4) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+	ReferenceFigure reference_fig(figure_type, figure_order);
+
+	MathVector n1 = { 1,2,0 };
+	MathVector n2 = { 3,1,0 };
+	MathVector n3 = { 4,1,0 };
+	MathVector n4 = { 1,3,0 };
+	std::vector<const MathVector*> nv = { &n1,&n2,&n3,&n4 };
+	const auto transformation_function = reference_fig.calculate_transformation_function(nv);
+	//std::cout << "\n" << transformation_function << "\n";
+
+	MathVector p1 = { -1,-1,0 };
+	MathVector p2 = { 1,-1,0 };
+	MathVector p3 = { 1,1,0 };
+	MathVector p4 = { -1,1,0 };
+
+	EXPECT_EQ(n1, transformation_function(p1));
+	EXPECT_EQ(n2, transformation_function(p2));
+	EXPECT_EQ(n3, transformation_function(p3));
+	EXPECT_EQ(n4, transformation_function(p4));
+}
+
+
+GTEST_TEST(REFERENCE_FIGURE, TRANSFORMATION_SCALE_FUNCTION1) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+	ReferenceFigure reference_fig(figure_type, figure_order);
+
+	MathVector n1 = { 1,2,0 };
+	MathVector n2 = { 3,1,0 };
+	MathVector n3 = { 4,1,0 };
+	MathVector n4 = { 1,3,0 };
+	std::vector<const MathVector*> nv = { &n1,&n2,&n3,&n4 };
+	const auto transformation_function = reference_fig.calculate_transformation_function(nv);
+	const auto transformation_scale_function = reference_fig.calculate_trasnformation_scale_function(transformation_function);
+	
+	Polynomial ref = (0.25 * Y + 1.25) * (-0.25 * X + 0.25) - (0.25 * X + 0.25) * (-0.25 * Y - 0.75);
+	EXPECT_EQ(transformation_scale_function, ref);
+}
 
 
 GTEST_TEST(FIGURE, QUADRATURE_RULE1) {
@@ -771,8 +812,8 @@ GTEST_TEST(FIGURE, QUADRATURE_RULE2) {
 	const size_t figure_order = 1;
 
 	MathVector p1 = { 1,2,0 };
-	MathVector p2 = { 4,2,0 };
-	MathVector p3 = { 2,4,0 };
+	MathVector p2 = { 1.5,1.257,0 };
+	MathVector p3 = { 2.4874,1.24,0 };
 	std::vector<const MathVector*> pv = { &p1,&p2,&p3 };
 
 	Figure fig(figure_type, figure_order, std::move(pv));
@@ -783,10 +824,114 @@ GTEST_TEST(FIGURE, QUADRATURE_RULE2) {
 	for (const auto& weight : quadrature_rule.weight_set)
 		area += weight;
 
-	const double ref = 3;
-	EXPECT_EQ(area, ref);
+	const double ref = 0.362569100000000;
+	EXPECT_DOUBLE_EQ(area, ref);
 }
+GTEST_TEST(FIGURE, QUADRATURE_RULE3) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
 
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 2.4874,1.257,0 };
+	MathVector p3 = { 3.4874,1.24,0 };
+	MathVector p4 = { 1,2.574,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 1;
+	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+
+	double area = 0;
+	for (const auto& weight : quadrature_rule.weight_set)
+		area += weight;
+
+	const double ref = 1.072740900000000; 
+	EXPECT_DOUBLE_EQ(area, ref);
+}
+GTEST_TEST(FIGURE, QUADRATURE_RULE4) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 1;
+	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+
+	double area = 0;
+	for (const auto& weight : quadrature_rule.weight_set)
+		area += weight;
+
+	const double ref = 2;
+	EXPECT_DOUBLE_EQ(area, ref);
+}
+GTEST_TEST(FIGURE, QUADRATURE_RULE5) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+
+	MathVector ref_n0 = { 1.238104996137775, 1.987298334620742,  0 };
+	MathVector ref_n1 = { 1.281754163448146, 2.330947501931113,  0 };
+	MathVector ref_n2 = { 1.325403330758517, 2.674596669241483,  0 };
+	MathVector ref_n3 = { 2.056350832689629, 1.556350832689629,  0 };
+	MathVector ref_n4 = { 2.250000000000000, 1.750000000000000,  0 };
+	MathVector ref_n5 = { 2.443649167310371, 1.943649167310371,  0 };
+	MathVector ref_n6 = { 2.874596669241483, 1.125403330758517,  0 };
+	MathVector ref_n7 = { 3.218245836551854, 1.169052498068887,  0 };
+	MathVector ref_n8 = { 3.561895003862225, 1.212701665379258,  0 };
+		
+	std::vector<MathVector> ref_node_set = { ref_n0,ref_n1,ref_n2,ref_n3,ref_n4,ref_n5,ref_n6,ref_n7,ref_n8 };
+	std::vector<double> ref_weight_set = { 0.154320987654321,0.294728189459351,0.214089249169867,0.199098971034476,0.395061728395062,0.294728189459351,0.094552726138774,0.199098971034476,0.154320987654321 };
+	constexpr double epsilon = 1.0E-15;
+	for (size_t i = 0; i < ref_node_set.size(); ++i) {
+		for (size_t j = 0; j < 3; ++j)
+			EXPECT_NEAR(quadrature_rule.node_set[i][j],ref_node_set[i][j], epsilon);
+
+		EXPECT_NEAR(quadrature_rule.weight_set[i],ref_weight_set[i], epsilon);
+	}
+
+	//round off error..
+	//for (size_t i = 0; i < ref_node_set.size(); ++i) {
+	//	for (size_t j = 0; j < 3; ++j)
+	//		EXPECT_EQ(quadrature_rule.node_set[i][j] - ref_node_set[i][j], 0);
+
+	//	EXPECT_EQ(quadrature_rule.weight_set[i] - ref_weight_set[i], 0);
+	//}
+}
+GTEST_TEST(FIGURE, QUADRATURE_RULE6) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 5;
+	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+
+	double area = 0;
+	for (const auto& weight : quadrature_rule.weight_set)
+		area += weight;
+
+	const double ref = 2;
+	EXPECT_DOUBLE_EQ(area, ref);
+}
 
 GTEST_TEST(FIGURE, INITIAL_BASIS1) {
 	const FigureType figure_type = FigureType::Quadrilateral;
@@ -800,17 +945,276 @@ GTEST_TEST(FIGURE, INITIAL_BASIS1) {
 
 	Figure fig(figure_type, figure_order, std::move(pv));
 	const size_t polynomial_order = 1;
-
-	VectorFunction<Polynomial> result;
-	const auto center_node = fig.calculate_center_node();
-	for (double a = 0; a <= polynomial_order; ++a)
-		for (double b = 0; b <= a; ++b)
-			result.push_back(((X - center_node[0]) ^ (a - b)) * ((Y - center_node[1]) ^ b));
-
+	const auto result = fig.calculate_initial_basis_vector(polynomial_order);
+	
 	VectorFunction<Polynomial> ref = { 1, X - 1, Y - 1 };
 	EXPECT_EQ(result, ref);
 }
+GTEST_TEST(FIGURE, INITIAL_BASIS2) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
 
+	MathVector p1 = { 0,0,0 };
+	MathVector p2 = { 2,0,0 };
+	MathVector p3 = { 2,2,0 };
+	MathVector p4 = { 0,2,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+	const auto result = fig.calculate_initial_basis_vector(polynomial_order);
+
+	VectorFunction<Polynomial> ref = { 1, X - 1, Y - 1, (X - 1) ^ 2,(X - 1) * (Y - 1),(Y - 1) ^ 2 };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(FIGURE, INITIAL_BASIS3) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 2.4874,1.257,0 };
+	MathVector p3 = { 3.4874,1.24,0 };
+	MathVector p4 = { 1,2.574,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 1;
+	const auto result = fig.calculate_initial_basis_vector(polynomial_order);
+
+	VectorFunction<Polynomial> ref = { 1, X - 1.9937, Y - 1.76775 };
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(FIGURE, INITIAL_BASIS4) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 2.4874,1.257,0 };
+	MathVector p3 = { 3.4874,1.24,0 };
+	MathVector p4 = { 1,2.574,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+	const auto result = fig.calculate_initial_basis_vector(polynomial_order);
+
+	VectorFunction<Polynomial> ref = { 1, X - 1.9937, Y - 1.76775, (X - 1.9937) ^ 2,(X - 1.9937) * (Y - 1.76775),(Y - 1.76775) ^ 2 };
+	EXPECT_EQ(result, ref);
+}
+
+GTEST_TEST(FIGURE, ORTHONORMAL_BASIS1) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 0,0,0 };
+	MathVector p2 = { 2,0,0 };
+	MathVector p3 = { 2,2,0 };
+	MathVector p4 = { 0,2,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+	const auto num_basis = orthonormal_basis.size();
+
+	constexpr double error = 1.0E-15;
+	for (size_t i = 0; i < num_basis; ++i) {
+		for (size_t j = 0; j < num_basis; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+						
+			if (i == j)
+				EXPECT_NEAR(result, 1, error);
+			else
+				EXPECT_NEAR(result, 0, error);
+		}
+	}
+}
+GTEST_TEST(FIGURE, ORTHONORMAL_BASIS2) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 2.4874,1.257,0 };
+	MathVector p3 = { 3.4874,1.24,0 };
+	MathVector p4 = { 1,2.574,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 1;
+	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+	const auto num_basis = orthonormal_basis.size();
+
+	constexpr double error = 9.0E-15;
+	for (size_t i = 0; i < num_basis; ++i) {
+		for (size_t j = 0; j < num_basis; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+
+			if (i == j)
+				EXPECT_NEAR(result, 1, error);
+			else
+				EXPECT_NEAR(result, 0, error);
+		}
+	}
+}
+GTEST_TEST(FIGURE, ORTHONORMAL_BASIS3) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 1;
+	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+	const auto num_basis = orthonormal_basis.size();
+
+	constexpr double error = 9.0E-15;
+	for (size_t i = 0; i < num_basis; ++i) {
+		for (size_t j = 0; j < num_basis; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+
+			if (i == j)
+				EXPECT_NEAR(result, 1, error);
+			else
+				EXPECT_NEAR(result, 0, error);
+		}
+	}
+}
+GTEST_TEST(FIGURE, ORTHONORMAL_BASIS4) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+	const auto num_basis = orthonormal_basis.size();
+
+	for (const auto& basis : orthonormal_basis)
+		std::cout << basis << "\n";
+
+
+	//constexpr double error = 9.0E-15;
+	//for (size_t i = 0; i < num_basis; ++i) {
+	//	for (size_t j = 0; j < num_basis; ++j) {
+	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+
+	//		if (i == j)
+	//			EXPECT_NEAR(result, 1, error);
+	//		else
+	//			EXPECT_NEAR(result, 0, error);
+	//	}
+	//}
+
+	//for (size_t i = 0; i < num_basis; ++i) {
+	//	for (size_t j = 0; j < num_basis; ++j) {
+	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+	//		std::cout << i << j << "\t" << result << "\n";
+	//	}
+	//}
+}
+//GTEST_TEST(FIGURE, ORTHONORMAL_BASIS3) {
+//	const FigureType figure_type = FigureType::Quadrilateral;
+//	const size_t figure_order = 1;
+//
+//	MathVector p1 = { 1,2,0 };
+//	MathVector p2 = { 2.4874,1.257,0 };
+//	MathVector p3 = { 3.4874,1.24,0 };
+//	MathVector p4 = { 1,2.574,0 };
+//	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+//
+//	Figure fig(figure_type, figure_order, std::move(pv));
+//	const size_t polynomial_order = 2;
+//	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+//	const auto num_basis = orthonormal_basis.size();
+//
+//	//constexpr double error = 9.0E-15;
+//	//for (size_t i = 0; i < num_basis; ++i) {
+//	//	for (size_t j = 0; j < num_basis; ++j) {
+//	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+//
+//	//		if (i == j)
+//	//			EXPECT_NEAR(result, 1, error);
+//	//		else
+//	//			EXPECT_NEAR(result, 0, error);
+//	//	}
+//	//}
+//
+	////for (size_t i = 0; i < num_basis; ++i) {
+	////	for (size_t j = 0; j < num_basis; ++j) {
+	////		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+	////		std::cout << i << j << "\t" << result << "\n";
+	////	}
+	////}
+	////for (const auto& basis : orthonormal_basis)
+	////	std::cout << basis << "\n";
+//}
+//GTEST_TEST(FIGURE, ORTHONORMAL_BASIS3) {
+//	const FigureType figure_type = FigureType::Quadrilateral;
+//	const size_t figure_order = 1;
+//
+//	const MathVector p1 = { 0.3635520579711813,		0.2973431147402148,		0 };
+//	const MathVector p2 = { 0.3512301560533574,		0.3184608229801218,		0 };
+//	const MathVector p3 = { 0.3309655464243111,		0.3010404355350647,		0 };
+//	const MathVector p4 = { 0.3359655464243111,		0.2910404355350647,		0 };
+//	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+//
+//	Figure fig(figure_type, figure_order, std::move(pv));
+//	const size_t polynomial_order = 2;
+//	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+//	const auto num_basis = orthonormal_basis.size();
+//
+//	constexpr double error = 1.0E-15;
+//	for (size_t i = 0; i < num_basis; ++i) {
+//		for (size_t j = 0; j < num_basis; ++j) {
+//			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+//
+//			if (i == j)
+//				EXPECT_NEAR(result, 1, error);
+//			else
+//				EXPECT_NEAR(result, 0, error);
+//		}
+//	}
+//}
+
+
+GTEST_TEST(FIGURE, INNER_PRODUCT1) {
+	Polynomial f0 = 0.70710678118654746;
+	Polynomial f1 = 0.94868329805051632 * X - 2.0554804791094519;
+	Polynomial f2 = 1.6710199556880552 * X + 3.0382181012510086 * Y - 9.1906097562843012;
+	Polynomial f3 = 1.3103156645083498 * ((X - 2.25) ^ 2) - 0.24190443037077192 * X - 0.33261859175981184 * Y + 0.39687445607705152;
+	VectorFunction<Polynomial> vf = { f0,f1,f2,f3 };
+
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+	Figure fig(figure_type, figure_order, std::move(pv));
+
+	const auto num_func = vf.size();
+	constexpr double error = 9.0E-15;
+	for (size_t i = 0; i < num_func; ++i) {
+		for (size_t j = 0; j < num_func; ++j) {
+			const auto result = ms::inner_product(vf[i], vf[j], fig);
+
+			if (i == j)
+				EXPECT_NEAR(result, 1, error);
+			else
+				EXPECT_NEAR(result, 0, error);
+		}
+	}
+}
 
 GTEST_TEST(FIGURE, MULTIPLY_MATRIX_VECTOR_FUNCTION1) {
 	VectorFunction<Monomial> v = { {0},{1},{2} };

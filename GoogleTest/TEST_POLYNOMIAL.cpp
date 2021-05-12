@@ -234,36 +234,6 @@ GTEST_TEST(MONOMIAL, REDUCE_ORDER6) {
 }
 
 
-GTEST_TEST(MONOMIAL, TO_STRING1) {
-	Monomial m = { 1,0,3,0,5 };
-	const auto result = m.to_string();
-
-	const std::string ref = "(x0)^1(x2)^3(x4)^5";
-	EXPECT_EQ(result, ref);
-}
-GTEST_TEST(MONOMIAL, TO_STRING2) {
-	Monomial m(128);
-	const auto result = m.to_string();
-
-	const std::string ref = "(x128)^1";
-	EXPECT_EQ(result, ref);
-}
-GTEST_TEST(MONOMIAL, TO_STRING3) {
-	Monomial m = { 1,2,3,4 };
-	const auto result = m.to_string();
-
-	const std::string ref = "(x0)^1(x1)^2(x2)^3(x3)^4";
-	EXPECT_EQ(result, ref);
-}
-GTEST_TEST(MONOMIAL, TO_STRING4) {
-	Monomial m;
-	const auto result = m.to_string();
-
-	const std::string ref = "(1)";
-	EXPECT_EQ(result, ref);
-}
-
-
 GTEST_TEST(MONOMIAL, OPERATOR_MULTIPLICATION_ASSIGN1) {
 	Monomial m1;
 	Monomial m2;
@@ -430,6 +400,36 @@ GTEST_TEST(MONOMIAL, OPERATOR_FUNCTION_CALL_6) {
 }
 
 
+GTEST_TEST(MONOMIAL, TO_STRING1) {
+	Monomial m = { 1,0,3,0,5 };
+	const auto result = m.to_string();
+
+	const std::string ref = "(x0)(x2)^3(x4)^5";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MONOMIAL, TO_STRING2) {
+	Monomial m(128);
+	const auto result = m.to_string();
+
+	const std::string ref = "(x128)";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MONOMIAL, TO_STRING3) {
+	Monomial m = { 1,2,3,4 };
+	const auto result = m.to_string();
+
+	const std::string ref = "(x0)(x1)^2(x2)^3(x3)^4";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(MONOMIAL, TO_STRING4) {
+	Monomial m;
+	const auto result = m.to_string();
+
+	const std::string ref = "(1)";
+	EXPECT_EQ(result, ref);
+}
+
+
 GTEST_TEST(POLYNOMIAL, CONSTRUCTOR1) {
 	Polynomial p1;
 	Polynomial p2(0.0);
@@ -475,7 +475,6 @@ GTEST_TEST(POLYNOMIAL, CONSTRUCTOR8) {
 	Polynomial ref = { {2},{0} };
 	EXPECT_EQ(p, ref);
 }
-
 
 
 GTEST_TEST(POLYNOMIAL, COMPARE1) {
@@ -585,6 +584,17 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN5) {
 	Polynomial ref = -3 * (X * Y) + 3 * ((X ^ 2) * Z);
 	EXPECT_EQ(p1, ref);
 }
+GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN6) {
+	Polynomial p0 = 0.70710678118654746;
+	Polynomial p1 = 0.94868329805051632 * X - 2.0554804791094519;
+	Polynomial p2 = 1.6710199556880552 * X + 3.0382181012510086 * Y - 9.1906097562843012;
+	Polynomial p3 = 1.3103156645083498 * ((X - 2.25) ^ 2) - 0.24190443037077192 * X - 0.33261859175981184 * Y + 0.39687445607705152;
+	
+	//std::cout << "\n" << p3 << "\n";
+
+	Polynomial ref = -3 * (X * Y) + 3 * ((X ^ 2) * Z);
+	EXPECT_EQ(p1, ref);
+}
 
 
 GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN1) {
@@ -616,6 +626,20 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN3) {
 
 	Polynomial ref = 5 * (X ^ 2) + 5 * X + 5;
 	EXPECT_EQ(p1, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN4) {
+	Polynomial p1 = (X ^ 2) + X + 1;
+	p1.power(0.7);
+	double scalar = 5;
+	p1 *= scalar;
+
+	for (size_t i = 0; i < 10; ++i) {
+		const double val = 0.31 * i;
+		const MathVector val_vec = { val };
+		const double result = p1(val_vec);
+		const double ref = 5 * (std::pow(val * val + val + 1, 0.7));
+		EXPECT_DOUBLE_EQ(result, ref);
+	}
 }
 
 
@@ -710,6 +734,14 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN10) {
 //	// compare node set이 0, 1, 2 인데
 //	// sqrt(음수) = nan이 떠서 비교가 안됨!
 //}
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN12) {
+	Polynomial p1 = X + 1;
+	p1.power(0.5);
+	p1 *= p1;
+
+	Polynomial ref = X + 1;
+	EXPECT_EQ(p1, ref);
+}
 
 
 GTEST_TEST(POLYNOMIAL, OPERATOR_POWER1) {
@@ -744,7 +776,22 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_POWER4) {
 	Polynomial ref;
 	EXPECT_EQ(result, ref);
 }
+GTEST_TEST(POLYNOMIAL, OPERATOR_POWER5) {
+	Polynomial p1 = -1;
+	const auto p2 = p1 ^ 2;
+	const auto result = ms::sqrt(p2);
 
+	Polynomial ref = 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_POWER6) {
+	Polynomial p1 = (X ^ 2) + 2 * X + 1;
+	const auto p2 = p1 ^ 2;
+	const auto result = ms::sqrt(p2);
+
+	Polynomial ref = (X ^ 2) + 2 * X + 1;
+	EXPECT_EQ(result, ref);
+}
 
 
 GTEST_TEST(POLYNOMIAL, OPERATOR_FUNCTION_CALL1) {
@@ -889,90 +936,6 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_FUNCTION_CALL16) {
 		const double ref = (std::sqrt(val * (val + 1)) + val + 1);
 		EXPECT_DOUBLE_EQ(p1(v), ref);
 	}
-}
-
-
-GTEST_TEST(POLYNOMIAL, POWER1) {
-	Polynomial p = { { 1,1 }, { {1},{0} } };
-	p.power(2);
-
-	Polynomial ref = { {1,2,1}, { {2},{1},{0} } };
-	EXPECT_EQ(p, ref);
-}
-GTEST_TEST(POLYNOMIAL, POWER2) {
-	Polynomial p = { { 1,1 }, { {0,1},{0} } };
-	p.power(2);
-
-	Polynomial ref = { {1,2,1}, { {0,2},{0,1},{0} } };
-	EXPECT_EQ(p, ref);
-}
-GTEST_TEST(POLYNOMIAL, POWER3) {
-	const auto p1 = X + 1;
-	const auto p2 = X + 2;
-	const auto p3 = X + 3;
-	auto p4 = p1 * p2 + p3;
-	p4.power(2);
-
-	Polynomial ref = (X ^ 4) + 8 * (X ^ 3) + 26 * (X ^ 2) + 40 * X + 25;
-	EXPECT_EQ(p4, ref);
-}
-GTEST_TEST(POLYNOMIAL, POWER4) {
-	Polynomial p = 1.5;
-	Polynomial result;
-	result += (p ^ 2);
-	result.power(0.5);
-
-	Polynomial ref = 1.5;
-	EXPECT_EQ(result, ref);
-}
-
-
-GTEST_TEST(POLYNOMIAL, TO_STRING1) {
-	Polynomial p = { {1,2,1},{{2},{1},{0}} };
-
-	std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^2 + " + ms::double_to_string(2.0) + "(x0)^1 + " + ms::double_to_string(1.0) + "(1)]";
-	EXPECT_EQ(p.to_string(), ref);
-}
-GTEST_TEST(POLYNOMIAL, TO_STRING2) {
-	Polynomial p = { {1,1},{{1},{0}} };
-	p.power(2);
-
-	std::string ref = "[" + ms::double_to_string(1.0) + "(x0)^1 + 1(1)]^("+ ms::double_to_string(2)+")";
-	EXPECT_EQ(p.to_string(), ref);
-}
-//GTEST_TEST(POLYNOMIAL, TO_STRING3) {
-//  비교해서 같으면 power를 올리는데, 비교 연산이 엄청 비쌈
-//	Polynomial p1 = { {1,1},{{1},{0}} };
-//	Polynomial p2 = { {1,1},{{1},{0}} };
-//	p1.power(2);
-//	p2 *= p2;
-//
-//	EXPECT_EQ(p1.to_string(), p2.to_string());  
-//}
-GTEST_TEST(POLYNOMIAL, TO_STRING4) {
-	Polynomial p1 = { {1,2,1},{ {2},{1},{0} } };
-	Polynomial p2 = { {2,1,1},{ {1},{2},{0} } };
-	
-	EXPECT_EQ(p1.to_string(), p2.to_string());
-}
-GTEST_TEST(POLYNOMIAL, TO_STRING5) {
-	Polynomial p({ 1,1 }, { {1},{0} });
-	p.power(2);
-	size_t variable_index = 1;
-	p.differentiate(variable_index);
-
-	std::string ref = Polynomial().to_string();
-	EXPECT_EQ(p.to_string(), ref);
-}
-GTEST_TEST(POLYNOMIAL, TO_STRING6) {
-	Polynomial p1 = 1.5;
-	Polynomial p2;
-	p2 += (p1 ^ 2);
-	p2.power(0.5);
-
-	const auto result = p2.to_string();
-	std::string ref = "[1.5(1)]";
-	EXPECT_EQ(result, ref);
 }
 
 
@@ -1241,6 +1204,155 @@ GTEST_TEST(POLYNOMIAL, POLYNOMIAL_ORDER6) {
 	const size_t ref = 0;
 	EXPECT_EQ(result, ref);
 }
+GTEST_TEST(POLYNOMIAL, POLYNOMIAL_ORDER7) {
+	Polynomial p = (0.25 * Y + 1.25) * (-0.25 * X + 0.25) - (0.25 * X + 0.25) * (-0.25 * Y - 0.75);
+	const auto result = p.polynomial_order();
+
+	const size_t ref = 2;
+	EXPECT_EQ(result, ref);
+}
+
+
+GTEST_TEST(POLYNOMIAL, POWER1) {
+	Polynomial p = { { 1,1 }, { {1},{0} } };
+	p.power(2);
+
+	Polynomial ref = { {1,2,1}, { {2},{1},{0} } };
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, POWER2) {
+	Polynomial p = { { 1,1 }, { {0,1},{0} } };
+	p.power(2);
+
+	Polynomial ref = { {1,2,1}, { {0,2},{0,1},{0} } };
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, POWER3) {
+	const auto p1 = X + 1;
+	const auto p2 = X + 2;
+	const auto p3 = X + 3;
+	auto p4 = p1 * p2 + p3;
+	p4.power(2);
+
+	Polynomial ref = (X ^ 4) + 8 * (X ^ 3) + 26 * (X ^ 2) + 40 * X + 25;
+	EXPECT_EQ(p4, ref);
+}
+GTEST_TEST(POLYNOMIAL, POWER4) {
+	Polynomial p = 1.5;
+	Polynomial result;
+	result += (p ^ 2);
+	result.power(0.5);
+
+	Polynomial ref = 1.5;
+	EXPECT_EQ(result, ref);
+}
+
+
+GTEST_TEST(POLYNOMIAL, TO_STRING1) {
+	Polynomial p = { {1,2,1},{{2},{1},{0}} };
+
+	std::string ref = "(x0)^2+2(x0)+1";
+	EXPECT_EQ(p.to_string(), ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING2) {
+	Polynomial p = { {1,1},{{1},{0}} };
+	p.power(2);
+
+	std::string ref = "[(x0)+1]^2";
+	EXPECT_EQ(p.to_string(), ref);
+}
+//GTEST_TEST(POLYNOMIAL, TO_STRING3) {
+//  비교해서 같으면 power를 올리는데, 비교 연산이 엄청 비쌈
+//	Polynomial p1 = { {1,1},{{1},{0}} };
+//	Polynomial p2 = { {1,1},{{1},{0}} };
+//	p1.power(2);
+//	p2 *= p2;
+//
+//	EXPECT_EQ(p1.to_string(), p2.to_string());  
+//}
+GTEST_TEST(POLYNOMIAL, TO_STRING4) {
+	Polynomial p1 = { {1,2,1},{ {2},{1},{0} } };
+	Polynomial p2 = { {2,1,1},{ {1},{2},{0} } };
+
+	EXPECT_EQ(p1.to_string(), p2.to_string());
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING5) {
+	Polynomial p({ 1,1 }, { {1},{0} });
+	p.power(2);
+	size_t variable_index = 1;
+	p.differentiate(variable_index);
+
+	std::string ref = Polynomial().to_string();
+	EXPECT_EQ(p.to_string(), ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING6) {
+	Polynomial p1 = 1.5;
+	Polynomial p2;
+	p2 += (p1 ^ 2);
+	p2.power(0.5);
+
+	const auto result = p2.to_string();
+	std::string ref = "|1.5|";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING7) {
+	const Polynomial p1 = X;
+	const Polynomial p2 = X + 1;
+	auto p3 = p1;
+	p3 *= p2;
+	p3 += p1;
+	p3 *= p2;
+	const auto p4 = (p1 * p2 + p1) * p2;
+
+	EXPECT_EQ(p3.to_string(), p4.to_string());
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING8) {
+	const Polynomial p1 = -7 * X + Y + 3;
+	const Polynomial p2 = X + 1;
+	const auto p3 = p1 * p2;
+	const auto result = p3.to_string();
+	
+	std::string ref = "[-7(x0)+(x1)+3]X[(x0)+1]";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING9) {
+	const Polynomial p1 = X + 1;
+	const Polynomial p2 = Y - 1;
+	const auto p3 = (p1 * p2 +p1+p2)*p1;
+	const auto result = p3.to_string();
+
+	std::string ref = "[[(x0)+1]X[(x1)-1]+(x0)+(x1)]X[(x0)+1]";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING10) {
+	const Polynomial p1 = X + 1;
+	const Polynomial p2 = Y - 1;
+	const auto p3 = p1 * p2;
+	auto p4 = p3 + p1 + p3 + p2;
+	const auto result = p4.to_string();
+
+	std::string ref = "[(x0)+1]X[(x1)-1]+(x0)+(x1)+[(x0)+1]X[(x1)-1]";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING11) {
+	const Polynomial p1 = X + 1;
+	const Polynomial p2 = Y - 1;
+	const auto p3 = p1 * p2;
+	auto p4 = p1 + p3 + p2;
+	const auto result = p4.to_string();
+
+	std::string ref = "(x0)+(x1)+[(x0)+1]X[(x1)-1]";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING12) {
+	const Polynomial p0 = X - 1;
+	const Polynomial p1 = (X + 1) * (Y + 1) - X + 1;
+	Polynomial p2 = p0 - p1;
+	const auto result = p2.to_string();
+
+	std::string ref = "(x0)-1+[-(x0)-1]X[(x1)+1]+(x0)-1";
+	EXPECT_EQ(result, ref);
+}
 
 
 GTEST_TEST(POLYNOMIAL, SIMPLE_POLYNOMIAL_SCALAR_MULTIPLICATION_1) {
@@ -1504,6 +1616,22 @@ GTEST_TEST(VECTORFUNCTION, L2_NORM1) {
 	EXPECT_EQ(result, ref);
 }
 
+
+GTEST_TEST(MS, IS_POSITIVE_ODD_NUMBER1) {
+	EXPECT_TRUE(ms::is_positive_odd_number(2.0));
+}
+GTEST_TEST(MS, IS_POSITIVE_ODD_NUMBER2) {
+	EXPECT_TRUE(ms::is_positive_odd_number(2.1-0.1));
+}
+GTEST_TEST(MS, IS_POSITIVE_ODD_NUMBER3) {
+	EXPECT_FALSE(ms::is_positive_odd_number(2.1));
+}
+GTEST_TEST(MS, IS_POSITIVE_ODD_NUMBER4) {
+	EXPECT_FALSE(ms::is_positive_odd_number(4.000001));
+}
+GTEST_TEST(MS, IS_POSITIVE_ODD_NUMBER5) {
+	EXPECT_FALSE(ms::is_positive_odd_number(4.000000000000001));
+}
 //
 //GTEST_TEST(MONOMIAL, PERFORMANCE_CALL_OPERATOR1_1) {
 //	Monomial m1{ 1,2,3,4,5,1,2,3,4,5,1,2,3,4,5 };

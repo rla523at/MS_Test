@@ -1,4 +1,13 @@
+#include <iostream>
 
+int main(void) {
+	int i = 0;
+	for (;; i++) {
+		std::cout << i << "\n";
+		if (i == 10)
+			break;
+	}
+}
 
 //#include "../MS_Test/INC/Profiler.h"
 //#include "../MS_Test/INC/Polynomial.h"
@@ -250,27 +259,27 @@
 
 
 
-
-
-#include <iostream>
-#include <vector>
-class A
-{
-public:
-	A() { std::cout << "constructor\n"; };
-	A(const A& a) { std::cout << "copy constructor \n"; };
-	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
-
-	A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
-	A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
-};
-
-void func(const A& a) {
-	return;
-}
-
-int main(void){
-	std::vector<double> v = { 1,2,3 };
-	func(v); // implicit inversion을 위해 임시 객체를 생성함!
-
-}
+//
+//
+//#include <iostream>
+//#include <vector>
+//class A
+//{
+//public:
+//	A() { std::cout << "constructor\n"; };
+//	A(const A& a) { std::cout << "copy constructor \n"; };
+//	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
+//
+//	A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
+//	A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
+//};
+//
+//void func(const A& a) {
+//	return;
+//}
+//
+//int main(void){
+//	std::vector<double> v = { 1,2,3 };
+//	func(v); // implicit inversion을 위해 임시 객체를 생성함!
+//
+//}
