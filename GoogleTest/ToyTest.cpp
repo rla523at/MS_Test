@@ -1,13 +1,80 @@
-#include <iostream>
+//#include "../MS_Test/INC/Text.h"
+//#include <iostream>
+//
+//
+//
+//int main(void) {
+//	const size_t num_val = 10000;
+//	
+//	//std::vector<double> exact_val;
+//	//exact_val.reserve(num_val);
+//
+//	//const double pi = 4.0 * std::atan(1.0);
+//
+//	//for (size_t i = 1; i <= 100; ++i) {
+//	//	for (size_t j = 1; j <= 100; ++j) {
+//	//		const double x = 0.01 * i - 0.005 + 1.0E-6;
+//	//		const double y = 0.01 * j - 0.005 + 1.0E-7;
+//
+//	//		const double val = 1.0 + 0.2 * std::sin(2.0 * pi * (x - 0.5)) * std::sin(2.0 * pi * (y - 0.5));
+//	//		exact_val.push_back(val);
+//	//	}
+//	//}
+//
+//	Text ref_text;
+//	ref_text.reserve(num_val);
+//	ref_text.read("DenbTest/Solution_REF.txt");
+//	
+//	std::vector<double> ref_val;
+//	ref_val.reserve(num_val);
+//
+//	for (const auto& sentence : ref_text) {
+//		auto parsed_sentece = ms::parse(sentence, ' ');
+//		parsed_sentece[2].pop_back();
+//		ref_val.push_back(ms::to_value<double>(parsed_sentece[2]));
+//	}
+//			
+//	const size_t order_limit = 2;
+//	const size_t num_cell_distance = 10;
+//	
+//	for (size_t order = 0; order <= order_limit; ++order) {
+//		for (size_t i = 1; i <= 5; ++i) {
+//			const auto num_cell = i * num_cell_distance;
+//			const std::string file_path = "DenbTest/";
+//			const std::string file_name = "Solution_P" + std::to_string(order) + "_" + std::to_string(num_cell) + "X" + std::to_string(num_cell) + ".txt";
+//	
+//			Text solution_text;
+//			solution_text.reserve(num_val);
+//			solution_text.read(file_path + file_name);
+//
+//			std::vector<double> sol_val;
+//			sol_val.reserve(num_val);
+//
+//			for (const auto& sentence : solution_text) {
+//				auto parsed_sentece = ms::parse(sentence, ' ');
+//				parsed_sentece[2].pop_back();
+//				sol_val.push_back(ms::to_value<double>(parsed_sentece[2]));
+//			}
+//
+//			double error = 0.0;
+//			for (size_t i = 0; i < num_val; ++i)
+//				error += std::pow(ref_val[i] - sol_val[i], 2);
+//			error *= 1.0E-4;
+//			std::cout << "File Name : " << file_name << "\t" << "Error : " << std::sqrt(error) << "\n";
+//		}
+//	}	
+//}
 
-int main(void) {
-	int i = 0;
-	for (;; i++) {
-		std::cout << i << "\n";
-		if (i == 10)
-			break;
-	}
-}
+//#include <iostream>
+//
+//int main(void) {
+//	int i = 0;
+//	for (;; i++) {
+//		std::cout << i << "\n";
+//		if (i == 10)
+//			break;
+//	}
+//}
 
 //#include "../MS_Test/INC/Profiler.h"
 //#include "../MS_Test/INC/Polynomial.h"

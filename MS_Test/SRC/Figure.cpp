@@ -765,15 +765,22 @@ VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFuncti
 	return result;
 }
 
-
+#include <iostream>
 namespace ms {
 	std::vector<Polynomial> Gram_Schmidt_Process(const std::vector<Polynomial>& initial_set, const QuadratureRule& quadrature_rule) {
 		auto orthonormal_set = initial_set;
 		for (size_t i = 0; i < initial_set.size(); ++i) {
-			for (size_t j = 0; j < i; ++j)
+			for (size_t j = 0; j < i; ++j) 
 				orthonormal_set[i] -= ms::inner_product(orthonormal_set[i], orthonormal_set[j], quadrature_rule) * orthonormal_set[j];
 
+			if (i == 4) {
+				std::cout << "orthogonal : " <<  orthonormal_set[i] << "\n";
+				std::cout << "1/L2_norm : " << 1.0/ms::L2_Norm(orthonormal_set[i], quadrature_rule) << "\n";
+				std::cout << "orthonormal : " << (orthonormal_set[i] *= 1.0 / ms::L2_Norm(orthonormal_set[i], quadrature_rule)) << "\n";
+			}
+
 			orthonormal_set[i] *= 1.0 / ms::L2_Norm(orthonormal_set[i], quadrature_rule);
+
 		}
 
 		return orthonormal_set;

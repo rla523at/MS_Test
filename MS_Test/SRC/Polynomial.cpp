@@ -191,33 +191,32 @@ Polynomial& Polynomial::operator+=(const Polynomial& other) {
 			return *this;
 		}
 
-		if (this->is_simple_polynomial()) {
-			this->simple_polynomial_addition(other);
-			return *this;
-		}
+		if (this->is_simple_polynomial()) 
+			return this->simple_polynomial_addition(other);
 
-		auto iter = this->calculated_polynomial_set_.rbegin();
-		const auto end_iter = this->calculated_polynomial_set_.rend();
-		for (;; ++iter) {
-			if (iter == end_iter)
-				return this->simple_polynomial_addition(other);
+		//auto iter = this->calculated_polynomial_set_.rbegin();
+		//const auto end_iter = this->calculated_polynomial_set_.rend();
+		//for (;; ++iter) {
+		//	if (iter == end_iter)
+		//		return this->simple_polynomial_addition(other);
 
-			auto& [binary_operator, poly] = *iter;
-			if (binary_operator == BinaryOperator::multiplication)
-				break;
+		//	auto& [binary_operator, poly] = *iter;
+		//	if (binary_operator == BinaryOperator::multiplication)
+		//		break;
 
-			if (binary_operator == BinaryOperator::addition && poly.is_simple_polynomial()) {
-				poly.simple_polynomial_addition(other);
-				return *this;
-			}
-		}
+		//	if (binary_operator == BinaryOperator::addition && poly.is_simple_polynomial()) {
+		//		poly.simple_polynomial_addition(other);
+		//		return *this;
+		//	}
+		//}
+
 		this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
 		return *this;		
 	}
 	else {
 		Polynomial tmp = 1;		
 		tmp.calculated_polynomial_set_.reserve(2);
-		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
+		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other); // a += a를 다루기 위해 순서가 이렇게 됨
 		tmp.calculated_polynomial_set_.emplace(tmp.calculated_polynomial_set_.begin(),BinaryOperator::multiplication, std::move(*this));
 		return *this = std::move(tmp);
 	}

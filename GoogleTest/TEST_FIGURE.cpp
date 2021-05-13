@@ -1083,44 +1083,50 @@ GTEST_TEST(FIGURE, ORTHONORMAL_BASIS3) {
 		}
 	}
 }
-GTEST_TEST(FIGURE, ORTHONORMAL_BASIS4) {
-	const FigureType figure_type = FigureType::Quadrilateral;
-	const size_t figure_order = 1;
-
-	MathVector p1 = { 1,2,0 };
-	MathVector p2 = { 3,1,0 };
-	MathVector p3 = { 4,1,0 };
-	MathVector p4 = { 1,3,0 };
-	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
-
-	Figure fig(figure_type, figure_order, std::move(pv));
-	const size_t polynomial_order = 2;
-	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
-	const auto num_basis = orthonormal_basis.size();
-
-	for (const auto& basis : orthonormal_basis)
-		std::cout << basis << "\n";
-
-
-	//constexpr double error = 9.0E-15;
-	//for (size_t i = 0; i < num_basis; ++i) {
-	//	for (size_t j = 0; j < num_basis; ++j) {
-	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
-
-	//		if (i == j)
-	//			EXPECT_NEAR(result, 1, error);
-	//		else
-	//			EXPECT_NEAR(result, 0, error);
-	//	}
-	//}
-
-	//for (size_t i = 0; i < num_basis; ++i) {
-	//	for (size_t j = 0; j < num_basis; ++j) {
-	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
-	//		std::cout << i << j << "\t" << result << "\n";
-	//	}
-	//}
-}
+//GTEST_TEST(FIGURE, ORTHONORMAL_BASIS4) {
+//	const FigureType figure_type = FigureType::Quadrilateral;
+//	const size_t figure_order = 1;
+//
+//	MathVector p1 = { 1,2,0 };
+//	MathVector p2 = { 3,1,0 };
+//	MathVector p3 = { 4,1,0 };
+//	MathVector p4 = { 1,3,0 };
+//	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+//
+//	Figure fig(figure_type, figure_order, std::move(pv));
+//	const size_t polynomial_order = 2;
+//
+//	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+//	const auto initial_basis = fig.calculate_initial_basis_vector(polynomial_order);
+//	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+//
+//
+//	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+//	const auto num_basis = orthonormal_basis.size();
+//
+//	//for (const auto& basis : orthonormal_basis)
+//	//	std::cout << basis << "\n";
+//
+//
+//	//constexpr double error = 9.0E-15;
+//	//for (size_t i = 0; i < num_basis; ++i) {
+//	//	for (size_t j = 0; j < num_basis; ++j) {
+//	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+//
+//	//		if (i == j)
+//	//			EXPECT_NEAR(result, 1, error);
+//	//		else
+//	//			EXPECT_NEAR(result, 0, error);
+//	//	}
+//	//}
+//
+//	//for (size_t i = 0; i < num_basis; ++i) {
+//	//	for (size_t j = 0; j < num_basis; ++j) {
+//	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+//	//		std::cout << i << j << "\t" << result << "\n";
+//	//	}
+//	//}
+//}
 //GTEST_TEST(FIGURE, ORTHONORMAL_BASIS3) {
 //	const FigureType figure_type = FigureType::Quadrilateral;
 //	const size_t figure_order = 1;
@@ -1215,6 +1221,95 @@ GTEST_TEST(FIGURE, INNER_PRODUCT1) {
 		}
 	}
 }
+GTEST_TEST(MS, INNER_PRODUCT2) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+
+	Polynomial f0 = 0.70710678118654746;
+	Polynomial f1 = (X - 2.25) * (Y - 1.75);
+	const auto result = ms::inner_product(f0, f1, quadrature_rule);
+	
+	const double ref = -0.441941738241592;
+	//EXPECT_EQ(result, ref);
+	EXPECT_NEAR(result, ref, 9.0E-15); // round off error ?? bug ?
+}
+GTEST_TEST(MS, INNER_PRODUCT3) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+
+	Polynomial f0 = 0.94868329805051632 * X - 2.0554804791094519;
+	Polynomial f1 = (X - 2.25) * (Y - 1.75);
+	const auto result = ms::inner_product(f0, f1, quadrature_rule);
+
+	const double ref = 0.039528470752105;
+	//EXPECT_EQ(result, ref);
+	EXPECT_NEAR(result, ref, 9.0E-15); // round off error ?? bug ?
+}
+GTEST_TEST(MS, INNER_PRODUCT4) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+
+	Polynomial f0 = 1.6710199556880552 * X + 3.0382181012510086 * Y - 9.1906097562843012;
+	Polynomial f1 = (X - 2.25) * (Y - 1.75);
+	const auto result = ms::inner_product(f0, f1, quadrature_rule);
+
+	const double ref = -0.158240526106823;
+	//EXPECT_EQ(result, ref);
+	EXPECT_NEAR(result, ref, 9.0E-15); // round off error ?? bug ?
+}
+GTEST_TEST(MS, INNER_PRODUCT5) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+
+	Polynomial f0 = 1.3103156645083498 * ((X - 2.25) ^ 2) - 0.24190443037077192 * X - 0.33261859175981184 * Y + 0.39687445607705152;
+	Polynomial f1 = (X - 2.25) * (Y - 1.75);
+	const auto result = ms::inner_product(f0, f1, quadrature_rule);
+
+	const double ref = -0.383687304838086;
+	//EXPECT_EQ(result, ref);
+	EXPECT_NEAR(result, ref, 9.0E-15); // round off error ?? bug ?
+}
+
 
 GTEST_TEST(FIGURE, MULTIPLY_MATRIX_VECTOR_FUNCTION1) {
 	VectorFunction<Monomial> v = { {0},{1},{2} };
@@ -1224,6 +1319,29 @@ GTEST_TEST(FIGURE, MULTIPLY_MATRIX_VECTOR_FUNCTION1) {
 	VectorFunction<Polynomial> ref = { {{1,2,1}, { {2},{1},{0} }}, {{1,4,4}, { {2},{1},{0} }} };
 	EXPECT_EQ(result, ref);
 }
+
+
+
+GTEST_TEST(MS, GRAM_SCHMIDT_PROCESS1) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 2;
+
+	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+	const auto initial_basis = fig.calculate_initial_basis_vector(polynomial_order);
+	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+		
+}
+
+
 
 
 GTEST_TEST(JACOBIAN, CONSTRUCTOR1) {

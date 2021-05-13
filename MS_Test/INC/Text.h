@@ -3,6 +3,7 @@
 #include <fstream>	//file stream
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include <vector>
 
 

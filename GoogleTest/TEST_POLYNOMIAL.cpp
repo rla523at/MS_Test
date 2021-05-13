@@ -585,6 +585,41 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN5) {
 	EXPECT_EQ(p1, ref);
 }
 GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN6) {
+	Polynomial p = (X - 1) * (Y - 1);
+	p -= 1;
+
+	const auto ref = X * Y - X - Y;
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN7) {
+	Polynomial p = (X - 1) * (Y - 1);
+	p -= X - 1;
+
+	const auto ref = X * Y - 2 * X - Y + 2;
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN8) {
+	Polynomial p = (X - 1) * (Y - 1);
+	p -= X + Y - 1;
+
+	const auto ref = X * Y - 2 * X - 2 * Y + 2;
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN9) {
+	Polynomial p = (X - 1) * (Y - 1);
+	p -= 2 * ((X - 1) ^ 2) + X + Y - 1;
+
+	const auto ref = -2 * (X ^ 2) + X * Y + 2 * X - 2 * Y;
+	EXPECT_EQ(p, ref);
+}
+//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN10) {
+//	Polynomial p = (X - 2.25) * (Y - 1.75);
+//	p -= 2 * ((X - 1) ^ 2) + X + Y - 1;
+//
+//	const auto ref = -2 * (X ^ 2) + X * Y + 2 * X - 2 * Y;
+//	EXPECT_EQ(p, ref);
+//}
+GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN10) {
 	Polynomial p0 = 0.70710678118654746;
 	Polynomial p1 = 0.94868329805051632 * X - 2.0554804791094519;
 	Polynomial p2 = 1.6710199556880552 * X + 3.0382181012510086 * Y - 9.1906097562843012;
@@ -641,6 +676,20 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN4) {
 		EXPECT_DOUBLE_EQ(result, ref);
 	}
 }
+GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN5) {
+	Polynomial p1 = X+1;
+	auto p2 = (p1 ^ 2);
+	p2 += X + 2;
+	p2 += 2 * X + 3;
+	double scalar = 5;
+	p2 *= scalar;
+
+	std::cout << p2 << "\n";
+
+	const auto ref = 5 * (X ^ 2) + 25 * X + 30;
+	EXPECT_EQ(p2, ref);
+}
+
 
 
 GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN1) {
