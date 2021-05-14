@@ -93,14 +93,17 @@ public:
 //private:
 	bool compare_v1(const Polynomial& other) const;
 	bool compare_v2(const Polynomial& other) const;
-
-	void insert(const double coefficient, const Monomial& monomial);
+		
 	Polynomial& be_zero(void);
 	bool is_zero(void) const;
 	bool is_one(void) const;
+	bool is_operable(void) const;
 	bool is_simple_polynomial(void) const;
 	bool is_single_term(void) const;
 
+	Polynomial& polynomial_addition(const Polynomial& other);
+
+	Polynomial& simple_polynomial_addition(const double coefficient, const Monomial& monomial);
 	Polynomial& simple_polynomial_addition(const Polynomial& other);
 	void simple_polynomial_scalar_multiplication(const double scalar);
 	Polynomial& simple_polynomial_multiplication(const Polynomial& other);

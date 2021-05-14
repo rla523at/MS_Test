@@ -612,24 +612,6 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN9) {
 	const auto ref = -2 * (X ^ 2) + X * Y + 2 * X - 2 * Y;
 	EXPECT_EQ(p, ref);
 }
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN10) {
-//	Polynomial p = (X - 2.25) * (Y - 1.75);
-//	p -= 2 * ((X - 1) ^ 2) + X + Y - 1;
-//
-//	const auto ref = -2 * (X ^ 2) + X * Y + 2 * X - 2 * Y;
-//	EXPECT_EQ(p, ref);
-//}
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN10) {
-	Polynomial p0 = 0.70710678118654746;
-	Polynomial p1 = 0.94868329805051632 * X - 2.0554804791094519;
-	Polynomial p2 = 1.6710199556880552 * X + 3.0382181012510086 * Y - 9.1906097562843012;
-	Polynomial p3 = 1.3103156645083498 * ((X - 2.25) ^ 2) - 0.24190443037077192 * X - 0.33261859175981184 * Y + 0.39687445607705152;
-	
-	//std::cout << "\n" << p3 << "\n";
-
-	Polynomial ref = -3 * (X * Y) + 3 * ((X ^ 2) * Z);
-	EXPECT_EQ(p1, ref);
-}
 
 
 GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN1) {
@@ -803,6 +785,7 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN12) {
 	Polynomial ref = X + 1;
 	EXPECT_EQ(p1, ref);
 }
+
 
 
 GTEST_TEST(POLYNOMIAL, OPERATOR_POWER1) {
@@ -1183,6 +1166,24 @@ GTEST_TEST(POLYNOMIAL, DIFFERENTIATE18) {
 	Polynomial ref = 3 * (X ^ 2) + 10 * X + 7;
 	EXPECT_EQ(result, ref);
 }
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE19) {
+	auto p = (2 * X + 3) ^ 2;
+	constexpr size_t variable_index = 0;
+	p.differentiate(variable_index);
+
+	Polynomial ref = 8 * X + 12;
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, DIFFERENTIATE20) {
+	auto p = ((2 * X + 3) ^ 2) * X;
+	constexpr size_t variable_index = 0;
+	p.differentiate(variable_index);
+
+	Polynomial ref = 12 * (X ^ 2) + 24 * X + 9;
+	EXPECT_EQ(p, ref);
+}
+
+
 GTEST_TEST(POLYNOMIAL, GRADIENT1) {
 	Polynomial p = { {1,1,1},{{0},{1},{0,1}} };
 	auto result = p.gradient();
@@ -1379,7 +1380,7 @@ GTEST_TEST(POLYNOMIAL, TO_STRING8) {
 GTEST_TEST(POLYNOMIAL, TO_STRING9) {
 	const Polynomial p1 = X + 1;
 	const Polynomial p2 = Y - 1;
-	const auto p3 = (p1 * p2 +p1+p2)*p1;
+	const auto p3 = (p1 * p2 + p1 + p2) * p1;
 	const auto result = p3.to_string();
 
 	std::string ref = "[[(x0)+1]X[(x1)-1]+(x0)+(x1)]X[(x0)+1]";
