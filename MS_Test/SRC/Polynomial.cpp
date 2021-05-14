@@ -232,7 +232,7 @@ Polynomial& Polynomial::operator*=(const double scalar) {
 		this->simple_polynomial_scalar_multiplication(scalar);
 		for (auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
 			if (binary_operator == BinaryOperator::addition)
-				polynomial.simple_polynomial_scalar_multiplication(scalar);
+				polynomial *= scalar;				
 		}
 		return *this;
 	}

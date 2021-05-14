@@ -684,12 +684,24 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN5) {
 	double scalar = 5;
 	p2 *= scalar;
 
-	std::cout << p2 << "\n";
-
 	const auto ref = 5 * (X ^ 2) + 25 * X + 30;
 	EXPECT_EQ(p2, ref);
 }
+GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN6) {
+	Polynomial p = X;
+	p += ((X - 1) ^ 2) + X;
+	p *= -1;
 
+	const auto ref = -1 * (X ^ 2) - 1;
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN7) {
+	Polynomial p = ((X - 1) ^ 2) + X;
+	p *= -1;
+
+	const auto ref = -1 * (X ^ 2) + X - 1;
+	EXPECT_EQ(p, ref);
+}
 
 
 GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN1) {

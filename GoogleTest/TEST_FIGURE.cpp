@@ -1071,70 +1071,81 @@ GTEST_TEST(FIGURE, ORTHONORMAL_BASIS3) {
 	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
 	const auto num_basis = orthonormal_basis.size();
 
-	constexpr double error = 9.0E-15;
+	constexpr double epsilon = 9.0E-15;
 	for (size_t i = 0; i < num_basis; ++i) {
-		for (size_t j = 0; j < num_basis; ++j) {
+		for (size_t j = 0; j <= i; ++j) {
 			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
 
 			if (i == j)
-				EXPECT_NEAR(result, 1, error);
+				EXPECT_NEAR(result, 1, epsilon);
 			else
-				EXPECT_NEAR(result, 0, error);
+				EXPECT_NEAR(result, 0, epsilon);
 		}
 	}
 }
-//GTEST_TEST(FIGURE, ORTHONORMAL_BASIS4) {
-//	const FigureType figure_type = FigureType::Quadrilateral;
-//	const size_t figure_order = 1;
-//
-//	MathVector p1 = { 1,2,0 };
-//	MathVector p2 = { 3,1,0 };
-//	MathVector p3 = { 4,1,0 };
-//	MathVector p4 = { 1,3,0 };
-//	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
-//
-//	Figure fig(figure_type, figure_order, std::move(pv));
-//	const size_t polynomial_order = 2;
-//
-//	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
-//	const auto initial_basis = fig.calculate_initial_basis_vector(polynomial_order);
-//	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
-//
-//
-//	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
-//	const auto num_basis = orthonormal_basis.size();
-//
-//	//for (const auto& basis : orthonormal_basis)
-//	//	std::cout << basis << "\n";
-//
-//
-//	//constexpr double error = 9.0E-15;
-//	//for (size_t i = 0; i < num_basis; ++i) {
-//	//	for (size_t j = 0; j < num_basis; ++j) {
-//	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
-//
-//	//		if (i == j)
-//	//			EXPECT_NEAR(result, 1, error);
-//	//		else
-//	//			EXPECT_NEAR(result, 0, error);
-//	//	}
-//	//}
-//
-//	//for (size_t i = 0; i < num_basis; ++i) {
-//	//	for (size_t j = 0; j < num_basis; ++j) {
-//	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
-//	//		std::cout << i << j << "\t" << result << "\n";
-//	//	}
-//	//}
-//}
+GTEST_TEST(FIGURE, ORTHONORMAL_BASIS4) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	const size_t polynomial_order = 4;
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+	const auto num_basis = orthonormal_basis.size();
+	
+	constexpr double epsilon = 9.0E-12;
+	for (size_t i = 0; i < num_basis; ++i) {
+		for (size_t j = 0; j <= i; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+
+			if (i == j)
+				EXPECT_NEAR(result, 1, epsilon);
+			else
+				EXPECT_NEAR(result, 0, epsilon);
+		}
+	}
+
+}
+GTEST_TEST(FIGURE, ORTHONORMAL_BASIS5) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	const size_t polynomial_order = 5;
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+	const auto num_basis = orthonormal_basis.size();
+
+	constexpr double epsilon = 9.0E-12;
+	for (size_t i = 0; i < num_basis; ++i) {
+		for (size_t j = 0; j <= i; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+
+			if (i == j)
+				EXPECT_NEAR(result, 1, epsilon);
+			else
+				EXPECT_NEAR(result, 0, epsilon);
+		}
+	}
+}
 //GTEST_TEST(FIGURE, ORTHONORMAL_BASIS3) {
 //	const FigureType figure_type = FigureType::Quadrilateral;
 //	const size_t figure_order = 1;
 //
-//	MathVector p1 = { 1,2,0 };
-//	MathVector p2 = { 2.4874,1.257,0 };
-//	MathVector p3 = { 3.4874,1.24,0 };
-//	MathVector p4 = { 1,2.574,0 };
+	//MathVector p1 = { 1,2,0 };
+	//MathVector p2 = { 2.4874,1.257,0 };
+	//MathVector p3 = { 3.4874,1.24,0 };
+	//MathVector p4 = { 1,2.574,0 };
 //	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
 //
 //	Figure fig(figure_type, figure_order, std::move(pv));
@@ -1154,12 +1165,12 @@ GTEST_TEST(FIGURE, ORTHONORMAL_BASIS3) {
 //	//	}
 //	//}
 //
-	////for (size_t i = 0; i < num_basis; ++i) {
-	////	for (size_t j = 0; j < num_basis; ++j) {
-	////		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
-	////		std::cout << i << j << "\t" << result << "\n";
-	////	}
-	////}
+	//for (size_t i = 0; i < num_basis; ++i) {
+	//	for (size_t j = 0; j < num_basis; ++j) {
+	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+	//		std::cout << i << j << "\t" << result << "\n";
+	//	}
+	//}
 	////for (const auto& basis : orthonormal_basis)
 	////	std::cout << basis << "\n";
 //}
@@ -1321,7 +1332,6 @@ GTEST_TEST(FIGURE, MULTIPLY_MATRIX_VECTOR_FUNCTION1) {
 }
 
 
-
 GTEST_TEST(MS, GRAM_SCHMIDT_PROCESS1) {
 	const FigureType figure_type = FigureType::Quadrilateral;
 	const size_t figure_order = 1;
@@ -1339,8 +1349,119 @@ GTEST_TEST(MS, GRAM_SCHMIDT_PROCESS1) {
 	const auto initial_basis = fig.calculate_initial_basis_vector(polynomial_order);
 	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
 		
-}
+	const auto num_basis = orthonormal_basis.size();
+	constexpr double error = 9.0E-15;
+	for (size_t i = 0; i < num_basis; ++i) {
+		for (size_t j = 0; j < num_basis; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
 
+			if (i == j)
+				EXPECT_NEAR(result, 1, error);
+			else
+				EXPECT_NEAR(result, 0, error);
+		}
+	}
+}
+GTEST_TEST(MS, GRAM_SCHMIDT_PROCESS2) {
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	MathVector p1 = { 1,2,0 };
+	MathVector p2 = { 3,1,0 };
+	MathVector p3 = { 4,1,0 };
+	MathVector p4 = { 1,3,0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 3;
+	const size_t integrand_order = 6;
+
+	const auto quadrature_rule = fig.calculate_quadrature_rule(integrand_order);
+	const auto initial_basis = fig.calculate_initial_basis_vector(polynomial_order);
+	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+
+	//for (const auto& ib : initial_basis)
+	//	std::cout << ib << "\n";
+	//for (const auto& ob : orthonormal_basis)
+	//	std::cout << ob << "\n";
+
+	const auto num_basis = orthonormal_basis.size();
+	constexpr double error = 9.0E-13;
+	for (size_t i = 0; i < num_basis; ++i) {
+		for (size_t j = 0; j < num_basis; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+
+			if (i == j)
+				EXPECT_NEAR(result, 1, error);
+			else
+				EXPECT_NEAR(result, 0, error);
+		}
+	}
+	//const auto num_basis = orthonormal_basis.size();
+	//for (size_t i = 0; i < num_basis; ++i) {
+	//	for (size_t j = 0; j < num_basis; ++j) {
+	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+	//		std::cout << i << j << "\t" << result << "\n";
+	//	}
+	//}
+}
+//GTEST_TEST(MS, GRAM_SCHMIDT_PROCESS2) {
+//	const FigureType figure_type = FigureType::Quadrilateral;
+//	const size_t figure_order = 1;
+//
+//	MathVector p1 = { 1,2,0 };
+//	MathVector p2 = { 2.4874,1.257,0 };
+//	MathVector p3 = { 3.4874,1.24,0 };
+//	MathVector p4 = { 1,2.574,0 };
+//	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+//
+//	Figure fig(figure_type, figure_order, std::move(pv));
+//	const size_t polynomial_order = 2;
+//
+//	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
+//	const auto initial_basis = fig.calculate_initial_basis_vector(polynomial_order);
+//	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+//
+//	const auto num_basis = orthonormal_basis.size();
+//	constexpr double error = 9.9E-15;
+//	for (size_t i = 0; i < num_basis; ++i) {
+//		for (size_t j = 0; j < num_basis; ++j) {
+//			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+//
+//			if (i == j)
+//				EXPECT_NEAR(result, 1, error);
+//			else
+//				EXPECT_NEAR(result, 0, error);
+//		}
+//	}
+//}
+//GTEST_TEST(MS, GRAM_SCHMIDT_PROCESS3) {
+//	const FigureType figure_type = FigureType::Quadrilateral;
+//	const size_t figure_order = 1;
+//
+//	const MathVector p1 = { 0.3635520579711813,		0.2973431147402148,		0 };
+//	const MathVector p2 = { 0.3512301560533574,		0.3184608229801218,		0 };
+//	const MathVector p3 = { 0.3309655464243111,		0.3010404355350647,		0 };
+//	const MathVector p4 = { 0.3359655464243111,		0.2910404355350647,		0 };
+//	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+//
+//	Figure fig(figure_type, figure_order, std::move(pv));
+//	const size_t polynomial_order = 2;
+//	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
+//	const auto num_basis = orthonormal_basis.size();
+//
+//	constexpr double error = 9.E-15;
+//	for (size_t i = 0; i < num_basis; ++i) {
+//		for (size_t j = 0; j < num_basis; ++j) {
+//			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+//
+//			if (i == j)
+//				EXPECT_NEAR(result, 1, error);
+//			else
+//				EXPECT_NEAR(result, 0, error);
+//		}
+//	}
+//}
 
 
 

@@ -773,30 +773,22 @@ namespace ms {
 			for (size_t j = 0; j < i; ++j) 
 				orthonormal_set[i] -= ms::inner_product(orthonormal_set[i], orthonormal_set[j], quadrature_rule) * orthonormal_set[j];
 
-			if (i == 4) {
-				std::cout << "orthogonal : " <<  orthonormal_set[i] << "\n";
-				std::cout << "1/L2_norm : " << 1.0/ms::L2_Norm(orthonormal_set[i], quadrature_rule) << "\n";
-				std::cout << "orthonormal : " << (orthonormal_set[i] *= 1.0 / ms::L2_Norm(orthonormal_set[i], quadrature_rule)) << "\n";
-			}
-
 			orthonormal_set[i] *= 1.0 / ms::L2_Norm(orthonormal_set[i], quadrature_rule);
-
 		}
 
 		return orthonormal_set;
-
 	}
 
-	std::vector<Polynomial> Gram_Schmidt_Process(const VectorFunction<Polynomial>& initial_polynomial_set, const Figure& figure) {
-		auto normalized_polynomial_set = initial_polynomial_set;
-		for (size_t i = 0; i < initial_polynomial_set.size(); ++i) {
+	std::vector<Polynomial> Gram_Schmidt_Process(const VectorFunction<Polynomial>& initial_set, const Figure& figure) {
+		auto orthonormal_set = initial_set;
+		for (size_t i = 0; i < initial_set.size(); ++i) {
 			for (size_t j = 0; j < i; ++j)
-				normalized_polynomial_set[i] -= ms::inner_product(normalized_polynomial_set[i], normalized_polynomial_set[j], figure) * normalized_polynomial_set[j];
+				orthonormal_set[i] -= ms::inner_product(orthonormal_set[i], orthonormal_set[j], figure) * orthonormal_set[j];
 
-			normalized_polynomial_set[i] *= 1.0 / ms::L2_Norm(normalized_polynomial_set[i], figure);
+			orthonormal_set[i] *= 1.0 / ms::L2_Norm(orthonormal_set[i], figure);
 		}
 
-		return normalized_polynomial_set;
+		return orthonormal_set;
 	}
 
 	double integrate(const Polynomial& integrand, const QuadratureRule& quadrature_rule) {
