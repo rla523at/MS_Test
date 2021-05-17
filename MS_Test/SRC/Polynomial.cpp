@@ -158,15 +158,15 @@ std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial) {
 
 
 Polynomial::Polynomial(const double coefficient) {
-	this->simple_polynomial_addition(coefficient, Monomial());
+	this->simple_polynomial_addition_single_term(coefficient, Monomial());
 }
 
 Polynomial::Polynomial(const Monomial& monomial) {
-	this->simple_polynomial_addition(1.0, monomial);
+	this->simple_polynomial_addition_single_term(1.0, monomial);
 }
 
 Polynomial::Polynomial(const double coefficient, const Monomial& monomial) {
-	this->simple_polynomial_addition(coefficient, monomial);
+	this->simple_polynomial_addition_single_term(coefficient, monomial);
 }
 
 Polynomial::Polynomial(const std::vector<double>& coefficient_vector, const std::vector<Monomial>& monomial_set) {
@@ -175,7 +175,7 @@ Polynomial::Polynomial(const std::vector<double>& coefficient_vector, const std:
 		throw std::length_error("Size Error");
 
 	for (size_t i = 0; i < num_term; ++i)
-		this->simple_polynomial_addition(coefficient_vector[i], monomial_set[i]);
+		this->simple_polynomial_addition_single_term(coefficient_vector[i], monomial_set[i]);
 }
 
 Polynomial& Polynomial::operator+=(const Polynomial& other) {
@@ -186,55 +186,35 @@ Polynomial& Polynomial::operator+=(const Polynomial& other) {
 		return *this;
 
 	if (this->is_operable()) {
-		if (!this->is_simple_polynomial() || !other.is_simple_polynomial()) {
-			this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
-			return *this;
+		if (this->is_simple_polynomial() && other.is_simple_polynomial())
+			return this->simple_polynomial_addition_simple_polynomial(other);
+		else if (this->is_simple_polynomial() && !other.is_simple_polynomial()) {
+			auto tmp = other;
+			tmp.nested_polynomial_addition_simple_polynomial(*this);
+			return *this = std::move(tmp);
 		}
-		return this->simple_polynomial_addition(other);
+		else if (!this->is_simple_polynomial() && other.is_simple_polynomial())
+			return this->nested_polynomial_addition_simple_polynomial(other);
+		else
+			return this->nested_polynomial_addition_nested_polynomial(other);
 	}
 	else {
 		Polynomial tmp = 1;
-		tmp.calculated_polynomial_set_.reserve(2);
-		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other); // a += a를 다루기 위해 순서가 이렇게 됨
+		tmp.calculated_polynomial_set_.reserve(3);
+		if (!other.is_simple_polynomial()) {
+			if (other.has_addable_simple_polynomial()) {
+				tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other); // a += a를 다루기 위해 순서가 이렇게 됨
+				tmp.calculated_polynomial_set_.back().second.calculated_polynomial_set_.pop_back();
+				tmp.calculated_polynomial_set_.emplace_back(other.calculated_polynomial_set_.back());
+			}
+			else
+				tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
+		}
+		else
+			tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
 		tmp.calculated_polynomial_set_.emplace(tmp.calculated_polynomial_set_.begin(), BinaryOperator::multiplication, std::move(*this));
 		return *this = std::move(tmp);
 	}
-
-
-	
-
-
-	//if (this->power_index_ == 1.0 && !this->absoulte_flag) {
-		//if (!this->is_simple_polynomial() || !other.is_simple_polynomial()) {
-		//	this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
-		//	return *this;
-		//}
-
-		//return this->simple_polynomial_addition(other);
-
-	//	//auto iter = this->calculated_polynomial_set_.rbegin();
-	//	//const auto end_iter = this->calculated_polynomial_set_.rend();
-	//	//for (;; ++iter) {
-	//	//	if (iter == end_iter)
-	//	//		return this->simple_polynomial_addition(other);
-
-	//	//	auto& [binary_operator, poly] = *iter;
-	//	//	if (binary_operator == BinaryOperator::multiplication)
-	//	//		break;
-
-	//	//	if (binary_operator == BinaryOperator::addition && poly.is_simple_polynomial()) {
-	//	//		poly.simple_polynomial_addition(other);
-	//	//		return *this;
-	//	//	}
-	//	//}
-	//}
-	//else {
-	//	Polynomial tmp = 1;		
-	//	tmp.calculated_polynomial_set_.reserve(2);
-	//	tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other); // a += a를 다루기 위해 순서가 이렇게 됨
-	//	tmp.calculated_polynomial_set_.emplace(tmp.calculated_polynomial_set_.begin(),BinaryOperator::multiplication, std::move(*this));
-	//	return *this = std::move(tmp);
-	//}
 }
 
 Polynomial& Polynomial::operator-=(const Polynomial& other) {
@@ -243,11 +223,16 @@ Polynomial& Polynomial::operator-=(const Polynomial& other) {
 }
 
 Polynomial& Polynomial::operator*=(const double scalar) {
-	if (this->is_operable()){
-		this->simple_polynomial_scalar_multiplication(scalar);
+	if (this->is_operable() && this->is_scalar()) {
+		this->coefficient_vector_.front() *= scalar;
+		return *this;
+	}
+
+	if (this->is_operable() && this->has_scalar_front_term()) {
+		this->coefficient_vector_.front() *= scalar;
 		for (auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
 			if (binary_operator == BinaryOperator::addition)
-				polynomial *= scalar;				
+				polynomial *= scalar;
 		}
 		return *this;
 	}
@@ -269,18 +254,36 @@ Polynomial& Polynomial::operator*=(const Polynomial& other) {
 		return *this = other;
 
 	if (this->is_operable()) {
-		if (this->is_simple_polynomial() && other.is_single_term())
-			return this->simple_polynomial_multiplication(other);
+		if (this->is_simple_polynomial()) {
+			if (other.is_single_term())
+				return this->simple_polynomial_multiplication(other);
+			else {
+				Polynomial tmp = 1 * (*this) * other;
+				return *this = std::move(tmp);
+			}
+		}
+		else {
+			this->calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
+			return *this;
+		}
 
-		this->calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
-		return *this;
+
+
+		//if (this->is_simple_polynomial() && other.is_single_term())
+		//	return this->simple_polynomial_multiplication(other);
+
+		//this->calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
+		//return *this;
 	}
 	else {
-		Polynomial tmp = 1;
-		tmp.calculated_polynomial_set_.reserve(2);
-		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
-		tmp.calculated_polynomial_set_.emplace(tmp.calculated_polynomial_set_.begin(), BinaryOperator::multiplication, std::move(*this));
+		Polynomial tmp = 1 * (*this) * other;
 		return *this = std::move(tmp);
+
+		//Polynomial tmp = 1;
+		//tmp.calculated_polynomial_set_.reserve(2);
+		//tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::multiplication, other);
+		//tmp.calculated_polynomial_set_.emplace(tmp.calculated_polynomial_set_.begin(), BinaryOperator::multiplication, std::move(*this));
+		//return *this = std::move(tmp);
 	}
 }
 
@@ -394,16 +397,22 @@ Polynomial& Polynomial::power(const double power_index) {
 }
 
 std::string Polynomial::to_string(void) const {
-	auto str = this->simple_polynomial_string();
+	auto str = this->simple_polynomial_string();	
 	for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
 		switch (binary_operator) {
-		case  BinaryOperator::addition:
+		case  BinaryOperator::addition: {
 			str += "+" + polynomial.to_string();
 			break;
-		case BinaryOperator::multiplication:
-			str.insert(0, "[");
-			str += "]X[" + polynomial.to_string() + "]";
+		}
+		case BinaryOperator::multiplication: {
+			if (str.back() == ']') 
+				str += "X[" + polynomial.to_string() + "]";
+			else {
+				str.insert(0, "[");
+				str += "]X[" + polynomial.to_string() + "]";
+			}		
 			break;
+		}
 		}
 	}
 	if (this->absoulte_flag) {
@@ -414,6 +423,13 @@ std::string Polynomial::to_string(void) const {
 		str.insert(0, "[");
 		str += "]^" + ms::double_to_string(this->power_index_);
 	}
+
+	if (this->has_scalar_front_term() && this->coefficient_vector_.front() == 1) {
+		const auto pos = str.find("[1]X");
+		const auto size = 4;
+		str.erase(pos, size);
+	}
+
 	return str;
 }
 
@@ -511,19 +527,53 @@ Polynomial& Polynomial::simple_polynomial_differentiate(const size_t variable_in
 	return *this;
 }
 
-Polynomial& Polynomial::simple_polynomial_addition(const Polynomial& other) {
+Polynomial& Polynomial::simple_polynomial_addition_simple_polynomial(const Polynomial& other) {
 	for (size_t i = 0; i < other.coefficient_vector_.size(); ++i)
-		this->simple_polynomial_addition(other.coefficient_vector_[i], other.monomial_vector_function_[i]);
+		this->simple_polynomial_addition_single_term(other.coefficient_vector_[i], other.monomial_vector_function_[i]);
 	return *this;
 }
 
-void Polynomial::simple_polynomial_scalar_multiplication(const double scalar) {
-	if (scalar == 0)
-		this->be_zero();
-
-	for (auto& coefficient : this->coefficient_vector_)
-		coefficient *= scalar;
+Polynomial& Polynomial::nested_polynomial_addition_simple_polynomial(const Polynomial& other) {
+	if (this->has_addable_simple_polynomial()) {
+		auto& [binary_operator, simple_polynomial] = this->calculated_polynomial_set_.back();
+		simple_polynomial.simple_polynomial_addition_simple_polynomial(other);
+	}
+	else
+		this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
+	return *this;
 }
+
+Polynomial& Polynomial::nested_polynomial_addition_nested_polynomial(const Polynomial& other) {
+	if (this->has_addable_simple_polynomial()) {
+		this->calculated_polynomial_set_.emplace(this->calculated_polynomial_set_.end() - 1, BinaryOperator::addition, other);
+		if (other.has_addable_simple_polynomial()) {
+			const auto& [other_binary_operator, other_simple_polynomial] = other.calculated_polynomial_set_.back();
+			auto& [this_binary_operator, this_simple_polynomial] = this->calculated_polynomial_set_.back();
+			this_simple_polynomial.simple_polynomial_addition_simple_polynomial(other_simple_polynomial);
+
+			auto& [this_binary_operator2, this_polynomial2] = *(this->calculated_polynomial_set_.end() - 2);
+			this_polynomial2.calculated_polynomial_set_.pop_back();
+		}
+	}
+	else {
+		this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
+		if (other.has_addable_simple_polynomial()) {
+			auto& [this_binary_operator, this_polynomial] = this->calculated_polynomial_set_.back();
+			this_polynomial.calculated_polynomial_set_.pop_back();
+			const auto& [other_binary_operator, other_simple_polynomial] = other.calculated_polynomial_set_.back();
+			this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other_simple_polynomial);
+		}
+	}
+	return *this;
+}
+
+//void Polynomial::simple_polynomial_scalar_multiplication(const double scalar) {
+//	if (scalar == 0)
+//		this->be_zero();
+//
+//	for (auto& coefficient : this->coefficient_vector_)
+//		coefficient *= scalar;
+//}
 
 Polynomial& Polynomial::simple_polynomial_multiplication(const Polynomial& other) {
 	const auto num_this_term = this->coefficient_vector_.size();
@@ -539,7 +589,7 @@ Polynomial& Polynomial::simple_polynomial_multiplication(const Polynomial& other
 
 			const auto result_coefficient = this_coefficient * other_coefficient;
 			const auto result_monomial = this_monomial * other_monomial;
-			result.simple_polynomial_addition(result_coefficient, result_monomial);
+			result.simple_polynomial_addition_single_term(result_coefficient, result_monomial);
 		}
 	}
 	return *this = std::move(result);
@@ -575,6 +625,44 @@ bool Polynomial::is_single_term(void) const {
 		return false;
 	else
 		return this->coefficient_vector_.size() == 1;
+}
+
+bool Polynomial::is_scalar(void) const {
+	if (!this->is_simple_polynomial())
+		return false;
+
+	return this->monomial_vector_function_.size() == 1 && this->monomial_vector_function_.front().is_constant();
+}
+
+bool Polynomial::is_same_term(const Polynomial& other) const {
+	if (this->has_scalar_front_term()) {
+		if (!other.has_scalar_front_term())
+			return false;
+		auto tmp1 = *this;
+		tmp1.coefficient_vector_.front() = 1;
+		auto tmp2 = other;
+		tmp2.coefficient_vector_.front() = 1;
+
+		return tmp1 == tmp2;
+	}
+	else {
+		if (other.has_scalar_front_term())
+			return false;
+
+		return *this == other;	
+	}
+}
+
+bool Polynomial::has_addable_simple_polynomial(void) const {
+	const auto& [binary_operator, polynomial] = this->calculated_polynomial_set_.back();
+	return binary_operator == BinaryOperator::addition && polynomial.is_simple_polynomial();
+}
+
+bool Polynomial::has_scalar_front_term(void) const {
+	if (this->is_simple_polynomial())
+		return false;
+
+	return this->monomial_vector_function_.size() == 1 && this->monomial_vector_function_.front().is_constant();
 }
 
 std::string Polynomial::simple_polynomial_string(void) const {
@@ -656,7 +744,7 @@ Polynomial Polynomial::to_simple_polynomial(void) const {
 	for (const auto& [binary_operator, polynomial] : this->calculated_polynomial_set_) {
 		switch (binary_operator) {
 		case  BinaryOperator::addition:
-			result.simple_polynomial_addition(polynomial.to_simple_polynomial());
+			result.simple_polynomial_addition_simple_polynomial(polynomial.to_simple_polynomial());
 			break;
 		case BinaryOperator::multiplication:
 			result.simple_polynomial_multiplication(polynomial.to_simple_polynomial());
@@ -669,66 +757,7 @@ Polynomial Polynomial::to_simple_polynomial(void) const {
 	return result;
 }
 
-Polynomial& Polynomial::polynomial_addition(const Polynomial& other) {
-	if (this->is_simple_polynomial()) {
-		auto tmp = other;
-		tmp.calculated_polynomial_set_.emplace_back(BinaryOperator::addition, *this);
-		return *this = std::move(tmp);
-	}
-	else {
-		this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
-	
-		if (!other.is_simple_polynomial()) {
-			auto& [binary_operator, polynomial] = other.calculated_polynomial_set_.back();
-			if (binary_operator == BinaryOperator::addition && polynomial.is_simple_polynomial()) {
-				this->calculated_polynomial_set_.back().second.calculated_polynomial_set_.pop_back();				
-				this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, polynomial);
-			}
-		}
-	}
-
-	//if (this->is_simple_polynomial()) {
-	//	auto tmp = other;
-	//	this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, *this);
-	//	return *this = std::move(tmp);
-	//}
-	//else {
-	//	auto& [binary_operator, polynomial] = this->calculated_polynomial_set_.back();
-	//	if (binary_operator == BinaryOperator::addition && polynomial.is_simple_polynomial() && polynomial.is_operable()) {
-	//		if (other.is_simple_polynomial() && other.is_operable())
-	//			return polynomial.simple_polynomial_addition(other);
-	//		else {
-	//			this->calculated_polynomial_set_.emplace(this->calculated_polynomial_set_.end() - 1, BinaryOperator::addition, other);
-	//			return *this;
-	//		}
-	//	}
-	//	
-	//	this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
-	//	return *this;
-	//}
-
-	//if (other.is_simple_polynomial()) {
-	//	if (this->calculated_polynomial_set_.empty())
-	//		this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
-	//	else {
-			//auto& [binary_operator, polynomial] = this->calculated_polynomial_set_.back();
-			//if (binary_operator == BinaryOperator::addition && polynomial.is_simple_polynomial())
-			//	polynomial.simple_polynomial_addition(other);
-			//else
-			//	this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
-	//	}
-	//}
-	//else {
-		//auto& [binary_operator, polynomial] = other.calculated_polynomial_set_.back();
-		//if (binary_operator == BinaryOperator::addition && polynomial.is_simple_polynomial())
-		//	this->polynomial_addition(polynomial);
-		//else
-		//	this->calculated_polynomial_set_.emplace_back(BinaryOperator::addition, other);
-	//}
-
-}
-
-Polynomial& Polynomial::simple_polynomial_addition(const double coefficient, const Monomial& monomial) {
+Polynomial& Polynomial::simple_polynomial_addition_single_term(const double coefficient, const Monomial& monomial) {
 	if (coefficient == 0.0)
 		return *this;
 

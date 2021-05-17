@@ -100,12 +100,17 @@ public:
 	bool is_operable(void) const;
 	bool is_simple_polynomial(void) const;
 	bool is_single_term(void) const;
+	bool is_scalar(void) const;
+	bool is_same_term(const Polynomial& other) const;
+	bool has_addable_simple_polynomial(void) const;
+	bool has_scalar_front_term(void) const;
 
-	Polynomial& polynomial_addition(const Polynomial& other);
+	Polynomial& simple_polynomial_addition_single_term(const double coefficient, const Monomial& monomial);
+	Polynomial& simple_polynomial_addition_simple_polynomial(const Polynomial& other);
+	Polynomial& nested_polynomial_addition_simple_polynomial(const Polynomial& other);
+	Polynomial& nested_polynomial_addition_nested_polynomial(const Polynomial& other);
 
-	Polynomial& simple_polynomial_addition(const double coefficient, const Monomial& monomial);
-	Polynomial& simple_polynomial_addition(const Polynomial& other);
-	void simple_polynomial_scalar_multiplication(const double scalar);
+	//void simple_polynomial_scalar_multiplication(const double scalar);
 	Polynomial& simple_polynomial_multiplication(const Polynomial& other);
 	double simple_polynomial_calculation(const MathVector& variable_vector) const;
 	Polynomial to_simple_polynomial(void) const;

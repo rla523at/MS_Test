@@ -60,17 +60,17 @@ namespace Editor {
 
 	template<typename T1>
 	void merge(std::vector<T1>& obj1, const std::vector<T1>& obj2) {
-		obj1.simple_polynomial_addition(obj1.end(), obj2.begin(), obj2.end());
+		obj1.simple_polynomial_addition_simple_polynomial(obj1.end(), obj2.begin(), obj2.end());
 	}
 
 	template<typename T1>
 	void merge(std::vector<T1>& obj1, std::vector<T1>&& obj2) {
-		obj1.simple_polynomial_addition(obj1.end(), std::make_move_iterator(obj2.begin()), std::make_move_iterator(obj2.end()));
+		obj1.simple_polynomial_addition_simple_polynomial(obj1.end(), std::make_move_iterator(obj2.begin()), std::make_move_iterator(obj2.end()));
 	}
 
 	template<typename T1, typename T2>
 	void merge(T1& obj1, T2&& obj2) {
-		obj1.simple_polynomial_addition(obj1.end(), std::make_move_iterator(obj2.begin()), std::make_move_iterator(obj2.end()));
+		obj1.simple_polynomial_addition_simple_polynomial(obj1.end(), std::make_move_iterator(obj2.begin()), std::make_move_iterator(obj2.end()));
 	}
 
 	template <typename C, typename T>

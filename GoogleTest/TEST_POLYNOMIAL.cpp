@@ -684,6 +684,27 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN7) {
 	const auto ref = -1 * (X ^ 2) + X - 1;
 	EXPECT_EQ(p, ref);
 }
+GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN8) {
+	Polynomial p = X+1;
+	p *= -1;
+
+	const auto ref = -1 * X - 1;
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN9) {
+	Polynomial p = (X + 1) * (X - 1) + 1;
+	p *= -1;
+
+	const auto ref = -1 * (X + 1) * (X - 1) - 1;
+	EXPECT_EQ(p, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN10) {
+	Polynomial p = 2 * ((X - 1) ^ 2);
+	p *= -1;
+
+	const auto ref = -2 * (X ^ 2) + 4 * X - 2;
+	EXPECT_EQ(p, ref);
+}
 
 
 GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_ASSIGN1) {
@@ -1374,7 +1395,7 @@ GTEST_TEST(POLYNOMIAL, TO_STRING8) {
 	const auto p3 = p1 * p2;
 	const auto result = p3.to_string();
 	
-	std::string ref = "[-7(x0)+(x1)+3]X[(x0)+1]";
+	std::string ref = "[[-7]X[(x0)]+(x1)+3]X[(x0)+1]";
 	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(POLYNOMIAL, TO_STRING9) {
@@ -1393,7 +1414,7 @@ GTEST_TEST(POLYNOMIAL, TO_STRING10) {
 	auto p4 = p3 + p1 + p3 + p2;
 	const auto result = p4.to_string();
 
-	std::string ref = "[(x0)+1]X[(x1)-1]+(x0)+(x1)+[(x0)+1]X[(x1)-1]";
+	std::string ref = "[(x0)+1]X[(x1)-1]+[(x0)+1]X[(x1)-1]+(x0)+(x1)";
 	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(POLYNOMIAL, TO_STRING11) {
@@ -1403,36 +1424,61 @@ GTEST_TEST(POLYNOMIAL, TO_STRING11) {
 	auto p4 = p1 + p3 + p2;
 	const auto result = p4.to_string();
 
-	std::string ref = "(x0)+(x1)+[(x0)+1]X[(x1)-1]";
+	std::string ref = "[(x0)+1]X[(x1)-1]+(x0)+(x1)";
 	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(POLYNOMIAL, TO_STRING12) {
-	const Polynomial p0 = X - 1;
-	const Polynomial p1 = (X + 1) * (Y + 1) - X + 1;
+	const Polynomial p0 = 7*X - 1;
+	const Polynomial p1 = (X + 1) * (Y + 1) - 2*X + 1;
+	//std::cout << p1 << "\n";
+
 	Polynomial p2 = p0 - p1;
 	const auto result = p2.to_string();
 
-	std::string ref = "(x0)-1+[-(x0)-1]X[(x1)+1]+(x0)-1";
+	std::string ref = "[-(x0)-1]X[(x1)+1]+2(x0)-2";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING13) {
+	const Polynomial p0 = (X + 1) * (Y + 1);
+	const Polynomial p1 = 2 * (X + 1) * (Y + 1);
+	Polynomial p2 = p0 - p1;
+	const auto result = p2.to_string();
+
+	std::string ref = "[-1]X[[(x0)+1]X[(x1)+1]]";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING14) {
+	const Polynomial p = X - 1;
+	const auto result = p.to_string();
+
+	std::string ref = "(x0)-1";
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, TO_STRING15) {
+	const Polynomial p = X - 1;	
+	const auto p2 = (p ^ 2) + p;
+	const auto result = p2.to_string();
+
+	std::string ref = "[[(x0)-1]^2]+(x0)-1";
 	EXPECT_EQ(result, ref);
 }
 
-
-GTEST_TEST(POLYNOMIAL, SIMPLE_POLYNOMIAL_SCALAR_MULTIPLICATION_1) {
-	Polynomial p1;
-	const double scalar = 5;
-	p1.simple_polynomial_scalar_multiplication(scalar);
-
-	Polynomial ref;
-	EXPECT_EQ(p1, ref);
-}
-GTEST_TEST(POLYNOMIAL, SIMPLE_POLYNOMIAL_SCALAR_MULTIPLICATION_2) {
-	Polynomial p1 = (X ^ 2) + X * (Y ^ 3) + 3 * X + 2;
-	const double scalar = 5;
-	p1.simple_polynomial_scalar_multiplication(scalar);
-
-	Polynomial ref = 5 * (X ^ 2) + 5 * X * (Y ^ 3) + 15 * X + 10;
-	EXPECT_EQ(p1, ref);
-}
+//GTEST_TEST(POLYNOMIAL, SIMPLE_POLYNOMIAL_SCALAR_MULTIPLICATION_1) {
+//	Polynomial p1;
+//	const double scalar = 5;
+//	p1.simple_polynomial_scalar_multiplication(scalar);
+//
+//	Polynomial ref;
+//	EXPECT_EQ(p1, ref);
+//}
+//GTEST_TEST(POLYNOMIAL, SIMPLE_POLYNOMIAL_SCALAR_MULTIPLICATION_2) {
+//	Polynomial p1 = (X ^ 2) + X * (Y ^ 3) + 3 * X + 2;
+//	const double scalar = 5;
+//	p1.simple_polynomial_scalar_multiplication(scalar);
+//
+//	Polynomial ref = 5 * (X ^ 2) + 5 * X * (Y ^ 3) + 15 * X + 10;
+//	EXPECT_EQ(p1, ref);
+//}
 
 
 GTEST_TEST(POLYNOMIAL, SIMPLE_POLYNOMIAL_MULTIPLICATION) {
