@@ -29,18 +29,64 @@ public:
 	bool operator==(const Monomial& other) const;
 
 	size_t exponent(size_t variable_index) const;
-	size_t monomial_order(void) const;
+	size_t order(void) const;
 	size_t domain_dimension(void) const;
 	Monomial& reduce_order(const size_t variable_index);
 	std::string to_string(void) const;
 
-	//private: // for testing
+//private: 
+public:// for testing
 	void remove_meaningless_zero(void);
 	bool is_constant(void) const;
 };
 
 
 std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
+
+
+class Term
+{
+private:
+	MathVector coefficient_vector_;
+	VectorFunction<Monomial> monomial_vector_function_;
+	double power_index_ = 1.0;
+	std::vector<Term> multiplied_term_set_; // to minimize truncation error
+
+public:
+	explicit Term(void) = default;
+	Term(const Monomial& monomial);
+	Term(const double coefficient, const Monomial& monomial);
+	Term(const std::vector<double>& coefficient_set, const std::vector<Monomial>& monomial_set);
+
+	Term& operator*=(const Term& other);
+	Term operator*(const Term& other) const;
+	Term operator^(const double power_index) const;
+	double operator()(const MathVector& variable_vector) const;
+	bool operator==(const Term& other) const;
+
+	size_t domain_dimension(void) const;
+	size_t order(void) const;
+	std::string to_string(void) const;
+
+//private:
+public: //for test
+	Term& add_term(const double coefficient, const Monomial& monomial);
+	Term base(void) const;
+	//std::vector<Term> differentiate(const size_t variable_index) const;
+	Term& power(const double power_index);
+	bool is_constant(void) const;
+	bool is_simple(void) const;
+
+	double simple_term_calculation(const MathVector& variable_vector) const;
+	Term& simple_term_differentiate(const size_t variable_index);
+	Term& simple_term_multiplication(const Term& other);
+	size_t simple_term_domain_dimension(void) const;
+	size_t simple_term_order(void) const;
+	std::string simple_term_to_string(void) const;
+};
+
+
+std::ostream& operator<<(std::ostream& ostream, const Term& term);
 
 
 class Polynomial
@@ -131,7 +177,7 @@ std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
 
 
 namespace ms {
-	std::vector<MathVector> build_compare_node_set(const size_t polynomial_order, const size_t domain_dimension);
+	std::vector<MathVector> polynomial_compare_node_set(const size_t polynomial_order, const size_t domain_dimension);
 	size_t combination(const size_t n, const size_t k);
 	size_t combination_with_repetition(const size_t n, const size_t k);
 	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
