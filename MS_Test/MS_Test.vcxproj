@@ -19,12 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\Figure.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="SRC\MathVector.cpp" />
     <ClCompile Include="SRC\Matrix.cpp" />
     <ClCompile Include="SRC\Polynomial.cpp" />
@@ -32,7 +26,6 @@
     <ClCompile Include="SRC\Text.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="INC\Figure.h" />
     <ClInclude Include="INC\MathVector.h" />
     <ClInclude Include="INC\Matrix.h" />
     <ClInclude Include="INC\Polynomial.h" />
