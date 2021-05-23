@@ -44,13 +44,13 @@ std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
 class Polynomial;
 class PolyTerm
 {
+	friend class Polynomial;
+
 private:
 	MathVector coefficient_vector_;
 	VectorFunction<Monomial> monomial_vector_function_;
 	double power_index_ = 1.0;
 	std::vector<PolyTerm> multiplied_term_set_; // to minimize truncation error
-
-	friend class Polynomial;
 
 public:
 	explicit PolyTerm(void);
@@ -75,6 +75,7 @@ public:
 	double& constant_front(void);
 	bool has_constant_front(void) const;
 	bool is_simple(void) const;
+	bool is_single_term(void) const;
 	void make_constant_front(void);
 	PolyTerm& power(const double power_index);
 	PolyTerm& simple_term_addition(const PolyTerm& other);
@@ -86,9 +87,6 @@ public:
 	std::string simple_term_to_string(void) const;
 };
 std::ostream& operator<<(std::ostream& ostream, const PolyTerm& term);
-//PolyTerm operator+(const Monomial& monomial1, const Monomial& monomial2);
-//PolyTerm operator-(const Monomial& monomial1, const Monomial& monomial2);
-PolyTerm operator*(const double scalar, const PolyTerm& polyterm);
 
 
 class Polynomial
@@ -100,33 +98,53 @@ private:
 
 public:
 	explicit Polynomial(void) = default;
+	Polynomial(const double scalar);
+	Polynomial(const Monomial& monomial);
 	Polynomial(const PolyTerm& poly_term);
 
 	Polynomial& operator+=(const Polynomial& other);
 	Polynomial& operator-=(const Polynomial& other);
 	Polynomial& operator*=(const Polynomial& other);
-	Polynomial operator+(const PolyTerm& poly_term) const;
 	Polynomial operator+(const Polynomial& other) const;
-	Polynomial operator-(const PolyTerm& poly_term) const;
 	Polynomial operator-(const Polynomial& other) const;
-	Polynomial operator*(const PolyTerm& poly_term) const;
 	Polynomial operator*(const Polynomial& other) const;
+	Polynomial operator^(const double power_index) const;
 	double operator()(const MathVector& variable_vector) const;
 	bool operator==(const Polynomial& other) const;
 
 	size_t domain_dimension(void) const;
 	size_t order(void) const;
+
 	std::string to_string(void) const;
 
 //private: // for test
 	Polynomial& add_term(const double coefficient, const PolyTerm& term);
 };
 std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
-//Polynomial operator+(const PolyTerm& poly_term, const Polynomial& polynomial);
-//Polynomial operator-(const PolyTerm& poly_term, const Polynomial& polynomial);
-Polynomial operator+(const PolyTerm& poly_term1, const PolyTerm& poly_term2);
-Polynomial operator-(const PolyTerm& poly_term1, const PolyTerm& poly_term2);
+Polynomial operator+(const PolyTerm& poly_term, const Polynomial& polynomial);
+Polynomial operator-(const PolyTerm& poly_term, const Polynomial& polynomial);
 Polynomial operator*(const PolyTerm& poly_term, const Polynomial& polynomial);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //class Polynomial
 //{
@@ -222,6 +240,7 @@ namespace ms {
 	//Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
 	//Polynomial sqrt(const Polynomial& polynomial);
 	bool is_positive_odd_number(const double val);
+	bool is_natural_number(const double val);
 }
 
 

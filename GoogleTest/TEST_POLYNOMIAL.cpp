@@ -473,15 +473,15 @@ GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN5) {
 	PolyTerm ref = { { 3,-3 }, { X,{0} } };
 	EXPECT_EQ(t1, ref);
 }
-GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN6) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-	t2 = 3 * (t2 ^ 2);
-	t1 *= t2;
-
-	PolyTerm ref = { {3,-3,-3,3}, {{X ^ 3},{X ^ 2},{X},{0}} };
-	EXPECT_EQ(t1, ref);
-}
+//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN6) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
+//	t2 = 3 * (t2 ^ 2);
+//	t1 *= t2;
+//
+//	PolyTerm ref = { {3,-3,-3,3}, {{X ^ 3},{X ^ 2},{X},{0}} };
+//	EXPECT_EQ(t1, ref);
+//}
 
 
 GTEST_TEST(TERM, OPERATOR_POWER1) {
@@ -493,14 +493,14 @@ GTEST_TEST(TERM, OPERATOR_POWER1) {
 	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(TERM, OPERATOR_POWER2) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	PolyTerm t2 = 2 * t1;
-	auto result = t2 ^ 2;
-
-	PolyTerm ref = { {4,8,4}, {{X ^ 2},{X},{0}} };
-	EXPECT_EQ(result, ref);
-}
+//GTEST_TEST(TERM, OPERATOR_POWER2) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	PolyTerm t2 = 2 * t1;
+//	auto result = t2 ^ 2;
+//
+//	PolyTerm ref = { {4,8,4}, {{X ^ 2},{X},{0}} };
+//	EXPECT_EQ(result, ref);
+//}
 
 
 GTEST_TEST(TERM, SIMPLE_TERM_ADDITION1) {
@@ -530,13 +530,18 @@ GTEST_TEST(TERM, SIMPLE_TERM_ADDITION3) {
 
 
 GTEST_TEST(POLYNOMIAL, CONSTRUCTOR1) {
+	//Polynomial p1 = X;
+	//std::cout << p1 << "\n";
+
+	//Polynomial p2 = X * (Y^2)*(Z^2);
+	//std::cout << p2 << "\n";
+
+	//Polynomial p3 = X + Y + 1;
+	//std::cout << p3 << "\n";
+
 	Polynomial p1 = X;
-	std::cout << p1 << "\n";
-
-	Polynomial p2 = X * (Y^2)*(Z^2);
-	std::cout << p2 << "\n";
-
-	Polynomial p3 = X + Y + 1;
+	Polynomial p2 = Y;
+	const auto p3 = p1 * p2;
 	std::cout << p3 << "\n";
 }
 
@@ -694,241 +699,104 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_5) {
 	Polynomial ref = -1 * X - 1 * Y;
 	EXPECT_EQ(result, ref);
 }
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_6) {
+	Polynomial p1 = X + 1;
+	Polynomial p2 = X + 1;
+	const auto result = p1 * p2;
 
-//GTEST_TEST(POLYNOMIAL, CONSTRUCTOR2) {
-//	Polynomial p1;
-//	Polynomial p2(1.0);
-//	EXPECT_NE(p1, p2);
-//}
-//GTEST_TEST(POLYNOMIAL, CONSTRUCTOR3) {
-//	Polynomial p1(0.0);
-//	Polynomial p2(1.0);
-//	EXPECT_NE(p1, p2);
-//}
-// 
-//GTEST_TEST(POLYNOMIAL, CONSTRUCTOR4) {
-//	Polynomial p1((Monomial()));
-//	Polynomial p2(1.0);
-//	EXPECT_EQ(p1, p2);
-//}
-//GTEST_TEST(POLYNOMIAL, CONSTRUCTOR5) {
-//	std::vector<double> v_c = { 1,2 };
-//	std::vector<Monomial> v_m = { Monomial(), Monomial{1,2,3} };
-//
-//	Polynomial p1 = { {1,2},{ {0}, {1,2,3} } };
-//	Polynomial p2(v_c, v_m);
-//
-//	EXPECT_EQ(p1, p2);
-//}
-//GTEST_TEST(POLYNOMIAL, CONSTRUCTOR6) {
-//	Polynomial p1 = { { 1,2 },{ {0},{1} } };
-//	Polynomial p2 = { { 2,1 },{ {1},{0} } };
-//	EXPECT_EQ(p1, p2);
-//}
-//GTEST_TEST(POLYNOMIAL, CONSTRUCTOR7) {
-//	std::vector<Monomial> m_set2 = { {1}, {0} };
-//	std::vector<double> c_set2 = { 1, 1, 1 };
-//	EXPECT_ANY_THROW(Polynomial p2(c_set2, m_set2));
-//}
-//GTEST_TEST(POLYNOMIAL, CONSTRUCTOR8) {
-//	Polynomial p = { { 1, 1} ,{ {0}, {0} } };
-//
-//	Polynomial ref = { {2},{0} };
-//	EXPECT_EQ(p, ref);
-//}
-//
-//
-//GTEST_TEST(POLYNOMIAL, COMPARE1) {
-//	Polynomial p1(1);
-//	Polynomial p2 = { {1,1},{{1},{0}} };
-//	EXPECT_NE(p1, p2);
-//}
-//
-//
-//GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_ASSIGN1) {
-//	Polynomial result = { { 1,1 }, {{2},{1}} };
-//	Polynomial p2 = { { 1,1 },{X,{0}} };
-//	result += p2;
-//
-//	Polynomial ref = { {1,2,1},{{2},{1},{0}} };
-//	EXPECT_EQ(result, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_ASSIGN2) {
-//	Polynomial result;
-//	Polynomial p2;
-//	result += p2;
-//
-//	Polynomial ref;
-//	EXPECT_EQ(result, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_ASSIGN3) {
-//	Polynomial p1{ {-12,45},{ {2,1},{1} } };
-//	Polynomial p2{ {12,-45},{ {2,1},{1} } };
-//	Polynomial ref;
-//
-//	p1 += p2;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_ASSIGN4) {
-//	Polynomial result = (X ^ 2) + X;
-//	Polynomial p2 = X + 1;
-//	result += p2;
-//
-//	Polynomial ref = { {1,2,1},{{2},{1},{0}} };
-//	EXPECT_EQ(result, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_ASSIGN5) {
-//	Polynomial p1 = -12 * (X ^ 2) * Y + 45;
-//	Polynomial p2 = 12 * (X ^ 2) * Y - 45;
-//	p1 += p2;
-//
-//	Polynomial ref;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_ASSIGN6) {
-//	Polynomial p1;
-//	Polynomial p2;
-//	p1 += p2;
-//
-//	Polynomial ref;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_ASSIGN7) {
-//	auto p1 = X + 1;
-//	const auto p2 = X + 2;	
-//	p1.power(2);
-//	p1 += p2;
-//
-//	Polynomial ref = (X ^ 2) + 3 * X + 3;
-//	EXPECT_EQ(p1, ref);
-//}
-//
-//
-//
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN1) {
-//	Polynomial p1 = X + Y;
-//	Polynomial p2 = X + 3 * Y;
-//	p1 -= p2;
-//
-//	Polynomial ref = -2 * Y;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN2) {
-//	Polynomial p1 = X * Y;
-//	Polynomial p2 = X + 3 * Y;
-//	p1 -= p2;
-//
-//	Polynomial ref = X * Y - X - 3 * Y;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN3) {
-//	Polynomial p1 = X * Y;
-//	Polynomial p2 = X;
-//	p1 -= p2;
-//
-//	Polynomial ref = X * Y - X;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN4) {
-//	Polynomial p1;
-//	Polynomial p2 = X;
-//	p1 -= p2;
-//
-//	Polynomial ref = -1 * X;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN5) {
-//	Polynomial p1;
-//	Polynomial p2 = 3 * (X * Y) - 3 * ((X ^ 2) * Z);
-//	p1 -= p2;
-//
-//	Polynomial ref = -3 * (X * Y) + 3 * ((X ^ 2) * Z);
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN6) {
-//	Polynomial p = (X - 1) * (Y - 1);
-//	p -= 1;
-//
-//	const auto ref = X * Y - X - Y;
-//	EXPECT_EQ(p, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN7) {
-//	Polynomial p = (X - 1) * (Y - 1);
-//	p -= X - 1;
-//
-//	const auto ref = X * Y - 2 * X - Y + 2;
-//	EXPECT_EQ(p, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN8) {
-//	Polynomial p = (X - 1) * (Y - 1);
-//	p -= X + Y - 1;
-//
-//	const auto ref = X * Y - 2 * X - 2 * Y + 2;
-//	EXPECT_EQ(p, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_ASSIGN9) {
-//	Polynomial p = (X - 1) * (Y - 1);
-//	p -= 2 * ((X - 1) ^ 2) + X + Y - 1;
-//
-//	const auto ref = -2 * (X ^ 2) + X * Y + 2 * X - 2 * Y;
-//	EXPECT_EQ(p, ref);
-//}
-//
-//
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN1) {
-//	Polynomial p1 = 1;
-//	double scalar = 5;
-//	p1 *= scalar;
-//
-//	Polynomial ref = 5;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN2) {
-//	const auto p1 = X + 1;
-//	const auto p2 = X + 2;
-//	const auto p3 = X + 3;
-//	auto p4 = p1 * p2 + p3;
-//	p4.power(2);
-//
-//	auto result = p4 + p1;
-//	double scalar = 2;
-//	result *= scalar;
-//
-//	Polynomial ref = 2 * (X ^ 4) + 16 * (X ^ 3) + 52 * (X ^ 2) + 82 * X + 52;
-//	EXPECT_EQ(result, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN3) {
-//	Polynomial p1 = (X ^ 2) + X + 1;
-//	double scalar = 5;
-//	p1 *= scalar;
-//
-//	Polynomial ref = 5 * (X ^ 2) + 5 * X + 5;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN4) {
-//	Polynomial p1 = (X ^ 2) + X + 1;
-//	p1.power(0.7);
-//	double scalar = 5;
-//	p1 *= scalar;
-//
-//	for (size_t i = 0; i < 10; ++i) {
-//		const double val = 0.31 * i;
-//		const MathVector val_vec = { val };
-//		const double result = p1(val_vec);
-//		const double ref = 5 * (std::pow(val * val + val + 1, 0.7));
-//		EXPECT_DOUBLE_EQ(result, ref);
-//	}
-//}
+	Polynomial ref = (X ^ 2) + 2 * X + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_7) {
+	Polynomial p1;
+	Polynomial p2;
+	const auto result = p1 * p2;
+
+	Polynomial ref;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_8) {
+	Polynomial p1 = 1;
+	Polynomial p2 = X + 1;
+	const auto result = p1 * p2;
+
+	Polynomial ref = X + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_9) {
+	Polynomial p1 = X + 1;
+	Polynomial p2;
+	const auto result = p1 * p2;
+
+	Polynomial ref;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_10) {
+	Polynomial p1 = X + 1;
+	const auto p2 = p1^(0.5);
+	const auto result = p2 * p2;
+
+	Polynomial ref = X + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_11) {
+	Polynomial p1 = (X ^ 2) + X + 1;
+	const auto result = p1 * 5;
+
+	Polynomial ref = 5 * (X ^ 2) + 5 * X + 5;
+	EXPECT_EQ(result, ref);
+}
+
+
+GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_1) {
+	const auto p1 = X + 1;
+	const auto p2 = X + 2;
+	const auto p3 = X + 3;
+	const auto p4 = p1 * p2 + p3;
+	const auto p5 = p4 ^ 2;
+	const auto result = 2 * (p5 + p1);
+
+	Polynomial ref = 2 * (X ^ 4) + 16 * (X ^ 3) + 52 * (X ^ 2) + 82 * X + 52;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_2) {
+	Polynomial p1 = (X ^ 2) + X + 1;
+	const auto p2 = p1 ^ 0.7;
+	const auto p3 = 5 * p2;
+
+	for (size_t i = 0; i < 10; ++i) {
+		const double val = 0.31 * i;
+		const MathVector val_vec = { val };
+		const double result = p3(val_vec);
+		const double ref = 5 * (std::pow(val * val + val + 1, 0.7));
+		EXPECT_DOUBLE_EQ(result, ref);
+	}
+}
+GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_3) {
+	Polynomial p1 = X + 1;
+	const auto p2 = p1 ^ 2;
+	const auto p3 = p2 + X + 2;
+	const auto p4 = p3 + 2 * X + 3;
+	const auto result = 5 * p4;
+
+	std::cout << p1 << "\n";
+	std::cout << p2 << "\n";
+	std::cout << p3 << "\n";
+	std::cout << p4 << "\n";
+	std::cout << result << "\n";
+
+	const auto ref = 5 * (X ^ 2) + 25 * X + 30;
+	EXPECT_EQ(result, ref);
+}
+
+
+
+
+
+
+
 //GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN5) {
-//	Polynomial p1 = X+1;
-//	auto p2 = (p1 ^ 2);
-//	p2 += X + 2;
-//	p2 += 2 * X + 3;
-//	double scalar = 5;
-//	p2 *= scalar;
-//
-//	const auto ref = 5 * (X ^ 2) + 25 * X + 30;
-//	EXPECT_EQ(p2, ref);
+
 //}
 //GTEST_TEST(POLYNOMIAL, OPERATOR_SCALAR_MULTIPLICATION_ASSIGN6) {
 //	Polynomial p = X;

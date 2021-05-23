@@ -180,6 +180,12 @@ PolyTerm::PolyTerm(const std::vector<double>& coefficient_vector, const std::vec
 }
 
 PolyTerm& PolyTerm::operator*=(const PolyTerm& other) {
+	if (this->is_single_term() && other.is_single_term()) {
+		this->coefficient_vector_.front() *= other.coefficient_vector_.front();
+		this->monomial_vector_function_.front() *= other.monomial_vector_function_.front();
+		return *this;
+	}
+
 	if (!this->has_constant_front())
 		this->make_constant_front();
 
@@ -288,11 +294,15 @@ void PolyTerm::add_mono_term(const double coefficient, const Monomial& monomial)
 	else {
 		const auto coefficient_iter = coefficient_vector_.begin() + (monomial_iter - monomial_vector_function_.begin());
 		*coefficient_iter += coefficient;
+
 		if (*coefficient_iter == 0) {
 			this->monomial_vector_function_.erase(monomial_iter);
 			this->coefficient_vector_.erase(coefficient_iter);
 		}
 	}
+
+	if (this->coefficient_vector_.empty() && this->monomial_vector_function_.empty())
+		*this = 0.0;
 }
 
 PolyTerm PolyTerm::base(void) const {
@@ -347,13 +357,18 @@ PolyTerm& PolyTerm::power(const double power_index) {
 }
 
 bool PolyTerm::has_constant_front(void) const {
-	return this->coefficient_vector_.size() == 1
-		&& this->monomial_vector_function_.size() == 1
+	return this->is_single_term()
 		&& this->monomial_vector_function_.front().is_one();
 }
 
 bool PolyTerm::is_simple(void) const {
 	return this->multiplied_term_set_.empty();
+}
+
+bool PolyTerm::is_single_term(void) const {
+	return this->is_simple()
+		&& this->coefficient_vector_.size() == 1
+		&& this->monomial_vector_function_.size() == 1;
 }
 
 PolyTerm& PolyTerm::simple_term_addition(const PolyTerm& other) {
@@ -454,40 +469,30 @@ std::ostream& operator<<(std::ostream& ostream, const PolyTerm& term) {
 	return ostream << term.to_string();
 }
 
-//PolyTerm operator+(const Monomial& monomial1, const Monomial& monomial2) {
-//	PolyTerm result;
-//	result.add_mono_term(1.0, monomial1);
-//	result.add_mono_term(1.0, monomial2);
-//	return result;
-//}
-//
-//PolyTerm operator-(const Monomial& monomial1, const Monomial& monomial2) {
-//	PolyTerm result;
-//	result.add_mono_term(1.0, monomial1);
-//	result.add_mono_term(-1.0, monomial2);
-//	return result;
-//}
 
-PolyTerm operator*(const double scalar, const PolyTerm& poly_term){
-	return poly_term * scalar;
+Polynomial::Polynomial(const double scalar) {
+	this->add_term(1.0, scalar);
 }
 
+Polynomial::Polynomial(const Monomial& monomial) {
+	this->add_term(1.0, monomial);
+}
 
 Polynomial::Polynomial(const PolyTerm& poly_term) {
 	this->add_term(1.0, poly_term);
 }
 
 Polynomial& Polynomial::operator+=(const Polynomial& other) {
-	const auto num_other_term = other.coefficient_vector_.size();
 	this->simple_term_.simple_term_addition(other.simple_term_);
 
+	const auto num_other_term = other.coefficient_vector_.size();
 	for (size_t i = 0; i < num_other_term; ++i)
 		this->add_term(other.coefficient_vector_[i], other.poly_term_vector_function_[i]);
 	return *this;
 }
 
 Polynomial& Polynomial::operator-=(const Polynomial& other) {
-	return *this += (-1 * other);
+	return *this += (other * -1);
 }
 
 Polynomial& Polynomial::operator*=(const Polynomial& other) {
@@ -510,19 +515,9 @@ Polynomial& Polynomial::operator*=(const Polynomial& other) {
 	return *this = std::move(result);
 }
 
-Polynomial Polynomial::operator+(const PolyTerm& poly_term) const { //scalar, monomial 등이 polyterm으로 형변환 한번 되고
-	Polynomial result(*this);
-	return result += poly_term; // polyterm이 polynomial로 형변환 한번 되고
-}
-
 Polynomial Polynomial::operator+(const Polynomial& other) const {
 	Polynomial result(*this);
 	return result += other;
-}
-
-Polynomial Polynomial::operator-(const PolyTerm& poly_term) const {
-	Polynomial result(*this);
-	return result -= poly_term;
 }
 
 Polynomial Polynomial::operator-(const Polynomial& other) const {
@@ -530,14 +525,27 @@ Polynomial Polynomial::operator-(const Polynomial& other) const {
 	return result -= other;
 }
 
-Polynomial Polynomial::operator*(const PolyTerm& poly_term) const {
-	Polynomial result(*this);
-	return result *= poly_term;
-}
-
 Polynomial Polynomial::operator*(const Polynomial& other) const {
 	Polynomial result(*this);
 	return result *= other;
+}
+
+Polynomial Polynomial::operator^(const double power_index) const {
+	Polynomial result = *this;
+	if (this->coefficient_vector_.empty()) {
+		result.simple_term_.power_index_ *= power_index;
+		result.coefficient_vector_.push_back(1.0);
+		result.poly_term_vector_function_.push_back(std::move(result.simple_term_));
+		result.simple_term_ = 0.0;
+		return result;
+	}
+	else if (ms::is_natural_number(power_index)) {
+		for (size_t i = 1; i < power_index; ++i)
+			result *= *this;
+		return result;
+	}
+	else
+		throw std::runtime_error("complex polynomial can not be powered");
 }
 
 double Polynomial::operator()(const MathVector& variable_vector) const {
@@ -627,28 +635,12 @@ std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial) {
 	return ostream << polynomial.to_string();
 }
 
-//Polynomial operator+(const PolyTerm& polyterm1, const PolyTerm& polyterm2) {
-//	Polynomial result = polyterm1;
-//	return result += polyterm2;
-//}
-
-//Polynomial operator+(const PolyTerm& poly_term, const Polynomial& polynomial) {
-//	return polynomial + poly_term;
-//}
-//
-//Polynomial operator-(const PolyTerm& poly_term, const Polynomial& polynomial) {
-//	return -1 * polynomial += poly_term;
-//}
-
-Polynomial operator+(const PolyTerm& poly_term1, const PolyTerm& poly_term2) {
-	Polynomial result = poly_term1;
-	return result += poly_term2;
+Polynomial operator+(const PolyTerm& poly_term, const Polynomial& polynomial) {
+	return polynomial + poly_term;
 }
 
-Polynomial operator-(const PolyTerm& poly_term1, const PolyTerm& poly_term2) {
-	Polynomial result = poly_term1;
-	return result -= poly_term2;
-
+Polynomial operator-(const PolyTerm& poly_term, const Polynomial& polynomial) {
+	return -1.0 * polynomial += poly_term;
 }
 
 Polynomial operator*(const PolyTerm& poly_term, const Polynomial& polynomial) {
@@ -1450,6 +1442,16 @@ namespace ms {
 
 		if (val - std::floor(val) == 0)
 			return static_cast<size_t>(val) % 2 == 0;
+		else
+			return false;
+	}
+
+	bool is_natural_number(const double val) {
+		if (val < 0)
+			return false;
+
+		if (val - std::floor(val) == 0)
+			return true;
 		else
 			return false;
 	}
