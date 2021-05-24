@@ -281,7 +281,7 @@ VectorFunction<Polynomial> ReferenceFigure::calculate_transformation_function(co
 QuadratureRule ReferenceFigure::calculate_quadrature_rule(const VectorFunction<Polynomial>& transformation_function, const size_t physical_domain_integrand_order) const {
 	const auto TS_function = this->calculate_trasnformation_scale_function(transformation_function);
 
-	const auto reference_domain_integrand_order = physical_domain_integrand_order + TS_function.polynomial_order();	
+	const auto reference_domain_integrand_order = physical_domain_integrand_order + TS_function.order();	
 	auto key = std::make_pair(this->figure_type_, reference_domain_integrand_order);
 	if (ReferenceFigure::key_to_quadrature_rule_.find(key) == ReferenceFigure::key_to_quadrature_rule_.end())
 		ReferenceFigure::key_to_quadrature_rule_.emplace(key, this->reference_quadrature_rule(reference_domain_integrand_order));
@@ -760,7 +760,7 @@ VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFuncti
 	VectorFunction<Polynomial> result;
 	result.reserve(num_row);
 	for (size_t i = 0; i < num_row; ++i)
-		result.push_back(Polynomial{ m.row(i) ,vector_function });
+		result.push_back(PolyTerm{ m.row(i) ,vector_function });
 
 	return result;
 }
@@ -803,7 +803,7 @@ namespace ms {
 	}
 
 	double integrate(const Polynomial& integrand, const Figure& figure) {
-		const auto quadrature_rule = figure.calculate_quadrature_rule(integrand.polynomial_order());
+		const auto quadrature_rule = figure.calculate_quadrature_rule(integrand.order());
 		return ms::integrate(integrand, quadrature_rule);
 	}
 

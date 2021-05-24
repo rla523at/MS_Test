@@ -46,7 +46,8 @@ class PolyTerm
 {
 	friend class Polynomial;
 
-private:
+//private:
+public: // for test
 	MathVector coefficient_vector_;
 	VectorFunction<Monomial> monomial_vector_function_;
 	double power_index_ = 1.0;
@@ -63,6 +64,7 @@ public:
 	PolyTerm operator^(const double power_index) const;
 	double operator()(const MathVector& variable_vector) const;
 	bool operator==(const PolyTerm& other) const;
+	bool operator!=(const PolyTerm& other) const;
 
 	size_t domain_dimension(void) const;
 	size_t order(void) const;	
@@ -71,6 +73,8 @@ public:
 //private: //for test
 	void add_mono_term(const double coefficient, const Monomial& monomial);
 	PolyTerm base(void) const;
+	void be_simple(void);
+	bool can_be_simple(void) const;
 	double constant_front(void) const;
 	double& constant_front(void);
 	bool has_constant_front(void) const;
@@ -113,12 +117,18 @@ public:
 	bool operator==(const Polynomial& other) const;
 
 	size_t domain_dimension(void) const;
+	Polynomial& differentiate(const size_t variable_index);
+	VectorFunction<Polynomial> gradient(void) const;
+	VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
 	size_t order(void) const;
-
+	Polynomial& power(const double power_index);
 	std::string to_string(void) const;
 
 //private: // for test
 	Polynomial& add_term(const double coefficient, const PolyTerm& term);
+	Polynomial differentiate(const size_t variable_index) const;
+	//Polynomial poly_term_differentiate(const PolyTerm& polyn_term, const size_t variable_index) const;
+	static Polynomial poly_term_differentiate(const PolyTerm& polyn_term, const size_t variable_index);
 };
 std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
 Polynomial operator+(const PolyTerm& poly_term, const Polynomial& polynomial);
@@ -126,7 +136,15 @@ Polynomial operator-(const PolyTerm& poly_term, const Polynomial& polynomial);
 Polynomial operator*(const PolyTerm& poly_term, const Polynomial& polynomial);
 
 
-
+namespace ms {
+	std::vector<MathVector> polynomial_compare_node_set(const size_t polynomial_order, const size_t domain_dimension);
+	size_t combination(const size_t n, const size_t k);
+	size_t combination_with_repetition(const size_t n, const size_t k);
+	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
+	Polynomial sqrt(const Polynomial& polynomial);
+	bool is_positive_odd_number(const double val);
+	bool is_natural_number(const double val);
+}
 
 
 
@@ -185,8 +203,8 @@ Polynomial operator*(const PolyTerm& poly_term, const Polynomial& polynomial);
 //	bool operator!=(const Polynomial& other) const;
 //
 //	Polynomial& differentiate(const size_t variable_index);
-//	VectorFunction<Polynomial> gradient(void) const;
-//	VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
+	//VectorFunction<Polynomial> gradient(void) const;
+	//VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
 //	Polynomial& power(const double power_index);
 //	std::string to_string(void) const;
 //
@@ -233,15 +251,7 @@ Polynomial operator*(const PolyTerm& poly_term, const Polynomial& polynomial);
 //std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
 //
 //
-namespace ms {
-	std::vector<MathVector> polynomial_compare_node_set(const size_t polynomial_order, const size_t domain_dimension);
-	size_t combination(const size_t n, const size_t k);
-	size_t combination_with_repetition(const size_t n, const size_t k);
-	//Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
-	//Polynomial sqrt(const Polynomial& polynomial);
-	bool is_positive_odd_number(const double val);
-	bool is_natural_number(const double val);
-}
+
 
 
 

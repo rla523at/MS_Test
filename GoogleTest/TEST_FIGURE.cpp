@@ -780,6 +780,21 @@ GTEST_TEST(REFERENCE_FIGURE, TRANSFORMATION_SCALE_FUNCTION1) {
 	MathVector n4 = { 1,3,0 };
 	std::vector<const MathVector*> nv = { &n1,&n2,&n3,&n4 };
 	const auto transformation_function = reference_fig.calculate_transformation_function(nv);
+
+	//debug
+	constexpr size_t r = 0;
+	constexpr size_t s = 1;
+	const auto T_r = ms::differentiate(transformation_function, r);
+	const auto T_s = ms::differentiate(transformation_function, s);
+	const auto cross_product = T_r.cross_product(T_s);
+	std::cout << cross_product << "\n";
+
+	Polynomial result;
+	for (const auto& func : cross_product)
+		result += (func ^ 2);
+	std::cout << result << "\n";
+	//debug
+
 	const auto transformation_scale_function = reference_fig.calculate_trasnformation_scale_function(transformation_function);
 	
 	Polynomial ref = (0.25 * Y + 1.25) * (-0.25 * X + 0.25) - (0.25 * X + 0.25) * (-0.25 * Y - 0.75);
@@ -1098,21 +1113,20 @@ GTEST_TEST(FIGURE, ORTHONORMAL_BASIS4) {
 	const auto orthonormal_basis = fig.calculate_orthonormal_basis_vector(polynomial_order);
 	const auto num_basis = orthonormal_basis.size();
 
-	for (size_t i = 0; i < 6; ++i)
-		std::cout << orthonormal_basis[i] << "\n";
+	//for (size_t i = 0; i < 6; ++i)
+	//	std::cout << orthonormal_basis[i] << "\n";
 
+	constexpr double epsilon = 9.0E-12;
+	for (size_t i = 0; i < num_basis; ++i) {
+		for (size_t j = 0; j <= i; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
 
-	//constexpr double epsilon = 9.0E-12;
-	//for (size_t i = 0; i < num_basis; ++i) {
-	//	for (size_t j = 0; j <= i; ++j) {
-	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
-
-	//		if (i == j)
-	//			EXPECT_NEAR(result, 1, epsilon);
-	//		else
-	//			EXPECT_NEAR(result, 0, epsilon);
-	//	}
-	//}
+			if (i == j)
+				EXPECT_NEAR(result, 1, epsilon);
+			else
+				EXPECT_NEAR(result, 0, epsilon);
+		}
+	}
 }
 GTEST_TEST(FIGURE, ORTHONORMAL_BASIS5) {
 	const FigureType figure_type = FigureType::Quadrilateral;
@@ -1134,17 +1148,17 @@ GTEST_TEST(FIGURE, ORTHONORMAL_BASIS5) {
 	//for (const auto& b : orthonormal_basis)
 	//	std::cout << b << "\n";
 
-	//constexpr double epsilon = 9.0E-12;
-	//for (size_t i = 0; i < num_basis; ++i) {
-	//	for (size_t j = 0; j <= i; ++j) {
-	//		const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+	constexpr double epsilon = 9.0E-12;
+	for (size_t i = 0; i < num_basis; ++i) {
+		for (size_t j = 0; j <= i; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
 
-	//		if (i == j)
-	//			EXPECT_NEAR(result, 1, epsilon);
-	//		else
-	//			EXPECT_NEAR(result, 0, epsilon);
-	//	}
-	//}
+			if (i == j)
+				EXPECT_NEAR(result, 1, epsilon);
+			else
+				EXPECT_NEAR(result, 0, epsilon);
+		}
+	}
 }
 //GTEST_TEST(FIGURE, ORTHONORMAL_BASIS3) {
 //	const FigureType figure_type = FigureType::Quadrilateral;
@@ -1335,7 +1349,7 @@ GTEST_TEST(FIGURE, MULTIPLY_MATRIX_VECTOR_FUNCTION1) {
 	RowMajorMatrix m(2, 3, { 1,2,1,4,4,1 });
 	const auto result = m * v;
 
-	VectorFunction<Polynomial> ref = { {{1,2,1}, { {2},{1},{0} }}, {{1,4,4}, { {2},{1},{0} }} };
+	VectorFunction<Polynomial> ref = { (X ^ 2) + 2 * X + 1, (X ^ 2) + 4 * X + 4 };
 	EXPECT_EQ(result, ref);
 }
 
@@ -1473,19 +1487,6 @@ GTEST_TEST(MS, GRAM_SCHMIDT_PROCESS2) {
 
 
 
-GTEST_TEST(JACOBIAN, CONSTRUCTOR1) {
-	Polynomial p1 = { {1,1,1},{{0},{1},{0,1}} };
-	Polynomial p2 = { {1},{{1,0,1}} };
-	Polynomial p3 = { {1},{{0,3}} };
-	VectorFunction<Polynomial> f = { p1,p2,p3 };
-	const auto result = JacobianFunction(f);
-
-	VectorFunction<Polynomial> vp1 = { {{1}, { {0} }}, {{1}, { {0} }}, {{0}, { {0} }} };
-	VectorFunction<Polynomial> vp2 = { {{1}, { {0,0,1} }}, {{0}, { {0} }}, {{1}, { {1} }} };
-	VectorFunction<Polynomial> vp3 = { {{0}, { {0} }}, {{3}, { {0,2} }}, {{0}, { {0} }} };
-	JacobianFunction ref = { vp1,vp2,vp3 };
-	EXPECT_EQ(result, ref);
-}
 GTEST_TEST(JACOBIAN, CONSTRUCTOR2) {
 	Polynomial p1 = 1 + X + Y;
 	Polynomial p2 = X * Z;

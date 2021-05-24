@@ -238,6 +238,10 @@ bool PolyTerm::operator==(const PolyTerm& other) const {
 	return true;
 }
 
+bool PolyTerm::operator!=(const PolyTerm& other) const {
+	return !(*this == other);
+}
+
 size_t PolyTerm::domain_dimension(void) const {
 	if (this->is_simple())
 		return this->simple_term_domain_dimension();
@@ -311,6 +315,14 @@ PolyTerm PolyTerm::base(void) const {
 	return result;
 }
 
+void PolyTerm::be_simple(void) {
+	*this = this->multiplied_term_set_.front();
+}
+
+bool PolyTerm::can_be_simple(void) const {
+	return this->constant_front() == 1 && this->multiplied_term_set_.size() == 1 && this->multiplied_term_set_.front().is_simple();
+}
+
 double PolyTerm::constant_front(void) const {
 	return this->coefficient_vector_.front();
 }
@@ -324,24 +336,6 @@ void PolyTerm::make_constant_front(void) {
 	result.multiplied_term_set_.push_back(std::move(*this));
 	*this = std::move(result);
 }
-
-//std::vector<Term> Term::differentiate(const size_t variable_index) const {
-//	std::vector<Term> result;
-//	if (this->is_constant()) {
-//		result.push_back(Term());
-//		return result;
-//	}
-//	if (this->is_simple()) {
-//		auto tmp = *this;
-//		result.push_back(std::move(tmp.simple_term_differentiate(variable_index)));
-//		return result;
-//	}
-//
-//	for (size_t i = 0; i < this->multiplied_term_set_.size(); ++i) {
-//		auto tmp = *this;
-//		tmp.multiplied_term_set_[i]
-//	}
-//}
 
 PolyTerm& PolyTerm::power(const double power_index) {
 	if (power_index == 0)
@@ -357,12 +351,13 @@ PolyTerm& PolyTerm::power(const double power_index) {
 }
 
 bool PolyTerm::has_constant_front(void) const {
-	return this->is_single_term()
+	return this->coefficient_vector_.size() == 1
+		&& this->monomial_vector_function_.size() == 1
 		&& this->monomial_vector_function_.front().is_one();
 }
 
 bool PolyTerm::is_simple(void) const {
-	return this->multiplied_term_set_.empty();
+	return this->multiplied_term_set_.empty() && this->power_index_ == 1.0;
 }
 
 bool PolyTerm::is_single_term(void) const {
@@ -405,6 +400,10 @@ PolyTerm& PolyTerm::simple_term_differentiate(const size_t variable_index) {
 		this->coefficient_vector_.erase(this->coefficient_vector_.begin() + position);
 		this->monomial_vector_function_.erase(this->monomial_vector_function_.begin() + position);
 	}
+
+	if (this->coefficient_vector_.empty() && this->monomial_vector_function_.empty())
+		*this = 0.0;
+
 	return *this;
 }
 
@@ -532,20 +531,7 @@ Polynomial Polynomial::operator*(const Polynomial& other) const {
 
 Polynomial Polynomial::operator^(const double power_index) const {
 	Polynomial result = *this;
-	if (this->coefficient_vector_.empty()) {
-		result.simple_term_.power_index_ *= power_index;
-		result.coefficient_vector_.push_back(1.0);
-		result.poly_term_vector_function_.push_back(std::move(result.simple_term_));
-		result.simple_term_ = 0.0;
-		return result;
-	}
-	else if (ms::is_natural_number(power_index)) {
-		for (size_t i = 1; i < power_index; ++i)
-			result *= *this;
-		return result;
-	}
-	else
-		throw std::runtime_error("complex polynomial can not be powered");
+	return result.power(power_index);
 }
 
 double Polynomial::operator()(const MathVector& variable_vector) const {
@@ -574,11 +560,59 @@ size_t Polynomial::domain_dimension(void) const {
 
 }
 
+Polynomial& Polynomial::differentiate(const size_t variable_index) {
+	Polynomial result = this->simple_term_.simple_term_differentiate(variable_index);
+
+	const auto num_poly_term = this->coefficient_vector_.size();
+	for (size_t i = 0; i < num_poly_term; ++i) 
+		result += this->coefficient_vector_[i] * this->poly_term_differentiate(this->poly_term_vector_function_[i], variable_index);
+
+	*this = std::move(result);
+	return *this;
+}
+
+VectorFunction<Polynomial> Polynomial::gradient(void) const {
+	const auto domain_dimension = this->domain_dimension();
+	return this->gradient(domain_dimension);
+}
+
+VectorFunction<Polynomial> Polynomial::gradient(const size_t domain_dimension) const {
+	VectorFunction<Polynomial> result;
+	result.reserve(domain_dimension);
+
+	for (size_t i = 0; i < domain_dimension; ++i)
+		result.push_back(ms::differentiate(*this, i));
+
+	return result;
+}
+
 size_t Polynomial::order(void) const {
 	size_t result = this->simple_term_.order();
 	for (const auto& term : this->poly_term_vector_function_)
 		result = std::max(result, term.order());
 	return result;
+}
+
+Polynomial& Polynomial::power(const double power_index) {
+	if (this->coefficient_vector_.empty()) {
+		this->simple_term_.power(power_index);
+		this->coefficient_vector_.push_back(1.0);
+		this->poly_term_vector_function_.push_back(std::move(this->simple_term_));
+		this->simple_term_ = 0.0;
+	}
+	else if (this->coefficient_vector_.size() == 1 && this->simple_term_ == 0) {
+		this->coefficient_vector_.front() = std::pow(this->coefficient_vector_.front(), power_index);
+		this->poly_term_vector_function_.front().power(power_index);
+	}
+	else if (ms::is_natural_number(power_index)) {
+		const auto tmp = *this;
+		for (size_t i = 1; i < power_index; ++i)
+			*this *= tmp;
+	}
+	else
+		throw std::runtime_error("complex polynomial can not be powered");
+
+	return *this;
 }
 
 std::string Polynomial::to_string(void) const {
@@ -595,6 +629,9 @@ std::string Polynomial::to_string(void) const {
 
 	if (!this->simple_term_.has_constant_front() || this->simple_term_.constant_front() != 0.0)
 		str += "+" + this->simple_term_.to_string();
+
+	if (str.empty())
+		return this->simple_term_.to_string();
 
 	str.erase(str.begin());
 	return str;
@@ -629,6 +666,56 @@ Polynomial& Polynomial::add_term(const double coefficient, const PolyTerm& term)
 		}
 	}
 	return *this;
+}
+
+Polynomial Polynomial::differentiate(const size_t variable_index) const {
+	auto simple_term = this->simple_term_;
+	Polynomial result = simple_term.simple_term_differentiate(variable_index);
+
+	const auto num_poly_term = this->coefficient_vector_.size();
+	for (size_t i = 0; i < num_poly_term; ++i)
+		result += this->coefficient_vector_[i] * this->poly_term_differentiate(this->poly_term_vector_function_[i], variable_index);
+
+	return result;
+}
+
+Polynomial Polynomial::poly_term_differentiate(const PolyTerm& poly_term, const size_t variable_index){
+//Polynomial Polynomial::poly_term_differentiate(const PolyTerm& poly_term, const size_t variable_index) const {
+	Polynomial result;
+
+	const auto num_multiplied_term = poly_term.multiplied_term_set_.size();
+	for (size_t i = 0; i < num_multiplied_term; ++i) {
+		auto tmp = poly_term;
+
+		if (tmp.multiplied_term_set_[i].power_index_ == 1.0) {
+			tmp.multiplied_term_set_[i].simple_term_differentiate(variable_index);
+
+			if (tmp.multiplied_term_set_[i] == 0)
+				continue;
+
+			if (tmp.multiplied_term_set_[i] == 1)
+				tmp.multiplied_term_set_.erase(tmp.multiplied_term_set_.begin() + i);
+
+			if (tmp.can_be_simple())
+				tmp.be_simple();
+		}
+		else {
+			auto diff_term = tmp.multiplied_term_set_[i];
+			diff_term.power_index_ = 1.0;
+			diff_term.simple_term_differentiate(variable_index);
+
+			if (diff_term == 0)
+				continue;
+
+			tmp.constant_front() *= poly_term.multiplied_term_set_[i].power_index_;
+			tmp.multiplied_term_set_[i].power_index_ -= 1.0;
+
+			if (diff_term != 1)
+				tmp.multiplied_term_set_.push_back(std::move(diff_term));
+		}
+		result += tmp;
+	}
+	return result;
 }
 
 std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial) {
@@ -943,18 +1030,18 @@ Polynomial operator*(const PolyTerm& poly_term, const Polynomial& polynomial) {
 //}
 //
 //VectorFunction<Polynomial> Polynomial::gradient(void) const {
-//	const auto domain_dimension = this->domain_dimension();
-//	return this->gradient(domain_dimension);
+	//const auto domain_dimension = this->domain_dimension();
+	//return this->gradient(domain_dimension);
 //}
 //
 //VectorFunction<Polynomial> Polynomial::gradient(const size_t domain_dimension) const {
-//	VectorFunction<Polynomial> result;
-//	result.reserve(domain_dimension);
-//
-//	for (size_t i = 0; i < domain_dimension; ++i)
-//		result.push_back(ms::differentiate(*this, i));
-//
-//	return result;
+	//VectorFunction<Polynomial> result;
+	//result.reserve(domain_dimension);
+
+	//for (size_t i = 0; i < domain_dimension; ++i)
+	//	result.push_back(ms::differentiate(*this, i));
+
+	//return result;
 //}
 //
 //Polynomial& Polynomial::power(const double power_index) {
@@ -1427,14 +1514,14 @@ namespace ms {
 		return combination(n + k - 1, k);
 	}
 
-	//Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index) {
-	//	auto result = polynomial;
-	//	return result.differentiate(variable_index);
-	//}
+	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index) {
+		auto result = polynomial;
+		return result.differentiate(variable_index); // 불필요한 복사가 발생함..
+	}
 
-	//Polynomial sqrt(const Polynomial& polynomial) {
-	//	return polynomial^(0.5);		
-	//}
+	Polynomial sqrt(const Polynomial& polynomial) {
+		return polynomial^0.5;		
+	}
 
 	bool is_positive_odd_number(const double val) {
 		if (val < 0)
