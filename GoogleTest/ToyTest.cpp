@@ -1,3 +1,17 @@
+
+#include <utility>
+
+std::pair<int, int> func(void) {
+	return { 1,1 };
+}
+
+void func2(const int i1, const int i2) {
+}
+
+int main(void) {
+	func2(func());
+}
+
 //#include "../MS_Test/INC/Text.h"
 //#include <iostream>
 //

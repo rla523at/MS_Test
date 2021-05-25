@@ -27,21 +27,21 @@ GTEST_TEST(MONOMIAL, CONSTRUCTOR6) {
 	Monomial m2 = { 0,0,0,0,1 };
 	EXPECT_EQ(m1, m2);
 }
-GTEST_TEST(MONOMIAL, CONSTRUCTOR7) {
-	Monomial m1 = X;
-	Monomial m2 = { 1 };
-	EXPECT_EQ(m1, m2);
-}
-GTEST_TEST(MONOMIAL, CONSTRUCTOR8) {
-	Monomial m1 = Y;
-	Monomial m2 = { 0,1 };
-	EXPECT_EQ(m1, m2);
-}
-GTEST_TEST(MONOMIAL, CONSTRUCTOR9) {
-	Monomial m1 = Z;
-	Monomial m2 = { 0,0,1 };
-	EXPECT_EQ(m1, m2);
-}
+//GTEST_TEST(MONOMIAL, CONSTRUCTOR7) {
+//	Monomial m1 = X;
+//	Monomial m2 = { 1 };
+//	EXPECT_EQ(m1, m2);
+//}
+//GTEST_TEST(MONOMIAL, CONSTRUCTOR8) {
+//	Monomial m1 = Y;
+//	Monomial m2 = { 0,1 };
+//	EXPECT_EQ(m1, m2);
+//}
+//GTEST_TEST(MONOMIAL, CONSTRUCTOR9) {
+//	Monomial m1 = Z;
+//	Monomial m2 = { 0,0,1 };
+//	EXPECT_EQ(m1, m2);
+//}
 
 
 GTEST_TEST(MONOMIAL, REMOVE_MEANINGLESS_ZERO1) {
@@ -430,107 +430,130 @@ GTEST_TEST(MONOMIAL, TO_STRING4) {
 }
 
 
-GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN1) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-	t1 *= t2;
+//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN1) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
+//	t1 *= t2;
+//
+//	PolyTerm ref = { {1,-1}, {{X ^ 2},{0}} };
+//	EXPECT_EQ(t1, ref);
+//}
+//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN2) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
+//	t1 *= t2;
+//	t1 *= t1;
+//
+//	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
+//	EXPECT_EQ(t1, ref);
+//}
+//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN3) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
+//	t1 = t1 ^ 2;
+//	t2 = t2 ^ 2;
+//	t1 *= t2;
+//
+//	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
+//	EXPECT_EQ(t1, ref);
+//}
+//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN4) {
+//	PolyTerm t1 = 3;
+//	PolyTerm t2 = 2;
+//	t1 *= t2;
+//
+//	PolyTerm ref = 6;
+//	EXPECT_EQ(t1, ref);
+//}
+//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN5) {
+//	PolyTerm t1 = 3;
+//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
+//	t1 *= t2;
+//
+//	PolyTerm ref = { { 3,-3 }, { X,{0} } };
+//	EXPECT_EQ(t1, ref);
+//}
+//
+//
+//GTEST_TEST(TERM, OPERATOR_POWER1) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
+//	t1 *= t2;
+//	auto result = t1 ^ 2;
+//
+//	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
+//	EXPECT_EQ(result, ref);
+//}
+//
+//
+//GTEST_TEST(TERM, SIMPLE_TERM_ADDITION1) {
+//	PolyTerm t1;
+//	PolyTerm t2 = { { 1,1 }, { X,{0} } }; // x+1
+//	t1.simple_term_addition(t2);
+//
+//	PolyTerm ref = { { 1,1 }, { X,{0} } };
+//	EXPECT_EQ(t1, ref);
+//}
+//GTEST_TEST(TERM, SIMPLE_TERM_ADDITION2) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	PolyTerm t2;
+//	t1.simple_term_addition(t2);
+//
+//	PolyTerm ref = { { 1,1 }, { X,{0} } };
+//	EXPECT_EQ(t1, ref);
+//}
+//GTEST_TEST(TERM, SIMPLE_TERM_ADDITION3) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	PolyTerm t2 = 3;
+//	t1.simple_term_addition(t2);
+//
+//	PolyTerm ref = { { 1,4 }, { X,{0} } };
+//	EXPECT_EQ(t1, ref);
+//}
+//
+//
+//GTEST_TEST(TERM, SIMPLE_TERM_DIFFERENTIATE_1) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	
+//	const size_t variable_index = 0;
+//	const auto result = t1.simple_term_differentiate(variable_index);
+//
+//	PolyTerm ref = 1;
+//	EXPECT_EQ(result, ref);
+//}
+//GTEST_TEST(TERM, SIMPLE_TERM_DIFFERENTIATE_2) {
+//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
+//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
+//	auto t3 = t1 * t2;
+//
+//	const size_t variable_index = 0;
+//	t3.multiplied_power_poly_term_set_.front().simple_term_differentiate(variable_index);
+//
+//	PolyTerm ref = { { 1,-1 }, { X,{0} } };
+//	EXPECT_EQ(t3, ref);
+//}
 
-	PolyTerm ref = { {1,-1}, {{X ^ 2},{0}} };
-	EXPECT_EQ(t1, ref);
-}
-GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN2) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-	t1 *= t2;
-	t1 *= t1;
 
-	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
-	EXPECT_EQ(t1, ref);
-}
-GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN3) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-	t1 = t1 ^ 2;
-	t2 = t2 ^ 2;
-	t1 *= t2;
+GTEST_TEST(POLYNOMIAL, TEMP) {
+	//Polynomial p1 = X + 1;
+	//Polynomial p2 = X - 1;
+	//auto p3 = 3 * p1;
+	//auto p4 = p3 * p2;
 
-	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
-	EXPECT_EQ(t1, ref);
-}
-GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN4) {
-	PolyTerm t1 = 3;
-	PolyTerm t2 = 2;
-	t1 *= t2;
+	Polynomial p1 = X * Y;
+	std::cout << p1 << "\n";
 
-	PolyTerm ref = 6;
-	EXPECT_EQ(t1, ref);
-}
-GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN5) {
-	PolyTerm t1 = 3;
-	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-	t1 *= t2;
+	auto p2 = p1 - X;
+	std::cout << p2 << "\n";
 
-	PolyTerm ref = { { 3,-3 }, { X,{0} } };
-	EXPECT_EQ(t1, ref);
-}
+	auto p3 = p2 - 3 * Y;
+	std::cout << p3 << "\n";
 
+	auto p4 = p3 + Y * Z;
+	std::cout << p4 << "\n";
 
-GTEST_TEST(TERM, OPERATOR_POWER1) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-	t1 *= t2;
-	auto result = t1 ^ 2;
-
-	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
-	EXPECT_EQ(result, ref);
-}
-
-
-GTEST_TEST(TERM, SIMPLE_TERM_ADDITION1) {
-	PolyTerm t1;
-	PolyTerm t2 = { { 1,1 }, { X,{0} } }; // x+1
-	t1.simple_term_addition(t2);
-
-	PolyTerm ref = { { 1,1 }, { X,{0} } };
-	EXPECT_EQ(t1, ref);
-}
-GTEST_TEST(TERM, SIMPLE_TERM_ADDITION2) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	PolyTerm t2;
-	t1.simple_term_addition(t2);
-
-	PolyTerm ref = { { 1,1 }, { X,{0} } };
-	EXPECT_EQ(t1, ref);
-}
-GTEST_TEST(TERM, SIMPLE_TERM_ADDITION3) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	PolyTerm t2 = 3;
-	t1.simple_term_addition(t2);
-
-	PolyTerm ref = { { 1,4 }, { X,{0} } };
-	EXPECT_EQ(t1, ref);
-}
-
-
-GTEST_TEST(TERM, SIMPLE_TERM_DIFFERENTIATE_1) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	
-	const size_t variable_index = 0;
-	const auto result = t1.simple_term_differentiate(variable_index);
-
-	PolyTerm ref = 1;
-	EXPECT_EQ(result, ref);
-}
-GTEST_TEST(TERM, SIMPLE_TERM_DIFFERENTIATE_2) {
-	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-	auto t3 = t1 * t2;
-
-	const size_t variable_index = 0;
-	t3.multiplied_term_set_.front().simple_term_differentiate(variable_index);
-
-	PolyTerm ref = { { 1,-1 }, { X,{0} } };
-	EXPECT_EQ(t3, ref);
+	auto p5 = p4 + Z + X + 5;
+	std::cout << p5 << "\n";
 }
 
 
@@ -816,27 +839,27 @@ GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_4) {
 }
 
 
-GTEST_TEST(POLYNOMIAL, POLY_TERM_DIFFERENTIATE_1) {
-	PolyTerm pt1 = { {1,1}, {X,{0}} };
-	PolyTerm pt2 = { {1,-1}, {X,{0}} };
-	const auto pt3 = pt1 * pt2;
-	
-	const size_t variable_index = 0;
-	const auto result = Polynomial::poly_term_differentiate(pt3, variable_index);
-
-	const Polynomial ref = 2*X;
-	EXPECT_EQ(result, ref);
-}
-GTEST_TEST(POLYNOMIAL, POLY_TERM_DIFFERENTIATE_2) {
-	PolyTerm pt1 = { {1,1}, {X,{0}} };
-	auto pt2 = pt1 ^ 2;
-
-	const size_t variable_index = 0;
-	const auto result = Polynomial::poly_term_differentiate(pt2, variable_index);
-
-	const Polynomial ref = 2 * X + 2;
-	EXPECT_EQ(result, ref);
-}
+//GTEST_TEST(POLYNOMIAL, POLY_TERM_DIFFERENTIATE_1) {
+//	PolyTerm pt1 = { {1,1}, {X,{0}} };
+//	PolyTerm pt2 = { {1,-1}, {X,{0}} };
+//	const auto pt3 = pt1 * pt2;
+//	
+//	const size_t variable_index = 0;
+//	const auto result = Polynomial::poly_term_differentiate(pt3, variable_index);
+//
+//	const Polynomial ref = 2*X;
+//	EXPECT_EQ(result, ref);
+//}
+//GTEST_TEST(POLYNOMIAL, POLY_TERM_DIFFERENTIATE_2) {
+//	PolyTerm pt1 = { {1,1}, {X,{0}} };
+//	auto pt2 = pt1 ^ 2;
+//
+//	const size_t variable_index = 0;
+//	const auto result = Polynomial::poly_term_differentiate(pt2, variable_index);
+//
+//	const Polynomial ref = 2 * X + 2;
+//	EXPECT_EQ(result, ref);
+//}
 
 
 GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_1) {

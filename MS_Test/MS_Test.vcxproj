@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\Figure.cpp" />
     <ClCompile Include="SRC\MathVector.cpp" />
     <ClCompile Include="SRC\Matrix.cpp" />
     <ClCompile Include="SRC\Polynomial.cpp" />
@@ -27,7 +26,6 @@
     <ClCompile Include="SRC\Text.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="INC\Figure.h" />
     <ClInclude Include="INC\MathVector.h" />
     <ClInclude Include="INC\Matrix.h" />
     <ClInclude Include="INC\Polynomial.h" />
