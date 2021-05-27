@@ -87,9 +87,9 @@ public:
 		return result;
 	}
 
-	VectorFunction<T>& differentiate(const size_t variable_index) {
+	VectorFunction<T>& be_derivative(const size_t variable_index) {
 		for (auto& func : *this)
-			func.differentiate(variable_index);
+			func.be_derivative(variable_index);
 		return *this;
 	}
 
@@ -129,8 +129,8 @@ std::ostream& operator<<(std::ostream& os, const VectorFunction<T>& x) {
 
 namespace ms {
 	template <typename T>
-	VectorFunction<T> differentiate(const VectorFunction<T>& vector_function, const size_t variable_index) {
+	VectorFunction<T> be_derivative(const VectorFunction<T>& vector_function, const size_t variable_index) {
 		auto result = vector_function;
-		return result.differentiate(variable_index);
+		return result.be_derivative(variable_index);
 	}
 }

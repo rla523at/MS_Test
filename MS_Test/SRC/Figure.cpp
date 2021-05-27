@@ -355,14 +355,14 @@ Polynomial ReferenceFigure::calculate_trasnformation_scale_function(const Vector
 	{
 	case 1: {
 		constexpr size_t r = 0;
-		const auto T_r = ms::differentiate(transformation_function, r);
+		const auto T_r = ms::be_derivative(transformation_function, r);
 		return T_r.L2_norm();
 	}
 	case 2: {
 		constexpr size_t r = 0;
 		constexpr size_t s = 1;
-		const auto T_r = ms::differentiate(transformation_function, r);
-		const auto T_s = ms::differentiate(transformation_function, s);
+		const auto T_r = ms::be_derivative(transformation_function, r);
+		const auto T_s = ms::be_derivative(transformation_function, s);
 		return T_r.cross_product(T_s).L2_norm();
 	}
 	default:

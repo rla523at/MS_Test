@@ -784,8 +784,8 @@ GTEST_TEST(REFERENCE_FIGURE, TRANSFORMATION_SCALE_FUNCTION1) {
 	//debug
 	constexpr size_t r = 0;
 	constexpr size_t s = 1;
-	const auto T_r = ms::differentiate(transformation_function, r);
-	const auto T_s = ms::differentiate(transformation_function, s);
+	const auto T_r = ms::be_derivative(transformation_function, r);
+	const auto T_s = ms::be_derivative(transformation_function, s);
 	const auto cross_product = T_r.cross_product(T_s);
 	std::cout << cross_product << "\n";
 
