@@ -789,7 +789,7 @@ GTEST_TEST(REFERENCE_FIGURE, TRANSFORMATION_SCALE_FUNCTION1) {
 	const auto cross_product = T_r.cross_product(T_s);
 	std::cout << cross_product << "\n";
 
-	Polynomial result;
+	CompactPolynomial result;
 	for (const auto& func : cross_product)
 		result += (func ^ 2);
 	std::cout << result << "\n";
@@ -797,7 +797,7 @@ GTEST_TEST(REFERENCE_FIGURE, TRANSFORMATION_SCALE_FUNCTION1) {
 
 	const auto transformation_scale_function = reference_fig.calculate_trasnformation_scale_function(transformation_function);
 	
-	Polynomial ref = (0.25 * Y + 1.25) * (-0.25 * X + 0.25) - (0.25 * X + 0.25) * (-0.25 * Y - 0.75);
+	CompactPolynomial ref = (0.25 * Y + 1.25) * (-0.25 * X + 0.25) - (0.25 * X + 0.25) * (-0.25 * Y - 0.75);
 	EXPECT_EQ(transformation_scale_function, ref);
 }
 
@@ -962,7 +962,7 @@ GTEST_TEST(FIGURE, INITIAL_BASIS1) {
 	const size_t polynomial_order = 1;
 	const auto result = fig.calculate_initial_basis_vector(polynomial_order);
 	
-	VectorFunction<Polynomial> ref = { 1, X - 1, Y - 1 };
+	VectorFunction<CompactPolynomial> ref = { 1, X - 1, Y - 1 };
 	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(FIGURE, INITIAL_BASIS2) {
@@ -979,7 +979,7 @@ GTEST_TEST(FIGURE, INITIAL_BASIS2) {
 	const size_t polynomial_order = 2;
 	const auto result = fig.calculate_initial_basis_vector(polynomial_order);
 
-	VectorFunction<Polynomial> ref = { 1, X - 1, Y - 1, (X - 1) ^ 2,(X - 1) * (Y - 1),(Y - 1) ^ 2 };
+	VectorFunction<CompactPolynomial> ref = { 1, X - 1, Y - 1, (X - 1) ^ 2,(X - 1) * (Y - 1),(Y - 1) ^ 2 };
 	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(FIGURE, INITIAL_BASIS3) {
@@ -996,7 +996,7 @@ GTEST_TEST(FIGURE, INITIAL_BASIS3) {
 	const size_t polynomial_order = 1;
 	const auto result = fig.calculate_initial_basis_vector(polynomial_order);
 
-	VectorFunction<Polynomial> ref = { 1, X - 1.9937, Y - 1.76775 };
+	VectorFunction<CompactPolynomial> ref = { 1, X - 1.9937, Y - 1.76775 };
 	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(FIGURE, INITIAL_BASIS4) {
@@ -1013,7 +1013,7 @@ GTEST_TEST(FIGURE, INITIAL_BASIS4) {
 	const size_t polynomial_order = 2;
 	const auto result = fig.calculate_initial_basis_vector(polynomial_order);
 
-	VectorFunction<Polynomial> ref = { 1, X - 1.9937, Y - 1.76775, (X - 1.9937) ^ 2,(X - 1.9937) * (Y - 1.76775),(Y - 1.76775) ^ 2 };
+	VectorFunction<CompactPolynomial> ref = { 1, X - 1.9937, Y - 1.76775, (X - 1.9937) ^ 2,(X - 1.9937) * (Y - 1.76775),(Y - 1.76775) ^ 2 };
 	EXPECT_EQ(result, ref);
 }
 
@@ -1226,11 +1226,11 @@ GTEST_TEST(FIGURE, ORTHONORMAL_BASIS5) {
 
 
 GTEST_TEST(FIGURE, INNER_PRODUCT1) {
-	Polynomial f0 = 0.70710678118654746;
-	Polynomial f1 = 0.94868329805051632 * X - 2.0554804791094519;
-	Polynomial f2 = 1.6710199556880552 * X + 3.0382181012510086 * Y - 9.1906097562843012;
-	Polynomial f3 = 1.3103156645083498 * ((X - 2.25) ^ 2) - 0.24190443037077192 * X - 0.33261859175981184 * Y + 0.39687445607705152;
-	VectorFunction<Polynomial> vf = { f0,f1,f2,f3 };
+	CompactPolynomial f0 = 0.70710678118654746;
+	CompactPolynomial f1 = 0.94868329805051632 * X - 2.0554804791094519;
+	CompactPolynomial f2 = 1.6710199556880552 * X + 3.0382181012510086 * Y - 9.1906097562843012;
+	CompactPolynomial f3 = 1.3103156645083498 * ((X - 2.25) ^ 2) - 0.24190443037077192 * X - 0.33261859175981184 * Y + 0.39687445607705152;
+	VectorFunction<CompactPolynomial> vf = { f0,f1,f2,f3 };
 
 	const FigureType figure_type = FigureType::Quadrilateral;
 	const size_t figure_order = 1;
@@ -1268,8 +1268,8 @@ GTEST_TEST(MS, INNER_PRODUCT2) {
 	const size_t polynomial_order = 2;
 	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
 
-	Polynomial f0 = 0.70710678118654746;
-	Polynomial f1 = (X - 2.25) * (Y - 1.75);
+	CompactPolynomial f0 = 0.70710678118654746;
+	CompactPolynomial f1 = (X - 2.25) * (Y - 1.75);
 	const auto result = ms::inner_product(f0, f1, quadrature_rule);
 	
 	const double ref = -0.441941738241592;
@@ -1290,8 +1290,8 @@ GTEST_TEST(MS, INNER_PRODUCT3) {
 	const size_t polynomial_order = 2;
 	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
 
-	Polynomial f0 = 0.94868329805051632 * X - 2.0554804791094519;
-	Polynomial f1 = (X - 2.25) * (Y - 1.75);
+	CompactPolynomial f0 = 0.94868329805051632 * X - 2.0554804791094519;
+	CompactPolynomial f1 = (X - 2.25) * (Y - 1.75);
 	const auto result = ms::inner_product(f0, f1, quadrature_rule);
 
 	const double ref = 0.039528470752105;
@@ -1312,8 +1312,8 @@ GTEST_TEST(MS, INNER_PRODUCT4) {
 	const size_t polynomial_order = 2;
 	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
 
-	Polynomial f0 = 1.6710199556880552 * X + 3.0382181012510086 * Y - 9.1906097562843012;
-	Polynomial f1 = (X - 2.25) * (Y - 1.75);
+	CompactPolynomial f0 = 1.6710199556880552 * X + 3.0382181012510086 * Y - 9.1906097562843012;
+	CompactPolynomial f1 = (X - 2.25) * (Y - 1.75);
 	const auto result = ms::inner_product(f0, f1, quadrature_rule);
 
 	const double ref = -0.158240526106823;
@@ -1334,8 +1334,8 @@ GTEST_TEST(MS, INNER_PRODUCT5) {
 	const size_t polynomial_order = 2;
 	const auto quadrature_rule = fig.calculate_quadrature_rule(polynomial_order);
 
-	Polynomial f0 = 1.3103156645083498 * ((X - 2.25) ^ 2) - 0.24190443037077192 * X - 0.33261859175981184 * Y + 0.39687445607705152;
-	Polynomial f1 = (X - 2.25) * (Y - 1.75);
+	CompactPolynomial f0 = 1.3103156645083498 * ((X - 2.25) ^ 2) - 0.24190443037077192 * X - 0.33261859175981184 * Y + 0.39687445607705152;
+	CompactPolynomial f1 = (X - 2.25) * (Y - 1.75);
 	const auto result = ms::inner_product(f0, f1, quadrature_rule);
 
 	const double ref = -0.383687304838086;
@@ -1349,7 +1349,7 @@ GTEST_TEST(FIGURE, MULTIPLY_MATRIX_VECTOR_FUNCTION1) {
 	RowMajorMatrix m(2, 3, { 1,2,1,4,4,1 });
 	const auto result = m * v;
 
-	VectorFunction<Polynomial> ref = { (X ^ 2) + 2 * X + 1, (X ^ 2) + 4 * X + 4 };
+	VectorFunction<CompactPolynomial> ref = { (X ^ 2) + 2 * X + 1, (X ^ 2) + 4 * X + 4 };
 	EXPECT_EQ(result, ref);
 }
 
@@ -1488,37 +1488,37 @@ GTEST_TEST(MS, GRAM_SCHMIDT_PROCESS2) {
 
 
 GTEST_TEST(JACOBIAN, CONSTRUCTOR2) {
-	Polynomial p1 = 1 + X + Y;
-	Polynomial p2 = X * Z;
-	Polynomial p3 = Z ^ 3;
-	VectorFunction<Polynomial> f = { p1,p2,p3 };
+	CompactPolynomial p1 = 1 + X + Y;
+	CompactPolynomial p2 = X * Z;
+	CompactPolynomial p3 = Z ^ 3;
+	VectorFunction<CompactPolynomial> f = { p1,p2,p3 };
 	const auto result = JacobianFunction(f);
 
-	VectorFunction<Polynomial> vp1 = { 1,1,0 };
-	VectorFunction<Polynomial> vp2 = { Z,0,X };
-	VectorFunction<Polynomial> vp3 = { 0,0,3 * (Z ^ 2) };
+	VectorFunction<CompactPolynomial> vp1 = { 1,1,0 };
+	VectorFunction<CompactPolynomial> vp2 = { Z,0,X };
+	VectorFunction<CompactPolynomial> vp3 = { 0,0,3 * (Z ^ 2) };
 	JacobianFunction ref = { vp1,vp2,vp3 };
 	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(JACOBIAN, CONSTRUCTOR3) {
-	Polynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
-	Polynomial p2 = X + Y + Z - 3;
-	Polynomial p3 = (Y ^ 2) * Z + X * Z - 2;
-	VectorFunction<Polynomial> f = { p1,p2,p3 };
+	CompactPolynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
+	CompactPolynomial p2 = X + Y + Z - 3;
+	CompactPolynomial p3 = (Y ^ 2) * Z + X * Z - 2;
+	VectorFunction<CompactPolynomial> f = { p1,p2,p3 };
 	const auto result = JacobianFunction(f);
 
-	VectorFunction<Polynomial> vp1 = { 2 * X + 6 * X * Y,3 * (X ^ 2) + 3 * (Y ^ 2),2 * Z };
-	VectorFunction<Polynomial> vp2 = { 1,1,1 };
-	VectorFunction<Polynomial> vp3 = { Z,2 * Y * Z,(Y ^ 2) + X };
+	VectorFunction<CompactPolynomial> vp1 = { 2 * X + 6 * X * Y,3 * (X ^ 2) + 3 * (Y ^ 2),2 * Z };
+	VectorFunction<CompactPolynomial> vp2 = { 1,1,1 };
+	VectorFunction<CompactPolynomial> vp3 = { Z,2 * Y * Z,(Y ^ 2) + X };
 	JacobianFunction ref = { vp1,vp2,vp3 };
 	EXPECT_EQ(result, ref);
 }
 
 
 GTEST_TEST(JACOBIAN, NEWTON_RAPHSON1) {
-	Polynomial p1 = X + Y - 1;
-	Polynomial p2 = X - Y - 3;
-	VectorFunction<Polynomial> f = { p1,p2 };
+	CompactPolynomial p1 = X + Y - 1;
+	CompactPolynomial p2 = X - Y - 3;
+	VectorFunction<CompactPolynomial> f = { p1,p2 };
 	MathVector initial_guess = { 0,0 };
 	const auto result = ms::Newton_Raphson(f, initial_guess);
 
@@ -1526,9 +1526,9 @@ GTEST_TEST(JACOBIAN, NEWTON_RAPHSON1) {
 	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(JACOBIAN, NEWTON_RAPHSON2) {
-	Polynomial p1 = (X ^ 2) + X + Y - 7;
-	Polynomial p2 = X - Y - 1;
-	VectorFunction<Polynomial> f = { p1,p2 };
+	CompactPolynomial p1 = (X ^ 2) + X + Y - 7;
+	CompactPolynomial p2 = X - Y - 1;
+	VectorFunction<CompactPolynomial> f = { p1,p2 };
 	MathVector initial_guess = { 0,0 };
 	const auto result = ms::Newton_Raphson(f, initial_guess);
 
@@ -1536,10 +1536,10 @@ GTEST_TEST(JACOBIAN, NEWTON_RAPHSON2) {
 	EXPECT_EQ(result, ref);
 }
 GTEST_TEST(JACOBIAN, NEWTON_RAPHSON3) {
-	Polynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
-	Polynomial p2 = X + Y + Z - 3;
-	Polynomial p3 = (Y ^ 2) * Z + X * Z - 2;
-	VectorFunction<Polynomial> f = { p1,p2,p3 };
+	CompactPolynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
+	CompactPolynomial p2 = X + Y + Z - 3;
+	CompactPolynomial p3 = (Y ^ 2) * Z + X * Z - 2;
+	VectorFunction<CompactPolynomial> f = { p1,p2,p3 };
 	MathVector initial_guess = { 1.1,1.1,1.1 };
 	const double convergence_criteria = 1.0E-13;
 	const auto solution = ms::Newton_Raphson(f, initial_guess, convergence_criteria);
@@ -1549,10 +1549,10 @@ GTEST_TEST(JACOBIAN, NEWTON_RAPHSON3) {
 	EXPECT_LE(result, ref);
 }
 GTEST_TEST(JACOBIAN, NEWTON_RAPHSON4) {
-	Polynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
-	Polynomial p2 = X + Y + Z - 3;
-	Polynomial p3 = (Y ^ 2) * Z + X * Z - 2;
-	VectorFunction<Polynomial> f = { p1,p2,p3 };
+	CompactPolynomial p1 = (X ^ 2) + 3 * (X ^ 2) * Y + (Y ^ 3) + (Z ^ 2) - 6;
+	CompactPolynomial p2 = X + Y + Z - 3;
+	CompactPolynomial p3 = (Y ^ 2) * Z + X * Z - 2;
+	VectorFunction<CompactPolynomial> f = { p1,p2,p3 };
 	//MathVector initial_guess = { 0,0,0 }; bad initial guess
 	MathVector initial_guess = { 0.5,0.5,0.5 };
 	const auto solution = ms::Newton_Raphson(f, initial_guess);

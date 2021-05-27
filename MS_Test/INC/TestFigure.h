@@ -255,7 +255,7 @@ void Test_Quad_Orthonormality3(const size_t integrand_order) {
 	
 	std::vector<double> coefficient_set = { 1.0,-100.0 };
 	std::vector<Monomial> monomial_set = { Monomial{1},Monomial{0} };
-	Polynomial poly(coefficient_set, monomial_set);
+	CompactPolynomial poly(coefficient_set, monomial_set);
 
 	auto poly2 = poly * poly;
 	std::cout << poly2 << "\n";

@@ -1,16 +1,16 @@
 
-#include <utility>
-
-std::pair<int, int> func(void) {
-	return { 1,1 };
-}
-
-void func2(const int i1, const int i2) {
-}
-
-int main(void) {
-	func2(func());
-}
+//#include <utility>
+//
+//std::pair<int, int> func(void) {
+//	return { 1,1 };
+//}
+//
+//void func2(const int i1, const int i2) {
+//}
+//
+//int main(void) {
+//	func2(func());
+//}
 
 //#include "../MS_Test/INC/Text.h"
 //#include <iostream>
@@ -340,27 +340,38 @@ int main(void) {
 
 
 
-//
-//
-//#include <iostream>
-//#include <vector>
-//class A
-//{
-//public:
-//	A() { std::cout << "constructor\n"; };
-//	A(const A& a) { std::cout << "copy constructor \n"; };
-//	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
-//
-//	A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
-//	A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
-//};
-//
-//void func(const A& a) {
-//	return;
-//}
-//
-//int main(void){
-//	std::vector<double> v = { 1,2,3 };
-//	func(v); // implicit inversion을 위해 임시 객체를 생성함!
-//
-//}
+
+
+#include <iostream>
+#include <vector>
+class B;
+class A
+{
+public:
+	A() { std::cout << "constructor\n"; };
+	A(const A& a) { std::cout << "copy constructor \n"; };
+	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
+
+	A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
+	A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
+	B func2(void);
+};
+
+class B
+{};
+
+void func(const A& a) {
+	return;
+}
+
+int main(void){
+	//std::vector<double> v = { 1,2,3 };
+	//func(v); // implicit inversion을 위해 임시 객체를 생성함!
+
+	A a;
+	a.func2();
+}
+
+B A::func2(void) {
+	return B();
+}

@@ -1,84 +1,83 @@
 #include "../INC/Polynomial.h"
 
-Monomial::Monomial(const size_t variable_index) {
-	this->exponent_set_.resize(variable_index + 1);
-	this->exponent_set_.back() = 1;
-};
+MonoTerm::MonoTerm(const std::string& variable) {
+	if (variable.front() != 'x')
+		throw std::invalid_argument("variable should start with 'x'");
 
-Monomial::Monomial(const std::initializer_list<size_t> list)
-	: exponent_set_{ list } {
-	this->remove_meaningless_zero();
-};
+	constexpr size_t position = 1;
+	const auto variable_index = std::stoull(variable.substr(position));
+	this->monomial_exponents_.resize(variable_index + 1);
+	this->monomial_exponents_.back() = 1;
+}
 
-Monomial& Monomial::operator*=(const Monomial& other) {
-	if (other.is_one())
-		return *this;
+void MonoTerm::add_assign_with_same_monomial(const MonoTerm& other) {
+	this->coefficient_ += other.coefficient_;
+	if (this->coefficient_ == 0.0)
+		*this = 0.0;
+}
 
-	if (this->is_one())
-		return *this = other;
+MonoTerm& MonoTerm::operator*=(const MonoTerm& other) {
+	if (other.coefficient_ == 0.0)
+		*this = 0.0;
 
-	const auto other_size = other.exponent_set_.size();
-	if (this->exponent_set_.size() <= other_size)
-		this->exponent_set_.resize(other_size);
+	this->coefficient_ *= other.coefficient_;
 
-	for (size_t i = 0; i < other_size; ++i)
-		this->exponent_set_[i] += other.exponent_set_[i];
+	if (this->domain_dimension() <= other.domain_dimension())
+		this->monomial_exponents_.resize(other.domain_dimension());
+	for (size_t i = 0; i < other.domain_dimension(); ++i)
+		this->monomial_exponents_[i] += other.monomial_exponents_[i];
 
-	this->remove_meaningless_zero();
+	const auto is_zero = [](const size_t exponent) {return exponent == 0; };
+	const auto iter = std::find_if_not(this->monomial_exponents_.rbegin(), this->monomial_exponents_.rend(), is_zero);
+	const auto num_zero = iter - this->monomial_exponents_.rbegin();
+	this->monomial_exponents_.erase(this->monomial_exponents_.end() - num_zero, this->monomial_exponents_.end());
+	
 	return *this;
 }
 
-Monomial Monomial::operator*(const Monomial& other) const {
-	Monomial result = *this;
+SimplePolynomial MonoTerm::operator+(const MonoTerm& other) const {
+	SimplePolynomial result = *this;
+	return result += other;
+}
+
+MonoTerm MonoTerm::operator*(const MonoTerm& other) const {
+	MonoTerm result = *this;
 	return result *= other;
 }
 
-Monomial Monomial::operator^(const size_t power) const {
-	if (this->is_one())
-		return *this;
-		
-	if (power == 0)
-		return Monomial();
-	
-	Monomial result(*this);
-	for (auto& exponent : result.exponent_set_)
-		exponent *= power;
 
-	return result;
+MonoTerm MonoTerm::operator^(const size_t power_index) const {
+	MonoTerm result = *this;
+	return result.power(power_index);
 }
 
-double Monomial::operator()(void) const {
-	if (!this->is_one())
-		throw std::invalid_argument("variable monomial need variable values");
-	else
-		return 1.0;
-}
-
-double Monomial::operator()(const MathVector& variable_value_vector) const {
-	if (this->exponent_set_.size() > variable_value_vector.size())
+double MonoTerm::operator()(const MathVector& variable_value_vector) const {
+	if (this->monomial_exponents_.size() > variable_value_vector.size())
 		throw std::invalid_argument("given variables are not enough");
 
-	if (this->is_one())
-		return 1.0;
-
-	double result = 1.0;
-	for (size_t i = 0; i < this->exponent_set_.size(); ++i)
-		result *= std::pow(variable_value_vector[i], this->exponent_set_[i]);
+	double result = this->coefficient_;
+	for (size_t i = 0; i < this->monomial_exponents_.size(); ++i)
+		result *= std::pow(variable_value_vector[i], this->monomial_exponents_[i]);
 
 	return result;
 }
 
-bool Monomial::operator<(const Monomial& other) const {
+bool MonoTerm::operator==(const MonoTerm& other) const {
+	return this->monomial_exponents_ == other.monomial_exponents_
+		&& this->coefficient_ == other.coefficient_;
+}
+
+bool MonoTerm::operator<(const MonoTerm& other) const {
 	const auto this_order = this->order();
 	const auto other_order = other.order();
 
 	if (this_order == other_order) {
-		const auto min_set_size = std::min(this->exponent_set_.size(), other.exponent_set_.size());
+		const auto min_set_size = std::min(this->monomial_exponents_.size(), other.monomial_exponents_.size());
 		for (size_t i = 0; i < min_set_size; ++i) {
-			if (this->exponent_set_[i] == other.exponent_set_[i])
+			if (this->monomial_exponents_[i] == other.monomial_exponents_[i])
 				continue;
 
-			return this->exponent_set_[i] < other.exponent_set_[i];
+			return this->monomial_exponents_[i] < other.monomial_exponents_[i];
 		}
 		return false;
 	}
@@ -86,128 +85,135 @@ bool Monomial::operator<(const Monomial& other) const {
 	return this_order < other_order;
 }
 
-bool Monomial::operator==(const Monomial& other) const {
-	return  this->exponent_set_ == other.exponent_set_;
+double MonoTerm::be_constant(void) const {
+	return this->coefficient_;
 }
 
-size_t Monomial::exponent(size_t variable_index) const {
-	if (this->exponent_set_.size() <= variable_index || this->is_one())
-		return 0;
-
-	return this->exponent_set_[variable_index];
+size_t MonoTerm::domain_dimension(void) const {
+	return this->monomial_exponents_.size();
 }
 
-size_t Monomial::order(void) const {
-	if (this->is_one())
-		return 0;
+MonoTerm& MonoTerm::differetiate(const size_t variable_index) {
+	if (this->domain_dimension() <= variable_index)
+		return *this = 0.0;
 
+	this->coefficient_ *= this->monomial_exponents_[variable_index];
+	if (this->coefficient_ == 0.0)
+		return *this = 0.0;
+
+	this->monomial_exponents_[variable_index]--;
+
+	const auto is_zero = [](size_t exponent) {return exponent == 0; };
+	const auto pos_iter = std::find_if_not(this->monomial_exponents_.rbegin(), this->monomial_exponents_.rend(), is_zero);
+	const auto num_meaningless_zero = pos_iter - this->monomial_exponents_.rbegin();
+	this->monomial_exponents_.erase(this->monomial_exponents_.end() - num_meaningless_zero, this->monomial_exponents_.end());
+
+	return *this;
+}
+
+bool MonoTerm::has_same_monomial(const MonoTerm& other) const {
+	return this->monomial_exponents_ == other.monomial_exponents_;
+}
+
+bool MonoTerm::is_constant(void) const {
+	return this->monomial_exponents_.empty();
+}
+
+size_t MonoTerm::order(void) const {
 	size_t order = 0;
-	for (const auto exponent : this->exponent_set_)
+	for (const auto exponent : this->monomial_exponents_)
 		order += exponent;
 	return order;
 }
 
-size_t Monomial::domain_dimension(void) const {
-	return this->exponent_set_.size();
-}
-
-Monomial& Monomial::reduce_order(const size_t variable_index) {
-	if (this->exponent(variable_index) == 0)
-		throw "exponent can not be negative";
-	else
-		this->exponent_set_[variable_index]--;
-
-	this->remove_meaningless_zero();
-	return *this;
-}
-
-std::string Monomial::to_string(void) const {
-	if (this->is_one())
-		return "(1)";
+std::string MonoTerm::to_string(void) const {
+	if (this->is_constant())
+		return ms::double_to_string(this->coefficient_);
 
 	std::string str;
-	for (size_t i = 0; i < this->exponent_set_.size(); ++i) {
-		if (this->exponent_set_[i] == 0)
+	if (this->coefficient_ == 1.0)
+		str += '+';
+	else if (this->coefficient_ == -1.0)
+		str += '-';
+	else if (this->coefficient_ > 0.0)
+		str += '+' + ms::double_to_string(this->coefficient_);
+	else
+		str += ms::double_to_string(this->coefficient_);
+
+
+	for (size_t i = 0; i < this->monomial_exponents_.size(); ++i) {
+		if (this->monomial_exponents_[i] == 0)
 			continue;
-		
-		if (this->exponent_set_[i] == 1)
+
+		if (this->monomial_exponents_[i] == 1)
 			str += "(x" + std::to_string(i) + ")";
 		else
-			str += "(x" + std::to_string(i) + ")^" + std::to_string(this->exponent_set_[i]);
+			str += "(x" + std::to_string(i) + ")^" + std::to_string(this->monomial_exponents_[i]);
 	}
 
 	return str;
 }
 
-void Monomial::remove_meaningless_zero(void) {
-	const auto is_zero = [](size_t exponent) {return exponent == 0; };
-	const auto pos_iter = std::find_if_not(this->exponent_set_.rbegin(), this->exponent_set_.rend(), is_zero);
-	const auto num_zero = pos_iter - this->exponent_set_.rbegin();
-
-	this->exponent_set_.erase(this->exponent_set_.end() - num_zero, this->exponent_set_.end());
+std::ostream& operator<<(std::ostream& os, const MonoTerm& mono_term) {
+	return os << mono_term.to_string();
 }
 
-bool Monomial::is_one(void) const {
-	return this->exponent_set_.empty();
+MonoTerm operator* (const double constant, const MonoTerm& mono_term) {
+	return mono_term * constant;
 }
 
-std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial) {
-	return ostream << monomial.to_string();
+SimplePolynomial::SimplePolynomial(const MonoTerm& mono_term) {
+	this->added_mono_term_set_.push_back(mono_term);
 }
 
+SimplePolynomial& SimplePolynomial::operator+=(const MonoTerm& mono_term) {
+	bool is_added = false;
+	for (auto& this_mono_term : this->added_mono_term_set_) {
+		if (this_mono_term.has_same_monomial(mono_term)) {
+			this_mono_term.add_assign_with_same_monomial(mono_term);
+			is_added = true;
+		}
+	}
+	if (!is_added)
+		this->added_mono_term_set_.push_back(mono_term);
 
-SimplePolyTerm::SimplePolyTerm(void) {
-	this->coefficient_vector_.push_back(0.0);
-	this->monomial_vector_function_.push_back(Monomial());
-}
+	constexpr double zero = 0.0;
+	for (;;) {
+		const auto zero_iter = std::find(this->added_mono_term_set_.begin(), this->added_mono_term_set_.end(), zero);
+		if (zero_iter == this->added_mono_term_set_.end())
+			break;
+		else
+			this->added_mono_term_set_.erase(zero_iter);
+	}
 
-SimplePolyTerm::SimplePolyTerm(const double scalar) {
-	this->coefficient_vector_.push_back(scalar);
-	this->monomial_vector_function_.push_back(Monomial());
-}
-
-SimplePolyTerm::SimplePolyTerm(const Monomial& monomial) {
-	this->coefficient_vector_.push_back(1.0);
-	this->monomial_vector_function_.push_back(monomial);
-}
-
-SimplePolyTerm::SimplePolyTerm(const double scalar, const Monomial& monomial) {
-	this->coefficient_vector_.push_back(scalar);
-	this->monomial_vector_function_.push_back(monomial);
-}
-
-SimplePolyTerm::SimplePolyTerm(const std::vector<double>& coefficient_vector, const std::vector<Monomial>& monomial_set) {
-	const auto num_term = coefficient_vector.size();
-	if (num_term != monomial_set.size())
-		throw std::length_error("Size Error");
-
-	for (size_t i = 0; i < num_term; ++i)
-		this->add_mono_term(coefficient_vector[i], monomial_set[i]);
-}
-
-SimplePolyTerm& SimplePolyTerm::operator+=(const SimplePolyTerm& other) {
-	const auto num_other_term = other.coefficient_vector_.size();
-	for (size_t i = 0; i < num_other_term; ++i)
-		this->add_mono_term(other.coefficient_vector_[i], other.monomial_vector_function_[i]);
 	return *this;
 }
 
-SimplePolyTerm& SimplePolyTerm::operator*=(const double constant) {
-	this->coefficient_vector_ *= constant;
+SimplePolynomial& SimplePolynomial::operator+=(const SimplePolynomial& other) {
+	this->constant_ += other.constant_;
+	for (const auto& other_mono_term : other.added_mono_term_set_)
+		*this += other_mono_term;	
 	return *this;
 }
 
-SimplePolyTerm SimplePolyTerm::operator*(const double constant) const {
+SimplePolynomial SimplePolynomial::operator+(const SimplePolynomial& other) const {
 	auto result = *this;
-	return result *= constant;
+	return result += other;
 }
 
-double SimplePolyTerm::operator()(const MathVector& variable_vector) const{
-	const auto monomial_value_vector = this->monomial_vector_function_(variable_vector);
-	return this->coefficient_vector_.inner_product(monomial_value_vector);
+CompactPolynomial SimplePolynomial::operator*(const SimplePolynomial& other) const {
+	CompactPolynomial result = *this;
+	return result *= other;
 }
 
-bool SimplePolyTerm::operator==(const SimplePolyTerm& other) const {
+double SimplePolynomial::operator()(const MathVector& variable_vector) const {
+	double result = this->constant_;
+	for (const auto& term : this->added_mono_term_set_)
+		result += term(variable_vector);
+	return result;
+}
+
+bool SimplePolynomial::operator==(const SimplePolynomial& other) const {
 	const auto max_order = std::max(this->order(), other.order());
 	const auto max_domain_dimension = std::max(this->domain_dimension(), other.domain_dimension());
 	const auto compare_node_set = ms::polynomial_compare_node_set(max_order, max_domain_dimension);
@@ -220,175 +226,160 @@ bool SimplePolyTerm::operator==(const SimplePolyTerm& other) const {
 	return true;
 }
 
-bool SimplePolyTerm::operator!=(const SimplePolyTerm& other) const {
+bool SimplePolynomial::operator!=(const SimplePolynomial& other) const {
 	return !(*this == other);
 }
 
-double SimplePolyTerm::be_constant(void) const {
-	return this->coefficient_vector_.front();
+double SimplePolynomial::be_constant(void) const {
+	return this->constant_;
 }
 
-SimplePolyTerm& SimplePolyTerm::differentiate(const size_t variable_index) {
-	SimplePolyTerm result;
-	for (size_t i = 0; i < this->coefficient_vector_.size(); ++i) {
-		auto diff_monomial = this->differentiate_monomial(this->monomial_vector_function_[i], variable_index);
-		if (diff_monomial != 0)
-			result += this->coefficient_vector_[i] * diff_monomial;
-	}
-
-	if (result.coefficient_vector_.empty() && result.monomial_vector_function_.empty())
-		result = 0.0;
-
-	return *this = std::move(result);
-}
-
-size_t SimplePolyTerm::domain_dimension(void) const {
-	std::vector<size_t> monomial_domain_dimension_set;
-	for (const auto& monomial : this->monomial_vector_function_)
-		monomial_domain_dimension_set.push_back(monomial.domain_dimension());
-
-	return *std::max_element(monomial_domain_dimension_set.begin(), monomial_domain_dimension_set.end());
-}
-
-bool SimplePolyTerm::is_constant(void) const {
-	return this->monomial_vector_function_.size() == 1 && this->monomial_vector_function_.front().is_one();
-}
-
-size_t SimplePolyTerm::order(void) const {
-	std::vector<size_t> monomial_order_set;
-	for (const auto& monomial : this->monomial_vector_function_)
-		monomial_order_set.push_back(monomial.order());
-
-	return *std::max_element(monomial_order_set.begin(), monomial_order_set.end());
-}
-
-std::string SimplePolyTerm::to_string(void) const {
-	std::string str = "[";
-
-	const auto num_term = this->coefficient_vector_.size();
-	std::map<Monomial, double> ordered_term;
-	for (size_t i = 0; i < num_term; ++i)
-		ordered_term.try_emplace(this->monomial_vector_function_[i], this->coefficient_vector_[i]);
-
-	for (auto iter = ordered_term.rbegin(); iter != ordered_term.rend(); ++iter) {
-		const auto& [monomial, coefficient] = *iter;
-		if (iter != ordered_term.rbegin() && coefficient > 0)
-			str += "+";
-		if (monomial.is_one())
-			str += ms::double_to_string(coefficient);
-		else if (coefficient == 1)
-			str += monomial.to_string();
-		else if (coefficient == -1)
-			str += "-" + monomial.to_string();
-		else
-			str += ms::double_to_string(coefficient) + monomial.to_string();
-	}
-	str += "]";
-
-	return str;
-}
-
-void SimplePolyTerm::add_mono_term(const double coefficient, const Monomial& monomial) {
-	if (coefficient == 0.0)
-		return;
-
-	const auto monomial_iter = std::find(this->monomial_vector_function_.begin(), this->monomial_vector_function_.end(), monomial);
-	if (monomial_iter == this->monomial_vector_function_.end()) {
-		this->monomial_vector_function_.push_back(monomial);
-		this->coefficient_vector_.push_back(coefficient);
-	}
-	else {
-		const auto coefficient_iter = coefficient_vector_.begin() + (monomial_iter - monomial_vector_function_.begin());
-		*coefficient_iter += coefficient;
-	}
-
-	//remove meaningless zero
-	constexpr double zero = 0.0;
+SimplePolynomial& SimplePolynomial::differentiate(const size_t variable_index) {
+	this->constant_ = 0.0;
+	for (auto& term : this->added_mono_term_set_)
+		term.differetiate(variable_index);
+		
+	const auto is_constant = [](const MonoTerm& mono_term) {return mono_term.is_constant(); };
 	for (;;) {
-		const auto zero_coefficient_iter = std::find(this->coefficient_vector_.begin(), this->coefficient_vector_.end(), zero);
-		if (zero_coefficient_iter == this->coefficient_vector_.end())
+		const auto constant_iter = std::find_if(this->added_mono_term_set_.begin(), this->added_mono_term_set_.end(), is_constant);
+		if (constant_iter == this->added_mono_term_set_.end())
 			break;
 
-		const auto position = zero_coefficient_iter - this->coefficient_vector_.begin();
-		this->monomial_vector_function_.erase(this->monomial_vector_function_.begin() + position);
-		this->coefficient_vector_.erase(zero_coefficient_iter);
+		this->constant_ += constant_iter->be_constant();
+		this->added_mono_term_set_.erase(constant_iter);
 	}
-
-	if (this->coefficient_vector_.empty() && this->monomial_vector_function_.empty())
-		*this = 0.0;
+	return *this;
 }
 
-SimplePolyTerm SimplePolyTerm::differentiate_monomial(const Monomial& monomial, const size_t variable_index) const {
-	const auto exponent = monomial.exponent(variable_index);	
-	if (exponent == 0)
-		return 0;
-	else {
-		auto result_monomial = monomial;
-		result_monomial.reduce_order(variable_index);
-		return { static_cast<double>(exponent), result_monomial };
-	}
+size_t SimplePolynomial::domain_dimension(void) const {
+	std::vector<size_t> mono_term_domain_dimension_set;
+	mono_term_domain_dimension_set.reserve(this->added_mono_term_set_.size());
+	for (const auto& mono_term : this->added_mono_term_set_)
+		mono_term_domain_dimension_set.push_back(mono_term.domain_dimension());
+
+	return *std::max_element(mono_term_domain_dimension_set.begin(), mono_term_domain_dimension_set.end());
 }
 
-SimplePolyTerm operator*(const double constant, const SimplePolyTerm& simple_poly_term) {
-	return simple_poly_term* constant;
+bool SimplePolynomial::is_constant(void) const {
+	return this->added_mono_term_set_.empty();
 }
 
-double Polynomial::PowerPolyTerm::operator()(const MathVector& variable_vector) const {
-	return std::pow(this->base_(variable_vector), this->exponent_);
+size_t SimplePolynomial::order(void) const {
+	std::vector<size_t> mono_term_order_set;
+	mono_term_order_set.reserve(this->added_mono_term_set_.size());
+	for (const auto& mono_term : this->added_mono_term_set_)
+		mono_term_order_set.push_back(mono_term.order());
+
+	return *std::max_element(mono_term_order_set.begin(), mono_term_order_set.end());
 }
 
-bool Polynomial::PowerPolyTerm::operator==(const PowerPolyTerm& other) const {
-	return this->base_ == other.base_ && this->exponent_ == other.exponent_;
+MonoTerm& MonoTerm::power(const size_t power_index) {
+	if (power_index == 0)
+		return *this = 1.0;
+
+	this->coefficient_ = std::pow(this->coefficient_, power_index);
+	for (auto& exponent : this->monomial_exponents_)
+		exponent *= power_index;
+
+	return *this;
 }
 
-bool Polynomial::PowerPolyTerm::has_same_base(const PowerPolyTerm& other) const {
-	return this->base_ == other.base_;
+std::string SimplePolynomial::to_string(void) const {
+	std::string str = "[";
+
+	auto sorted_set = this->added_mono_term_set_;
+	std::sort(sorted_set.begin(), sorted_set.end());
+	for (auto iter = sorted_set.rbegin(); iter != sorted_set.rend(); iter++)
+		str += iter->to_string();
+
+	constexpr size_t position = 1;
+	constexpr size_t size = 1;
+	if (str.at(position) == '+')
+		str.erase(position, size);
+
+	if (this->constant_ == 0)
+		return str += "]";
+
+	if (this->constant_ > 0)
+		return str += '+' + ms::double_to_string(this->constant_) + "]";
+	else
+		return str += ms::double_to_string(this->constant_) + "]";
+}
+std::ostream& operator<<(std::ostream& os, const SimplePolynomial& simple_polynomial) {
+	return os << simple_polynomial.to_string();
 }
 
-void Polynomial::PowerPolyTerm::multiply_with_same_term(const PowerPolyTerm& other) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void CompactPolynomial::PowerPolyTerm::multiply_assign_with_same_base(const PowerPolyTerm& other) {
 	this->exponent_ += other.exponent_;
 }
 
-double Polynomial::PowerPolyTerm::be_constant(void) const {
+double CompactPolynomial::PowerPolyTerm::operator()(const MathVector& variable_vector) const {
+	return std::pow(this->base_(variable_vector), this->exponent_);
+}
+
+bool CompactPolynomial::PowerPolyTerm::operator==(const PowerPolyTerm& other) const {
+	return this->base_ == other.base_ && this->exponent_ == other.exponent_;
+}
+
+double CompactPolynomial::PowerPolyTerm::be_constant(void) const {
 	return std::pow(this->base_.be_constant(), this->exponent_);
 }
 
-size_t Polynomial::PowerPolyTerm::domain_dimension(void) const {
+size_t CompactPolynomial::PowerPolyTerm::domain_dimension(void) const {
 	return this->base_.domain_dimension();
 }
 
-Polynomial::PolyTerm Polynomial::PowerPolyTerm::differentiate(const size_t variable_index) const {
+CompactPolynomial::PolyTerm CompactPolynomial::PowerPolyTerm::differentiate(const size_t variable_index) const {
 	auto diff_term = ms::differentiate(this->base_, variable_index);
 	if (diff_term == 0.0)
-		return 0;
+		return 0.0;
 
 	if (this->exponent_ == 1) {
 		if (diff_term.is_constant())
 			return diff_term.be_constant();
 		else
-			return diff_term;
+			return PolyTerm(diff_term);
 	}
 	else {
-		PolyTerm result(this->exponent_, *this);
-		result.multiplied_power_poly_term_set_.front().exponent_--;
-		result.multiplied_power_poly_term_set_.push_back(std::move(diff_term));
-		return result;
+		auto tmp = *this;
+		tmp.exponent_--;
+		PolyTerm result(tmp);
+		return result * diff_term * this->exponent_;
 	}
 }
 
-bool Polynomial::PowerPolyTerm::is_constant(void) const {
+bool CompactPolynomial::PowerPolyTerm::has_same_base(const PowerPolyTerm& other) const {
+	return this->base_ == other.base_;
+}
+
+bool CompactPolynomial::PowerPolyTerm::is_constant(void) const {
 	return this->base_.is_constant();
 }
 
-size_t Polynomial::PowerPolyTerm::order(void) const {
+size_t CompactPolynomial::PowerPolyTerm::order(void) const {
 	return this->base_.order() * this->exponent_;
 }
 
-void Polynomial::PowerPolyTerm::power(const int power_index) {
+void CompactPolynomial::PowerPolyTerm::power(const int power_index) {
 	this->exponent_ *= power_index;
 }
 
-std::string Polynomial::PowerPolyTerm::to_string(void) const {
+std::string CompactPolynomial::PowerPolyTerm::to_string(void) const {
 	auto str = this->base_.to_string();
 	if (this->exponent_ != 1)
 		return  str + "^" + std::to_string(this->exponent_);
@@ -396,33 +387,34 @@ std::string Polynomial::PowerPolyTerm::to_string(void) const {
 		return str;
 }
 
-Polynomial::PolyTerm::PolyTerm(const SimplePolyTerm& simple_poly_term) {
-	if (simple_poly_term.is_constant())
-		this->constant_ = simple_poly_term.be_constant();
+
+
+
+
+
+
+
+
+
+
+CompactPolynomial::PolyTerm::PolyTerm(const SimplePolynomial& simple_polynomial) {
+	if (simple_polynomial.is_constant())
+		this->coefficient_ = simple_polynomial.be_constant();
 	else
-		this->multiplied_power_poly_term_set_.push_back(simple_poly_term);
+		this->multiplied_power_poly_term_set_.push_back(simple_polynomial);
 }
 
-Polynomial::PolyTerm::PolyTerm(const double constant, const PowerPolyTerm& power_poly_term) {
-	this->constant_ = constant;
+CompactPolynomial::PolyTerm::PolyTerm(const PowerPolyTerm& power_poly_term) {
 	if (power_poly_term.is_constant())
-		this->constant_ *= power_poly_term.be_constant();
+		this->coefficient_ = power_poly_term.be_constant();
 	else
 		this->multiplied_power_poly_term_set_.push_back(power_poly_term);
 }
 
-Polynomial::PolyTerm& Polynomial::PolyTerm::operator*=(const double constant) {
-	if (constant == 0.0)
-		*this = 0;
-	
-	this->constant_ *= constant;
-	return *this;
-}
-
-Polynomial::PolyTerm& Polynomial::PolyTerm::operator*=(const PowerPolyTerm& power_poly_term) {
+CompactPolynomial::PolyTerm& CompactPolynomial::PolyTerm::operator*=(const PowerPolyTerm& power_poly_term) {
 	for (auto& this_term : this->multiplied_power_poly_term_set_) {
 		if (this_term.has_same_base(power_poly_term)) {
-			this_term.multiply_with_same_term(power_poly_term);
+			this_term.multiply_assign_with_same_base(power_poly_term);
 			return *this;
 		}
 	}
@@ -430,9 +422,9 @@ Polynomial::PolyTerm& Polynomial::PolyTerm::operator*=(const PowerPolyTerm& powe
 	return *this;
 }
 
-Polynomial::PolyTerm& Polynomial::PolyTerm::operator*=(const PolyTerm& other) {
-	this->constant_ *= other.constant_;
-	if (this->constant_ == 0.0)		
+CompactPolynomial::PolyTerm& CompactPolynomial::PolyTerm::operator*=(const PolyTerm& other) {
+	this->coefficient_ *= other.coefficient_;
+	if (this->coefficient_ == 0.0)		
 		return *this = 0.0;
 
 	for (const auto& other_power_poly_term : other.multiplied_power_poly_term_set_)
@@ -441,24 +433,24 @@ Polynomial::PolyTerm& Polynomial::PolyTerm::operator*=(const PolyTerm& other) {
 	return *this;
 }
 
-Polynomial::PolyTerm Polynomial::PolyTerm::operator*(const PolyTerm& other) const {
+CompactPolynomial::PolyTerm CompactPolynomial::PolyTerm::operator*(const PolyTerm& other) const {
 	PolyTerm result(*this);
 	return result *= other;
 }
 
-Polynomial::PolyTerm Polynomial::PolyTerm::operator^(const double power_index) const {
+CompactPolynomial::PolyTerm CompactPolynomial::PolyTerm::operator^(const double power_index) const {
 	PolyTerm result(*this);
 	return result.power(power_index);
 }
 
-double Polynomial::PolyTerm::operator()(const MathVector& variable_vector) const {
-	double result = this->constant_;
+double CompactPolynomial::PolyTerm::operator()(const MathVector& variable_vector) const {
+	double result = this->coefficient_;
 	for (const auto& power_poly_term : this->multiplied_power_poly_term_set_)
 		result *= power_poly_term(variable_vector);
 	return result;
 }
 
-bool Polynomial::PolyTerm::operator==(const PolyTerm& other) const {
+bool CompactPolynomial::PolyTerm::operator==(const PolyTerm& other) const {
 	const auto max_order = std::max(this->order(), other.order());
 	const auto max_domain_dimension = std::max(this->domain_dimension(), other.domain_dimension());
 	const auto compare_node_set = ms::polynomial_compare_node_set(max_order, max_domain_dimension);
@@ -471,19 +463,19 @@ bool Polynomial::PolyTerm::operator==(const PolyTerm& other) const {
 	return true;
 }
 
-bool Polynomial::PolyTerm::operator!=(const PolyTerm& other) const {
+bool CompactPolynomial::PolyTerm::operator!=(const PolyTerm& other) const {
 	return !(*this == other);
 }
 
-size_t Polynomial::PolyTerm::domain_dimension(void) const {
+size_t CompactPolynomial::PolyTerm::domain_dimension(void) const {
 	size_t result = 0;
 	for (const auto& term : this->multiplied_power_poly_term_set_)
 		result = std::max(result, term.domain_dimension());
 	return result;
 }
 
-Polynomial Polynomial::PolyTerm::differentiate(const size_t variable_index) const {
-	Polynomial result;	
+CompactPolynomial CompactPolynomial::PolyTerm::differentiate(const size_t variable_index) const {
+	CompactPolynomial result;	
 	const auto num_term = this->multiplied_power_poly_term_set_.size();
 	for (size_t i = 0; i < num_term; ++i) {
 		auto tmp = *this;
@@ -498,14 +490,14 @@ Polynomial Polynomial::PolyTerm::differentiate(const size_t variable_index) cons
 	return result;
 }
 
-size_t Polynomial::PolyTerm::order(void) const {
+size_t CompactPolynomial::PolyTerm::order(void) const {
 	size_t result = 0;
 	for (const auto& term : this->multiplied_power_poly_term_set_)
 		result += term.order();
 	return result;
 }
 
-bool Polynomial::PolyTerm::has_same_form(const PolyTerm& other) const {	
+bool CompactPolynomial::PolyTerm::has_same_form(const PolyTerm& other) const {	
 	if (this->multiplied_power_poly_term_set_.size() != other.multiplied_power_poly_term_set_.size())
 		return false;
 
@@ -518,25 +510,26 @@ bool Polynomial::PolyTerm::has_same_form(const PolyTerm& other) const {
 	return true;
 }
 
-Polynomial::PolyTerm& Polynomial::PolyTerm::power(const int power_index) {
+CompactPolynomial::PolyTerm& CompactPolynomial::PolyTerm::power(const int power_index) {
 	if (power_index == 0)
 		return *this = 1;
 
-	this->constant_ = std::pow(this->constant_, power_index);
+	this->coefficient_ = std::pow(this->coefficient_, power_index);
 	for (auto& power_poly_term : this->multiplied_power_poly_term_set_)
-		this->power(power_index);
+		power_poly_term.power(power_index);
+
 	return *this;
 }
 
-std::string Polynomial::PolyTerm::to_string(void) const {
+std::string CompactPolynomial::PolyTerm::to_string(void) const {
 	std::string str;
-	if (std::abs(this->constant_) != 1.0) {
-		if (this->constant_ > 0)
+	if (std::abs(this->coefficient_) != 1.0) {
+		if (this->coefficient_ > 0)
 			str += "+";
 
-		str += ms::double_to_string(this->constant_);
+		str += ms::double_to_string(this->coefficient_);
 	}
-	else if (this->constant_ == 1.0)
+	else if (this->coefficient_ == 1.0)
 		str += "+";
 	else
 		str += "-";
@@ -547,9 +540,9 @@ std::string Polynomial::PolyTerm::to_string(void) const {
 	return str;
 }
 
-void Polynomial::PolyTerm::add_with_same_form(const PolyTerm& other) {
-	this->constant_ += other.constant_;
-	if (this->constant_ == 0.0)
+void CompactPolynomial::PolyTerm::add_with_same_form(const PolyTerm& other) {
+	this->coefficient_ += other.coefficient_;
+	if (this->coefficient_ == 0.0)
 		*this = 0;
 }
 
@@ -561,22 +554,46 @@ void Polynomial::PolyTerm::add_with_same_form(const PolyTerm& other) {
 //	Polynomial::PolyTerm result(simple_poly1);
 //	return result *= simple_poly2;
 //}
+//Polynomial::PolyTerm& Polynomial::PolyTerm::operator*=(const double constant) {
+//	if (constant == 0.0)
+//		*this = 0;
+//	
+//	this->coefficient_ *= constant;
+//	return *this;
+//}
+//Polynomial::PolyTerm::PolyTerm(const double constant, const PowerPolyTerm& power_poly_term) {
+//	this->coefficient_ = constant;
+//	if (power_poly_term.is_constant())
+//		this->coefficient_ *= power_poly_term.be_constant();
+//	else
+//		this->multiplied_power_poly_term_set_.push_back(power_poly_term);
+//}
 
 
 
-Polynomial::Polynomial(const double scalar) {
+
+
+
+
+
+
+
+
+
+
+CompactPolynomial::Polynomial(const double scalar) {
 	this->simple_poly_term_ = scalar;
 }
 
-Polynomial::Polynomial(const Monomial& monomial) {
+CompactPolynomial::Polynomial(const Monomial& monomial) {
 	this->simple_poly_term_ = monomial;
 }
 
-Polynomial::Polynomial(const PolyTerm& poly_term) {
+CompactPolynomial::CompactPolynomial(const PolyTerm& poly_term) {
 	this->added_poly_term_set_.push_back(poly_term);
 }
 
-Polynomial& Polynomial::operator+=(const Polynomial& other) {
+CompactPolynomial& CompactPolynomial::operator+=(const CompactPolynomial& other) {
 	this->simple_poly_term_ += other.simple_poly_term_;
 
 	for (const auto& poly_term : other.added_poly_term_set_)
@@ -585,12 +602,12 @@ Polynomial& Polynomial::operator+=(const Polynomial& other) {
 	return *this;
 }
 
-Polynomial& Polynomial::operator-=(const Polynomial& other) {
+CompactPolynomial& CompactPolynomial::operator-=(const CompactPolynomial& other) {
 	return *this += (other * -1);
 }
 
-Polynomial& Polynomial::operator*=(const Polynomial& other) {
-	Polynomial result;
+CompactPolynomial& CompactPolynomial::operator*=(const CompactPolynomial& other) {
+	CompactPolynomial result;
 
 	const auto num_this_term = this->added_poly_term_set_.size();
 	const auto num_other_term = other.added_poly_term_set_.size();
@@ -604,17 +621,17 @@ Polynomial& Polynomial::operator*=(const Polynomial& other) {
 	for (size_t j = 0; j < num_other_term; ++j)
 		result.add_poly_term(other.added_poly_term_set_[j] * this->simple_poly_term_);
 
-	result.add_poly_term(PolyTerm(this->simple_poly_term_) * other.simple_poly_term_);
+	result.add_poly_term(PolyTerm(this->simple_poly_term_) * other.simple_poly_term_); //simple * simple = compact not Polyterm
 
 	return *this = std::move(result);
 }
 
-Polynomial& Polynomial::operator*=(const double constant) {
+CompactPolynomial& CompactPolynomial::operator*=(const double constant) {
 	for (auto& poly_term : this->added_poly_term_set_)
 		poly_term *= constant;
 
 	if (this->simple_poly_term_.is_constant())
-		this->simple_poly_term_ *= constant;
+		this->simple_poly_term_ = this->simple_poly_term_.be_constant() * constant;
 	else {
 		this->added_poly_term_set_.push_back(PolyTerm(constant, simple_poly_term_));
 		this->simple_poly_term_ = 0.0;
@@ -623,39 +640,39 @@ Polynomial& Polynomial::operator*=(const double constant) {
 	return *this;
 }
 
-Polynomial Polynomial::operator+(const Polynomial& other) const {
-	Polynomial result(*this);
+CompactPolynomial CompactPolynomial::operator+(const CompactPolynomial& other) const {
+	CompactPolynomial result(*this);
 	return result += other;
 }
 
-Polynomial Polynomial::operator-(const Polynomial& other) const {
-	Polynomial result(*this);
+CompactPolynomial CompactPolynomial::operator-(const CompactPolynomial& other) const {
+	CompactPolynomial result(*this);
 	return result -= other;
 }
 
-Polynomial Polynomial::operator*(const Polynomial& other) const {
-	Polynomial result(*this);
+CompactPolynomial CompactPolynomial::operator*(const CompactPolynomial& other) const {
+	CompactPolynomial result(*this);
 	return result *= other;
 }
 
-Polynomial Polynomial::operator*(const double constant) const {
-	Polynomial result(*this);
+CompactPolynomial CompactPolynomial::operator*(const double constant) const {
+	CompactPolynomial result(*this);
 	return result *= constant;
 }
 
-Polynomial Polynomial::operator^(const double power_index) const {
-	Polynomial result = *this;
+CompactPolynomial CompactPolynomial::operator^(const double power_index) const {
+	CompactPolynomial result = *this;
 	return result.power(power_index);
 }
 
-double Polynomial::operator()(const MathVector& variable_vector) const {
+double CompactPolynomial::operator()(const MathVector& variable_vector) const {
 	auto result = this->simple_poly_term_(variable_vector);
 	for (const auto& poly_term : this->added_poly_term_set_)
 		result += poly_term(variable_vector);
 	return result;
 }
 
-bool Polynomial::operator==(const Polynomial& other) const {
+bool CompactPolynomial::operator==(const CompactPolynomial& other) const {
 	const auto max_order = std::max(this->order(), other.order());
 	const auto max_domain_dimension = std::max(this->domain_dimension(), other.domain_dimension());
 	const auto compare_node_set = ms::polynomial_compare_node_set(max_order, max_domain_dimension);
@@ -668,15 +685,15 @@ bool Polynomial::operator==(const Polynomial& other) const {
 	return true;
 }
 
-size_t Polynomial::domain_dimension(void) const {
+size_t CompactPolynomial::domain_dimension(void) const {
 	size_t result = this->simple_poly_term_.domain_dimension();
 	for (const auto& term : this->added_poly_term_set_)
 		result = std::max(result, term.domain_dimension());
 	return result;
 }
 
-Polynomial& Polynomial::differentiate(const size_t variable_index) {
-	Polynomial result = this->simple_poly_term_.differentiate(variable_index);
+CompactPolynomial& CompactPolynomial::differentiate(const size_t variable_index) {
+	CompactPolynomial result = this->simple_poly_term_.differentiate(variable_index);
 
 	for (const auto& poly_term : this->added_poly_term_set_)
 		result += poly_term.differentiate(variable_index);
@@ -685,13 +702,13 @@ Polynomial& Polynomial::differentiate(const size_t variable_index) {
 	return *this;
 }
 
-VectorFunction<Polynomial> Polynomial::gradient(void) const {
+VectorFunction<CompactPolynomial> CompactPolynomial::gradient(void) const {
 	const auto domain_dimension = this->domain_dimension();
 	return this->gradient(domain_dimension);
 }
 
-VectorFunction<Polynomial> Polynomial::gradient(const size_t domain_dimension) const {
-	VectorFunction<Polynomial> result;
+VectorFunction<CompactPolynomial> CompactPolynomial::gradient(const size_t domain_dimension) const {
+	VectorFunction<CompactPolynomial> result;
 	result.reserve(domain_dimension);
 
 	for (size_t i = 0; i < domain_dimension; ++i)
@@ -700,14 +717,14 @@ VectorFunction<Polynomial> Polynomial::gradient(const size_t domain_dimension) c
 	return result;
 }
 
-size_t Polynomial::order(void) const {
+size_t CompactPolynomial::order(void) const {
 	size_t result = this->simple_poly_term_.order();
 	for (const auto& term : this->added_poly_term_set_)
 		result = std::max(result, term.order());
 	return result;
 }
 
-Polynomial& Polynomial::power(const double power_index) {
+CompactPolynomial& CompactPolynomial::power(const double power_index) {
 	 if (ms::is_natural_number(power_index)) {
 		const auto tmp = *this;
 		for (size_t i = 1; i < power_index; ++i)
@@ -719,7 +736,7 @@ Polynomial& Polynomial::power(const double power_index) {
 	return *this;
 }
 
-std::string Polynomial::to_string(void) const {
+std::string CompactPolynomial::to_string(void) const {
 	std::string str;
 	for (const auto& poly_term : this->added_poly_term_set_)
 		str += poly_term.to_string();
@@ -736,7 +753,7 @@ std::string Polynomial::to_string(void) const {
 	return str;
 }
 
-void Polynomial::add_poly_term(const PolyTerm& term) {
+void CompactPolynomial::add_poly_term(const PolyTerm& term) {
 	for (auto& this_poly_term : this->added_poly_term_set_) {
 		if (this_poly_term.has_same_form(term)) {
 			this_poly_term.add_with_same_form(term);
@@ -746,14 +763,14 @@ void Polynomial::add_poly_term(const PolyTerm& term) {
 	this->added_poly_term_set_.push_back(term);
 }
 
-std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial) {
+std::ostream& operator<<(std::ostream& ostream, const CompactPolynomial& polynomial) {
 	return ostream << polynomial.to_string();
 }
 
-Polynomial operator*(const double constant, const Polynomial& polynomial) {
-	return polynomial * constant;
-}
-
+//Polynomial operator*(const double constant, const Polynomial& polynomial) {
+//	return polynomial * constant;
+//}
+//
 //Polynomial operator+(const PolyTerm& poly_term, const Polynomial& polynomial) {
 //	return polynomial + poly_term;
 //}
@@ -2100,6 +2117,8 @@ Polynomial operator*(const double constant, const Polynomial& polynomial) {
 //}
 //
 //
+
+
 namespace ms {
 	std::vector<MathVector> polynomial_compare_node_set(const size_t polynomial_order, const size_t domain_dimension) {
 		const auto num_node = ms::combination_with_repetition(polynomial_order + 1, domain_dimension);
@@ -2166,38 +2185,38 @@ namespace ms {
 		return combination(n + k - 1, k);
 	}
 
-	SimplePolyTerm differentiate(const SimplePolyTerm& simple_poly_term, const size_t variable_index) {
-		auto result = simple_poly_term;
+	SimplePolynomial differentiate(const SimplePolynomial& simple_polynomial, const size_t variable_index) {
+		auto result = simple_polynomial;
 		return result.differentiate(variable_index);
 	}
-		
+	//	
 
-	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index) {
-		auto result = polynomial;
-		return result.differentiate(variable_index); // 불필요한 복사가 발생함..
-	}
+	//Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index) {
+	//	auto result = polynomial;
+	//	return result.differentiate(variable_index); // 불필요한 복사가 발생함..
+	//}
 
-	Polynomial sqrt(const Polynomial& polynomial) {
-		return polynomial^0.5;		
-	}
+	//Polynomial sqrt(const Polynomial& polynomial) {
+	//	return polynomial^0.5;		
+	//}
 
-	bool is_positive_odd_number(const double val) {
-		if (val < 0)
-			return false;
+	//bool is_positive_odd_number(const double val) {
+	//	if (val < 0)
+	//		return false;
 
-		if (val - std::floor(val) == 0)
-			return static_cast<size_t>(val) % 2 == 0;
-		else
-			return false;
-	}
+	//	if (val - std::floor(val) == 0)
+	//		return static_cast<size_t>(val) % 2 == 0;
+	//	else
+	//		return false;
+	//}
 
-	bool is_natural_number(const double val) {
-		if (val < 0)
-			return false;
+	//bool is_natural_number(const double val) {
+	//	if (val < 0)
+	//		return false;
 
-		if (val - std::floor(val) == 0)
-			return true;
-		else
-			return false;
-	}
+	//	if (val - std::floor(val) == 0)
+	//		return true;
+	//	else
+	//		return false;
+	//}
 }

@@ -1,170 +1,123 @@
 #pragma once
 #include "MathVector.h"
 
-#include <algorithm> //for min max
-#include <map>
+#include <algorithm>
 
-
-#define X Polynomial(Monomial(0))
-#define Y Polynomial(Monomial(1))
-#define Z Polynomial(Monomial(2))
-
-
-//#define X Monomial(0)
-//#define Y Monomial(1)
-//#define Z Monomial(2)
-class Monomial
+class SimplePolynomial;
+class MonoTerm
 {
-private:
-	std::vector<size_t> exponent_set_;
+	double coefficient_ = 1.0;
+	std::vector<size_t> monomial_exponents_;
 
 public:
-	explicit Monomial(void) = default;
-	explicit Monomial(const size_t variable_index);			// Monomial(0) => x0	/ Monomial(2) => x2
-	Monomial(const std::initializer_list<size_t> list);		// Monomial{0} => 1		/ Monomial{2} => x0^2 , without explicit m = {1,2,3} work!
-		
-	Monomial& operator*=(const Monomial& other);
-	Monomial operator*(const Monomial& other) const;
-	Monomial operator^(const size_t power) const;
-	double operator()(void) const;
+	MonoTerm(const std::string& variable);
+	MonoTerm(const double coefficient) : coefficient_(coefficient) {};
+	MonoTerm(const std::initializer_list<size_t> list) : monomial_exponents_(list) {};
+
+	void add_assign_with_same_monomial(const MonoTerm& other);
+	MonoTerm& operator*=(const MonoTerm& other);
+	SimplePolynomial operator+(const MonoTerm& other) const;
+	MonoTerm operator*(const MonoTerm& other) const;
 	double operator()(const MathVector& variable_vector) const;
-	bool operator<(const Monomial& other) const;
-	bool operator==(const Monomial& other) const;
-
-	size_t domain_dimension(void) const;
-	size_t exponent(size_t variable_index) const;
-	bool is_one(void) const;
-	size_t order(void) const;	
-	Monomial& reduce_order(const size_t variable_index);
-	std::string to_string(void) const;
-
-//private: //for test
-	void remove_meaningless_zero(void);	
-};
-std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
-
-
-class SimplePolyTerm 
-{
-private:
-	MathVector coefficient_vector_;
-	VectorFunction<Monomial> monomial_vector_function_;
-
-public:
-	explicit SimplePolyTerm(void);
-	SimplePolyTerm(const double scalar);
-	SimplePolyTerm(const Monomial& monomial);
-	SimplePolyTerm(const double scalar,const Monomial& monomial);
-	SimplePolyTerm(const std::vector<double>& coefficient_set, const std::vector<Monomial>& monomial_set);
-
-	SimplePolyTerm& operator+=(const SimplePolyTerm& other);
-	SimplePolyTerm& operator*=(const double constant);
-	SimplePolyTerm operator*(const double constant) const;
-	double operator()(const MathVector& variable_vector) const;
-	bool operator==(const SimplePolyTerm& other) const;
-	bool operator!=(const SimplePolyTerm& other) const;
+	MonoTerm operator^(const size_t power) const;
+	bool operator==(const MonoTerm& other) const;
+	bool operator<(const MonoTerm& other) const;
 
 	double be_constant(void) const;
-	SimplePolyTerm& differentiate(const size_t variable_index);
+	size_t domain_dimension(void) const;
+	MonoTerm& differetiate(const size_t variable_index);
+	bool has_same_monomial(const MonoTerm& other) const;
+	bool is_constant(void) const;
+	size_t order(void) const;
+	MonoTerm& power(const size_t power_index);
+	std::string to_string(void) const;
+};
+std::ostream& operator<<(std::ostream& os, const MonoTerm& mono_term);
+MonoTerm operator* (const double constant, const MonoTerm& mono_term);
+
+
+class CompactPolynomial;
+class SimplePolynomial
+{
+	std::vector<MonoTerm> added_mono_term_set_;
+	double constant_ = 0.0;
+
+public:
+	explicit SimplePolynomial(void) = default;
+	SimplePolynomial(const double constant) : constant_(constant) {};
+	SimplePolynomial(const MonoTerm& mono_term);
+	SimplePolynomial(const std::initializer_list<MonoTerm>& mono_term_set) : added_mono_term_set_(mono_term_set) {};
+
+	SimplePolynomial& operator+=(const MonoTerm& other);
+	SimplePolynomial& operator+=(const SimplePolynomial& other);
+	SimplePolynomial operator+(const SimplePolynomial& other) const;
+	CompactPolynomial operator*(const SimplePolynomial& other) const;
+	double operator()(const MathVector& variable_vector) const;
+	bool operator==(const SimplePolynomial& other) const;
+	bool operator!=(const SimplePolynomial& other) const;
+
+	double be_constant(void) const;
+	SimplePolynomial& differentiate(const size_t variable_index);
 	size_t domain_dimension(void) const;
 	bool is_constant(void) const;
 	size_t order(void) const;
 	std::string to_string(void) const;
-	
-//private:
-	void add_mono_term(const double coefficient, const Monomial& monomial);
-	SimplePolyTerm differentiate_monomial(const Monomial& monomial, const size_t variable_index) const;
 };
-SimplePolyTerm operator*(const double constant, const SimplePolyTerm& simple_poly_term);
+std::ostream& operator<<(std::ostream& os, const SimplePolynomial& simple_polynomial);
 
 
-class Polynomial
+class CompactPolynomial
 {
-	struct PowerPolyTerm;
-	struct PolyTerm;
+	class PowerPolyTerm;
+	class PolyTerm;
 private:
 	std::vector<PolyTerm> added_poly_term_set_;
-	SimplePolyTerm simple_poly_term_ = 0.0;
+	SimplePolynomial simple_poly_term_ = 0.0;
 
 public:
-	explicit Polynomial(void) = default;
-	Polynomial(const double scalar);
-	Polynomial(const Monomial& monomial);
-	Polynomial(const SimplePolyTerm& simple_poly_term) : simple_poly_term_(simple_poly_term) {};
-	Polynomial(const PolyTerm& poly_term);
+	explicit CompactPolynomial(void) = default;
+	//Polynomial(const double scalar);
+	CompactPolynomial(const SimplePolynomial& simple_poly_term) : simple_poly_term_(simple_poly_term) {};
+	//CompactPolynomial(const PolyTerm& poly_term);
 
-	Polynomial& operator+=(const Polynomial& other);
-	Polynomial& operator-=(const Polynomial& other);
-	Polynomial& operator*=(const Polynomial& other);
-	Polynomial& operator*=(const double constant);
-	Polynomial operator+(const Polynomial& other) const;
-	Polynomial operator-(const Polynomial& other) const;
-	Polynomial operator*(const Polynomial& other) const;
-	Polynomial operator*(const double constant) const;
-	Polynomial operator^(const double power_index) const;
+	CompactPolynomial& operator+=(const CompactPolynomial& other);
+	CompactPolynomial& operator-=(const CompactPolynomial& other);
+	CompactPolynomial& operator*=(const CompactPolynomial& other);
+	CompactPolynomial& operator*=(const double constant);
+	CompactPolynomial operator+(const CompactPolynomial& other) const;
+	CompactPolynomial operator-(const CompactPolynomial& other) const;
+	CompactPolynomial operator*(const CompactPolynomial& other) const;
+	CompactPolynomial operator*(const double constant) const;
+	CompactPolynomial operator^(const double power_index) const;
 	double operator()(const MathVector& variable_vector) const;
-	bool operator==(const Polynomial& other) const;
+	bool operator==(const CompactPolynomial& other) const;
 
 	size_t domain_dimension(void) const;
-	Polynomial& differentiate(const size_t variable_index);
-	VectorFunction<Polynomial> gradient(void) const;
-	VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
+	CompactPolynomial& differentiate(const size_t variable_index);
+	VectorFunction<CompactPolynomial> gradient(void) const;
+	VectorFunction<CompactPolynomial> gradient(const size_t domain_dimension) const;
 	size_t order(void) const;
-	Polynomial& power(const double power_index);
+	CompactPolynomial& power(const double power_index);
 	std::string to_string(void) const;
 
 	//private: // for test
 	void add_poly_term(const PolyTerm& term);
-	//Polynomial differentiate(const size_t variable_index) const;
-	//Polynomial poly_term_differentiate(const PolyTerm& polyn_term, const size_t variable_index) const;
-	//static Polynomial differentiate_poly_term(const PolyTerm& polyn_term, const size_t variable_index);
 };
-std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
-//Polynomial operator+(const PolyTerm& poly_term, const Polynomial& polynomial);
-//Polynomial operator-(const PolyTerm& poly_term, const Polynomial& polynomial);
-Polynomial operator*(const double constant, const Polynomial& polynomial);
+std::ostream& operator<<(std::ostream& ostream, const CompactPolynomial& polynomial);
+//Polynomial operator*(const double constant, const Polynomial& polynomial);
 
 
-struct Polynomial::PolyTerm
+class CompactPolynomial::PowerPolyTerm
 {
-	double constant_ = 1.0;
-	std::vector<PowerPolyTerm> multiplied_power_poly_term_set_;
+	SimplePolynomial base_ = 1.0;
+	size_t exponent_ = 1;
 
-	PolyTerm(const double constant) : constant_(constant) {};
-	PolyTerm(const SimplePolyTerm& simple_poly_term);
-	PolyTerm(const double constant, const PowerPolyTerm& power_poly_term);
+public:
+	PowerPolyTerm(const SimplePolynomial& simple_poly_term) : base_(simple_poly_term) {};
 
-	PolyTerm& operator*=(const double constant);
-	PolyTerm& operator*=(const PowerPolyTerm& power_poly_term);
-	PolyTerm& operator*=(const PolyTerm& other);
-	PolyTerm operator*(const PolyTerm& other) const;
-	PolyTerm operator^(const double power_index) const;
-	double operator()(const MathVector& variable_vector) const;
-	bool operator==(const PolyTerm& other) const;
-	bool operator!=(const PolyTerm& other) const;
-
-	void add_with_same_form(const PolyTerm& other);
-
-	size_t domain_dimension(void) const;
-	Polynomial differentiate(const size_t variable_index) const;
-	size_t order(void) const;
-	bool has_same_form(const PolyTerm& other) const;
-	PolyTerm& power(const int power_index);
-	std::string to_string(void) const;
-};
-
-
-struct Polynomial::PowerPolyTerm
-{
-	SimplePolyTerm base_ = 1.0;
-	int exponent_ = 1;
-
-	PowerPolyTerm(const SimplePolyTerm& simple_poly_term) : base_(simple_poly_term) {};
-
+	void multiply_assign_with_same_base(const PowerPolyTerm& other);
 	double operator()(const MathVector& variable_vector) const;
 	bool operator==(const PowerPolyTerm& other) const;
-
-	void multiply_with_same_term(const PowerPolyTerm& other);
 
 	double be_constant(void) const;
 	size_t domain_dimension(void) const;
@@ -176,6 +129,38 @@ struct Polynomial::PowerPolyTerm
 	std::string to_string(void) const;
 };
 
+class CompactPolynomial::PolyTerm
+{
+	double coefficient_ = 1.0;
+	std::vector<PowerPolyTerm> multiplied_power_poly_term_set_;
+
+public:
+	PolyTerm(const double coeeficient) : coefficient_(coeeficient) {};
+	PolyTerm(const SimplePolynomial& simple_polynomial); //이 생성자가 있어야 simple polynomial을 poly term으로 암시적으로 형변환후 연산가능
+	PolyTerm(const PowerPolyTerm& power_poly_term);
+
+	//PolyTerm& operator*=(const double constant);
+	PolyTerm& operator*=(const PowerPolyTerm& power_poly_term);
+	PolyTerm& operator*=(const PolyTerm& other);
+	PolyTerm operator*(const PolyTerm& other) const;
+	PolyTerm operator^(const double power_index) const;
+	double operator()(const MathVector& variable_vector) const;
+	bool operator==(const PolyTerm& other) const;
+	bool operator!=(const PolyTerm& other) const;
+
+	void add_with_same_form(const PolyTerm& other);
+
+	size_t domain_dimension(void) const;
+	CompactPolynomial differentiate(const size_t variable_index) const;
+	size_t order(void) const;
+	bool has_same_form(const PolyTerm& other) const;
+	PolyTerm& power(const int power_index);
+	std::string to_string(void) const;
+
+
+	//explicit PolynTerm(void) = default;
+	//PolyTerm(const double constant, const PowerPolyTerm& power_poly_term);
+};
 
 
 
@@ -210,6 +195,70 @@ struct Polynomial::PowerPolyTerm
 
 
 
+
+
+//class Monomial
+//{
+//private:
+//	std::vector<size_t> exponent_set_;
+//
+//public:
+//	explicit Monomial(void) = default;
+//	explicit Monomial(const size_t variable_index);			// Monomial(0) => x0	/ Monomial(2) => x2
+//	Monomial(const std::initializer_list<size_t> list);		// Monomial{0} => 1		/ Monomial{2} => x0^2 , without explicit m = {1,2,3} work!
+//		
+//	Monomial& operator*=(const Monomial& other);
+//	Monomial operator*(const Monomial& other) const;
+//	Monomial operator^(const size_t power) const;
+//	double operator()(void) const;
+//	double operator()(const MathVector& variable_vector) const;
+//	bool operator<(const Monomial& other) const;
+//	bool operator==(const Monomial& other) const;
+//
+//	size_t domain_dimension(void) const;
+//	size_t exponent(size_t variable_index) const;
+//	bool is_one(void) const;
+//	size_t order(void) const;	
+//	Monomial& reduce_order(const size_t variable_index);
+//	std::string to_string(void) const;
+//
+////private: //for test
+//	void remove_meaningless_zero(void);	
+//};
+//std::ostream& operator<<(std::ostream& ostream, const Monomial& monomial);
+//
+//
+//class SimplePolyTerm 
+//{
+//private:
+//	MathVector coefficient_vector_;
+//	VectorFunction<Monomial> monomial_vector_function_;
+//
+//public:
+//	explicit SimplePolyTerm(void);
+//	SimplePolyTerm(const double scalar);
+//	SimplePolyTerm(const Monomial& monomial);
+//	SimplePolyTerm(const double scalar,const Monomial& monomial);
+//	SimplePolyTerm(const std::vector<double>& coefficient_set, const std::vector<Monomial>& monomial_set);
+//
+//	SimplePolyTerm& operator+=(const SimplePolyTerm& other);
+//	SimplePolyTerm& operator*=(const double constant);
+//	SimplePolyTerm operator*(const double constant) const;
+//	double operator()(const MathVector& variable_vector) const;
+//	bool operator==(const SimplePolyTerm& other) const;
+//	bool operator!=(const SimplePolyTerm& other) const;
+//
+//	double be_constant(void) const;
+//	SimplePolyTerm& differentiate(const size_t variable_index);
+//	size_t domain_dimension(void) const;
+//	bool is_constant(void) const;
+//	size_t order(void) const;
+//	std::string to_string(void) const;
+//	
+////private:
+//	void add_mono_term(const double coefficient, const Monomial& monomial);
+//	SimplePolyTerm differentiate_monomial(const Monomial& monomial, const size_t variable_index) const;
+//};
 
 
 //
@@ -312,11 +361,11 @@ namespace ms {
 	std::vector<MathVector> polynomial_compare_node_set(const size_t polynomial_order, const size_t domain_dimension);
 	size_t combination(const size_t n, const size_t k);
 	size_t combination_with_repetition(const size_t n, const size_t k);
-	SimplePolyTerm differentiate(const SimplePolyTerm& simple_poly_term, const size_t variable_index);
-	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
-	Polynomial sqrt(const Polynomial& polynomial);
-	bool is_positive_odd_number(const double val);
-	bool is_natural_number(const double val);
+	SimplePolynomial differentiate(const SimplePolynomial& simple_polynomial, const size_t variable_index);
+//	Polynomial differentiate(const Polynomial& polynomial, const size_t variable_index);
+//	Polynomial sqrt(const Polynomial& polynomial);
+//	bool is_positive_odd_number(const double val);
+//	bool is_natural_number(const double val);
 }
 
 

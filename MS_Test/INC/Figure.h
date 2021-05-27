@@ -35,8 +35,8 @@ private:
 public:
 	ReferenceFigure(const FigureType figure_type, const size_t figure_order);
 
-	VectorFunction<Polynomial> calculate_transformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
-	QuadratureRule calculate_quadrature_rule(const VectorFunction<Polynomial>& trasnformation_function, const size_t integrand_order) const;
+	VectorFunction<CompactPolynomial> calculate_transformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
+	QuadratureRule calculate_quadrature_rule(const VectorFunction<CompactPolynomial>& trasnformation_function, const size_t integrand_order) const;
 
 	MathVector center_node(void) const;
 	std::vector<FigureType> face_figure_type_set(void) const;
@@ -59,7 +59,7 @@ public: //for test
 	size_t calculate_Num_Required_Point(const size_t required_order) const;
 	size_t support_element_order(void) const;
 
-	Polynomial calculate_trasnformation_scale_function(const VectorFunction<Polynomial>& transformation_function) const;
+	CompactPolynomial calculate_trasnformation_scale_function(const VectorFunction<CompactPolynomial>& transformation_function) const;
 
 	std::vector<MathVector> transformation_node_set(void) const;
 	VectorFunction<Monomial> transformation_monomial_vector(void) const;
@@ -78,34 +78,34 @@ class Figure
 private:
 	ReferenceFigure reference_figure_;
 	std::vector<const MathVector*> node_set_;
-	VectorFunction<Polynomial> transformation_function_;
+	VectorFunction<CompactPolynomial> transformation_function_;
 	//JacobianFunction<Polynomial> transformation_Jacobian_function_;
 
 public:
 	explicit Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set);
 
 	MathVector calculate_center_node(void) const;
-	VectorFunction<Polynomial> calculate_orthonormal_basis_vector(const size_t polynomial_order) const;
+	VectorFunction<CompactPolynomial> calculate_orthonormal_basis_vector(const size_t polynomial_order) const;
 	QuadratureRule calculate_quadrature_rule(const size_t integrand_roder) const;
 //private:
 public: //for test
-	VectorFunction<Polynomial> calculate_initial_basis_vector(const size_t polynomial_order) const;
+	VectorFunction<CompactPolynomial> calculate_initial_basis_vector(const size_t polynomial_order) const;
 	
 };
 
 
-VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Monomial> vector_function);
+VectorFunction<CompactPolynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Monomial> vector_function);
 
 
 namespace ms {
-	double integrate(const Polynomial& integrand, const QuadratureRule& quadrature_rule);
-	double integrate(const Polynomial& integrand, const Figure& figure);
-	double inner_product(const Polynomial& f1, const Polynomial& f2, const QuadratureRule& quadrature_rule);
-	double inner_product(const Polynomial& f1, const Polynomial& f2, const Figure& figure);
-	double L2_Norm(const Polynomial& polynomial, const QuadratureRule& quadrature_rule);
-	double L2_Norm(const Polynomial& polynomial, const Figure& figure);
-	std::vector<Polynomial> Gram_Schmidt_Process(const std::vector<Polynomial>& initial_polynomial_set, const QuadratureRule& quadrature_rule);
-	std::vector<Polynomial> Gram_Schmidt_Process(const VectorFunction<Polynomial>& initial_polynomial_set, const Figure& figure);
+	double integrate(const CompactPolynomial& integrand, const QuadratureRule& quadrature_rule);
+	double integrate(const CompactPolynomial& integrand, const Figure& figure);
+	double inner_product(const CompactPolynomial& f1, const CompactPolynomial& f2, const QuadratureRule& quadrature_rule);
+	double inner_product(const CompactPolynomial& f1, const CompactPolynomial& f2, const Figure& figure);
+	double L2_Norm(const CompactPolynomial& polynomial, const QuadratureRule& quadrature_rule);
+	double L2_Norm(const CompactPolynomial& polynomial, const Figure& figure);
+	std::vector<CompactPolynomial> Gram_Schmidt_Process(const std::vector<CompactPolynomial>& initial_polynomial_set, const QuadratureRule& quadrature_rule);
+	std::vector<CompactPolynomial> Gram_Schmidt_Process(const VectorFunction<CompactPolynomial>& initial_polynomial_set, const Figure& figure);
 }
 
 //
