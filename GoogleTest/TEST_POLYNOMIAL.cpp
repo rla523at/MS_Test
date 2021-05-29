@@ -136,192 +136,83 @@ GTEST_TEST(MonoTerm, domain_dimension_4) {
 
 
 
-GTEST_TEST(SimplePolynomial, operator_add_1) {
+GTEST_TEST(SimplePolynomial, operator_addition_1) {
 	const auto p1 = 3 * X + Y;
 	const auto p2 = 5 * (X ^ 2);
 	const auto p3 = Y ^ 2;
 	const auto p4 = -7;
 	const auto result = p1 + p2 + p3 + p4;
 
-	SimplePolynomial ref = { Y ^ 2,5 * (X ^ 2),3 * X,Y,-7 };
+	SimplePolynomial ref = 5 * (X ^ 2) + (Y ^ 2) + 3 * X + Y - 7;
 	EXPECT_EQ(result, ref);
 }
-
-
-//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN1) {
-//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-//	t1 *= t2;
-//
-//	PolyTerm ref = { {1,-1}, {{X ^ 2},{0}} };
-//	EXPECT_EQ(t1, ref);
-//}
-//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN2) {
-//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-//	t1 *= t2;
-//	t1 *= t1;
-//
-//	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
-//	EXPECT_EQ(t1, ref);
-//}
-//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN3) {
-//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-//	t1 = t1 ^ 2;
-//	t2 = t2 ^ 2;
-//	t1 *= t2;
-//
-//	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
-//	EXPECT_EQ(t1, ref);
-//}
-//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN4) {
-//	PolyTerm t1 = 3;
-//	PolyTerm t2 = 2;
-//	t1 *= t2;
-//
-//	PolyTerm ref = 6;
-//	EXPECT_EQ(t1, ref);
-//}
-//GTEST_TEST(TERM, OPERATOR_MULTIPLCATION_ASSIGN5) {
-//	PolyTerm t1 = 3;
-//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-//	t1 *= t2;
-//
-//	PolyTerm ref = { { 3,-3 }, { X,{0} } };
-//	EXPECT_EQ(t1, ref);
-//}
-//
-//
-//GTEST_TEST(TERM, OPERATOR_POWER1) {
-//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-//	t1 *= t2;
-//	auto result = t1 ^ 2;
-//
-//	PolyTerm ref = { {1,-2,1}, {{X ^ 4}, {X ^ 2},{0}} };
-//	EXPECT_EQ(result, ref);
-//}
-//
-//
-//GTEST_TEST(TERM, SIMPLE_TERM_ADDITION1) {
-//	PolyTerm t1;
-//	PolyTerm t2 = { { 1,1 }, { X,{0} } }; // x+1
-//	t1.simple_term_addition(t2);
-//
-//	PolyTerm ref = { { 1,1 }, { X,{0} } };
-//	EXPECT_EQ(t1, ref);
-//}
-//GTEST_TEST(TERM, SIMPLE_TERM_ADDITION2) {
-//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-//	PolyTerm t2;
-//	t1.simple_term_addition(t2);
-//
-//	PolyTerm ref = { { 1,1 }, { X,{0} } };
-//	EXPECT_EQ(t1, ref);
-//}
-//GTEST_TEST(TERM, SIMPLE_TERM_ADDITION3) {
-//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-//	PolyTerm t2 = 3;
-//	t1.simple_term_addition(t2);
-//
-//	PolyTerm ref = { { 1,4 }, { X,{0} } };
-//	EXPECT_EQ(t1, ref);
-//}
-//
-//
-//GTEST_TEST(TERM, SIMPLE_TERM_DIFFERENTIATE_1) {
-//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-//	
-//	const size_t variable_index = 0;
-//	const auto result = t1.simple_term_differentiate(variable_index);
-//
-//	PolyTerm ref = 1;
-//	EXPECT_EQ(result, ref);
-//}
-//GTEST_TEST(TERM, SIMPLE_TERM_DIFFERENTIATE_2) {
-//	PolyTerm t1 = { { 1,1 }, { X,{0} } }; // x+1
-//	PolyTerm t2 = { { 1,-1 }, { X,{0} } }; // x-1
-//	auto t3 = t1 * t2;
-//
-//	const size_t variable_index = 0;
-//	t3.multiplied_power_poly_term_set_.front().simple_term_differentiate(variable_index);
-//
-//	PolyTerm ref = { { 1,-1 }, { X,{0} } };
-//	EXPECT_EQ(t3, ref);
-//}
-
-
-GTEST_TEST(POLYNOMIAL, TEMP) {
-	//auto p1 = X + 1;
-	//auto p2 = X - 1;
-	//auto p3 = 3 * p1;
-	//auto p4 = p3 * p2;
-
-	//auto p1 = X * Y;
-	//std::cout << p1 << "\n";
-
-	//auto p2 = p1 - X;
-	//std::cout << p2 << "\n";
-
-	//auto p3 = p2 - 3 * Y;
-	//std::cout << p3 << "\n";
-
-	//auto p4 = p3 + Y * Z;
-	//std::cout << p4 << "\n";
-
-	//auto p5 = p4 + Z + X + 5;
-	//std::cout << p5 << "\n";
-
-	//auto p1 = 1;
-	//auto p2 = X;
-	//auto p3 = p1 + p2;
-}
-
-
-GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_1) {
-	auto p1 = X;
+GTEST_TEST(SimplePolynomial, operator_addition_2) {
+	auto p1 = X + 1;
 	auto p2 = X + Y + 1;
 	const auto result = p1 + p2;
 
-	auto ref = 2 * X + Y + 1;
+	auto ref = 2 * X + Y + 2;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_2) {
-	auto p1 = (X^2) + X;
+GTEST_TEST(SimplePolynomial, operator_addition_3) {
+	auto p1 = (X ^ 2) + X;
 	auto p2 = X + Y + 1;
 	const auto result = p1 + p2;
 
-	auto ref = (X^2) + 2 * X + Y + 1;
+	auto ref = (X ^ 2) + 2 * X + Y + 1;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_3) {
-	SimplePolynomial p1;
-	SimplePolynomial p2;
+GTEST_TEST(SimplePolynomial, operator_addition_4) {
+	SimplePolynomial p1 = 0.0;
+	SimplePolynomial p2 = 0.0;
 	const auto result = p1 + p2;
 
-	SimplePolynomial ref;
+	SimplePolynomial ref = 0.0;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_4) {
+GTEST_TEST(SimplePolynomial, operator_addition_5) {
 	auto p1 = -12 * (X ^ 2) * Y + 45 * X;
 	auto p2 = 12 * (X ^ 2) * Y - 45 * X;
 	const auto result = p1 + p2;
 
-	SimplePolynomial ref;
+	SimplePolynomial ref = 0;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_ADDITION_5) {
+GTEST_TEST(SimplePolynomial, operator_addition_6) {
 	auto p1 = (X ^ 2) + X;
 	auto p2 = X + 1;
 	const auto result = p1 + p2;
 
-	auto ref = (X ^ 2) + 2 * X + 1;
+	const auto ref = (X ^ 2) + 2 * X + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, operator_addition_7) {
+	SimplePolynomial p1 = 0.0;
+	const auto p2 = X + 1;
+	const auto result = p1 + p2;
+
+	const auto ref = X + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, operator_addition_8) {
+	SimplePolynomial p1 = 0.0;
+	const auto p2 = X + 1;
+	const auto result = p2 + p1;
+
+	const auto ref = X + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, operator_addition_9) {
+	SimplePolynomial p1 = 3;
+	const auto p2 = X + 1;
+	const auto result = p1 + p2;
+
+	const auto ref = X + 4;
 	EXPECT_EQ(result, ref);
 }
 
 
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_1) {
+GTEST_TEST(SimplePolynomial, operator_substraction_1) {
 	auto p1 = X + Y;
 	auto p2 = X + 3 * Y;
 	const auto result = p1 - p2;
@@ -329,7 +220,7 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_1) {
 	auto ref = -2 * Y;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_2) {
+GTEST_TEST(SimplePolynomial, operator_substraction_2) {
 	auto p1 = X * Y;
 	auto p2 = X + 3 * Y;
 	const auto result = p1 - p2;
@@ -337,7 +228,7 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_2) {
 	auto ref = X * Y - X - 3 * Y;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_3) {
+GTEST_TEST(SimplePolynomial, operator_substraction_3) {
 	auto p1 = X * Y;
 	auto p2 = X;
 	const auto result = p1 - p2;
@@ -345,62 +236,72 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_3) {
 	auto ref = X * Y - X;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_4) {
-	SimplePolynomial p1;
+GTEST_TEST(SimplePolynomial, operator_substraction_4) {
+	SimplePolynomial p1 = 0;
 	auto p2 = X;
 	const auto result = p1 - p2;
 
 	auto ref = -1 * X;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_5) {
-	SimplePolynomial p1;
+GTEST_TEST(SimplePolynomial, operator_substraction_5) {
+	SimplePolynomial p1 = 0;
 	const auto p2 = 3 * (X * Y) - 3 * ((X ^ 2) * Z);
 	const auto result = p1 - p2;
 
 	auto ref = -3 * (X * Y) + 3 * ((X ^ 2) * Z);
-	EXPECT_EQ(p1, ref);
-}
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_6) {
-	auto p = (X - 1) * (Y - 1);
-	const auto result = p - 1;
-
-	const auto ref = X * Y - X - Y;
-	EXPECT_EQ(p, ref);
-}
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_7) {
-	auto p = (X - 1) * (Y - 1);
-	p -= X - 1;
-
-	const auto ref = X * Y - 2 * X - Y + 2;
-	EXPECT_EQ(p, ref);
-}
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_8) {
-	auto p = (X - 1) * (Y - 1);
-	p -= X + Y - 1;
-
-	const auto ref = X * Y - 2 * X - 2 * Y + 2;
-	EXPECT_EQ(p, ref);
-}
-GTEST_TEST(POLYNOMIAL, OPERATOR_SUBSTRACTION_9) {
-	auto p = (X - 1) * (Y - 1);
-	p -= 2 * ((X - 1) ^ 2) + X + Y - 1;
-
-	const auto ref = -2 * (X ^ 2) + X * Y + 2 * X - 2 * Y;
-	EXPECT_EQ(p, ref);
+	EXPECT_EQ(result, ref);
 }
 
+GTEST_TEST(SimplePolynomial, operator_multiplication_1) {
+	const auto p1 = X + 1;
+	const auto p2 = X - 2;
+	const auto result = p1 * p2;
 
+	const auto ref = (X ^ 2) - X - 2;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, operator_multiplication_2) {
+	const auto p1 = (X ^ 2) - 1;
+	const auto p2 = (X ^ 2) + 2 * X + 1;
+	const auto result = p1 * p2;
 
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_1) {
+	const auto ref = (X ^ 4) + 2 * (X ^ 3) - 2 * X - 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, operator_multiplication_3) {
+	const auto p1 = (X ^ 2) + 2 * X + 1;
+	const auto p2 = (X ^ 2) - 2 * X + 1;
+	const auto result = p1 * p2;
+
+	const auto ref = (X ^ 4) - 2 * (X ^ 2) + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, operator_multiplication_4) {
+	SimplePolynomial p1 = 3;
+	SimplePolynomial p2 = 2;
+	const auto result = p1 * p2;
+
+	SimplePolynomial ref = 6;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, operator_multiplication_5) {
+	SimplePolynomial p1 = 3;
+	SimplePolynomial p2 = X - 1;
+	const auto result = p1 * p2;
+
+	SimplePolynomial ref = 3 * X - 3;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, operator_multiplication_6) {
 	auto p1 = X;
 	auto p2 = X + Y + 1;
 	const auto result = p1 * p2;
 
-	auto ref = (X^2) + X*Y + X;
+	auto ref = (X ^ 2) + X * Y + X;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_2) {
+GTEST_TEST(SimplePolynomial, operator_multiplication_7) {
 	auto p1 = X + Y + 1;
 	auto p2 = X;
 	const auto result = p1 * p2;
@@ -408,7 +309,7 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_2) {
 	auto ref = (X ^ 2) + X * Y + X;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_3) {
+GTEST_TEST(SimplePolynomial, operator_multiplication_8) {
 	auto p1 = X + Y;
 	auto p2 = Y + X;
 	const auto result = p1 * p2;
@@ -416,23 +317,14 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_3) {
 	auto ref = (X ^ 2) + 2 * X * Y + (Y ^ 2);
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_4) {
-	auto p1 = X + Y;
-	auto p2 = Y + X;
-	auto p3 = X;
-	const auto result = (p1 * p3) * (p2 * p3);
-
-	auto ref = (X ^ 4) + 2 * (X^3) * Y + ((X*Y) ^ 2);
-	EXPECT_EQ(result, ref);
-}
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_5) {
-	auto p1 = X + Y;
+GTEST_TEST(SimplePolynomial, operator_multiplication_9) {
+	const auto p1 = X + Y;
 	const auto result = -1 * p1;
 
 	auto ref = -1 * X - 1 * Y;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_6) {
+GTEST_TEST(SimplePolynomial, operator_multiplication_10) {
 	auto p1 = X + 1;
 	auto p2 = X + 1;
 	const auto result = p1 * p2;
@@ -440,15 +332,15 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_6) {
 	auto ref = (X ^ 2) + 2 * X + 1;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_7) {
-	auto p1;
-	auto p2;
+GTEST_TEST(SimplePolynomial, operator_multiplication_11) {
+	SimplePolynomial p1 = 0;
+	SimplePolynomial p2 = 0;
 	const auto result = p1 * p2;
 
-	auto ref;
+	SimplePolynomial ref = 0;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_8) {
+GTEST_TEST(SimplePolynomial, operator_multiplication_12) {
 	auto p1 = 1;
 	auto p2 = X + 1;
 	const auto result = p1 * p2;
@@ -456,86 +348,257 @@ GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_8) {
 	auto ref = X + 1;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_9) {
+GTEST_TEST(SimplePolynomial, operator_multiplication_13) {
 	auto p1 = X + 1;
-	auto p2;
+	SimplePolynomial p2 = 0;
 	const auto result = p1 * p2;
 
-	auto ref;
+	SimplePolynomial ref = 0;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_10) {
-	auto p1 = X + 1;
-	const auto p2 = p1^(0.5);
-	const auto result = p2 * p2;
-
-	auto ref = X + 1;
-	EXPECT_EQ(result, ref);
-}
-GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_11) {
-	auto p1 = (X ^ 2) + X + 1;
-	const auto result = p1 * 5;
+GTEST_TEST(SimplePolynomial, operator_multiplication_14) {
+	const auto p1 = (X ^ 2) + X + 1;
+	const auto result = 5 * p1;
 
 	auto ref = 5 * (X ^ 2) + 5 * X + 5;
 	EXPECT_EQ(result, ref);
 }
 
 
-GTEST_TEST(POLYNOMIAL, OPERATOR_POWER_1) {
+GTEST_TEST(SimplePolynomial, operator_power_1) {
+	const auto p1 = (X ^ 2) - 1;
+	auto result = p1 ^ 2;
+
+	SimplePolynomial ref = (X ^ 4) - 2 * (X ^ 2) + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, operator_power_2) {
 	auto p1 = X + 1;
 	const auto result = p1 ^ 2;
 
 	auto ref = (X ^ 2) + 2 * X + 1;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_POWER_2) {
-	auto p = 1.5;
+GTEST_TEST(SimplePolynomial, operator_power_3) {
+	SimplePolynomial p = 1.5;
 	auto result = p ^ 2;
 
 	auto ref = 2.25;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, OPERATOR_POWER_3) {
-	auto p;
+GTEST_TEST(SimplePolynomial, operator_power_4) {
+	SimplePolynomial p = 0;
 	auto result = p ^ 2;
 
-	auto ref;
-	EXPECT_EQ(result, ref);
-}
-GTEST_TEST(POLYNOMIAL, OPERATOR_POWER_4) {
-	auto p1 = (X ^ 2) + 2 * X + 1;
-	const auto p2 = p1 ^ 2;
-	const auto result = ms::sqrt(p2);
-
-	auto ref = (X ^ 2) + 2 * X + 1;
+	SimplePolynomial ref = 0;
 	EXPECT_EQ(result, ref);
 }
 
+GTEST_TEST(SimplePolynomial, differentiate_1) {
+	const auto  p = X + 1;
+	
+	const size_t variable_index = 0;
+	const auto result = p.differentiate(variable_index);
+
+	SimplePolynomial ref = 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, differentiate_2) {
+	SimplePolynomial p = (X ^ 2) - 1;
+
+	const size_t variable_index = 0;
+	const auto result = p.differentiate(variable_index);
+
+	const auto ref = 2 * X;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, differentiate_3) {
+	auto p1 = (X ^ 2) + X + 1;
+
+	size_t variable_index = 0;
+	const auto result = p1.differentiate(variable_index);
+
+	auto ref = 2 * X + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(SimplePolynomial, differentiate_4) {
+	auto p1 = (X ^ 2) + X + 1;
+
+	size_t variable_index = 1;
+	const auto result = p1.differentiate(variable_index);
+
+	const auto ref = 0;
+	EXPECT_EQ(result, ref);
+}
+
+GTEST_TEST(CompactPolynomial, operator_substraction_1) {
+	const auto p1 = (X - 1) * (Y - 1);
+	const SimplePolynomial p2 = 1;
+	const auto result = p1 - p2;
+
+	const auto ref = X * Y - X - Y;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, operator_substraction_2) {
+	const auto p1 = (X - 1) * (Y - 1);
+	const auto p2 = X + 1;
+	const auto result = p1 - p2;
+
+	const auto ref = X * Y - 2 * X - Y;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, operator_substraction_3) {
+	const auto p1 = (X - 1) * (Y - 1);
+	const auto p2 = 2 * ((X - 1) ^ 2) + X + Y - 1;
+	const auto result = p1 - p2;
+
+	const auto ref = -2 * (X ^ 2) + X * Y + 2 * X - 2 * Y;
+	EXPECT_EQ(result, ref);
+}
+
+GTEST_TEST(CompactPolynomial, operator_multiplication_1) {
+	const auto p1 = X * (X + Y);
+	const auto p2 = (Y + X) * X;
+	const auto result = p1 * p2;
+
+	const auto ref = (X ^ 4) + 2 * (X^3) * Y + ((X*Y) ^ 2);
+	EXPECT_EQ(result, ref);
+}
+
+GTEST_TEST(CompactPolynomial, differentiate_1) {
+	const auto p = (X + 1) * (X - 1) + 2;
+
+	const size_t variable_index = 0;
+	const auto result = p.differentiate(variable_index);
+
+	const auto ref = 2 * X;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, differentiate_2) {
+	const auto p = (X - 1) ^ 2;
+
+	const size_t variable_index = 0;
+	const auto result = p.differentiate(variable_index);
+
+	const auto ref = 2 * X - 2;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, differentiate_3) {
+	const auto p = (X - 1) ^ 2;
+
+	const size_t variable_index = 1;
+	const auto result = p.differentiate(variable_index);
+
+	const auto ref = 0;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, differentiate_4) {
+	const auto p1 = (X + 1) ^ 2;
+
+	size_t variable_index = 0;
+	const auto result = p1.differentiate(variable_index);
+
+	auto ref = 2 * X + 2;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, differentiate_5) {
+	const auto p1 = (X + Y + 2) * (X + 1);
+
+	size_t variable_index = 0;
+	const auto result = p1.differentiate(variable_index);
+
+	auto ref = 2 * X + Y + 3;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, differentiate_6) {
+	const auto p1 = (X + Y + 2) * (X + 1);
+
+	size_t variable_index = 1;
+	const auto result = p1.differentiate(variable_index);
+
+	auto ref = X + 1;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, differentiate_7) {
+	auto p1 = (X + 1) * (Y + 1) + X + 1;
+
+	size_t variable_index = 0;
+	const auto result = p1.differentiate(variable_index);
+
+	auto ref = Y + 2;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, differentiate_8) {
+	const auto p1 = ((X + 1) ^ 2) * (X + 2);
+
+	constexpr size_t variable_index = 0;
+	const auto result = p1.differentiate(variable_index);
+
+	auto ref = 3 * (X ^ 2) + 8 * X + 5;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, differentiate_9) {
+	auto p = (2 * X + 3) ^ 2;
+
+	constexpr size_t variable_index = 0;
+	const auto result = p.differentiate(variable_index);
+
+	auto ref = 8 * X + 12;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(CompactPolynomial, differentiate_10) {
+	auto p = ((2 * X + 3) ^ 2) * X;
+
+	constexpr size_t variable_index = 0;
+	const auto result = p.differentiate(variable_index);
+
+	auto ref = 12 * (X ^ 2) + 24 * X + 9;
+	EXPECT_EQ(result, ref);
+}
+
+
+
+//GTEST_TEST(POLYNOMIAL, OPERATOR_POWER_4) {
+//	auto p1 = (X ^ 2) + 2 * X + 1;
+//	const auto p2 = p1 ^ 2;
+//	const auto result = ms::sqrt(p2);
+//
+//	auto ref = (X ^ 2) + 2 * X + 1;
+//	EXPECT_EQ(result, ref);
+//}
+//GTEST_TEST(POLYNOMIAL, OPERATOR_MULTIPLICATION_10) {
+//	auto p1 = X + 1;
+//	const auto p2 = p1^(0.5);
+//	const auto result = p2 * p2;
+//
+//	auto ref = X + 1;
+//	EXPECT_EQ(result, ref);
+//}
 
 GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_1) {
 	const auto p1 = X + 1;
 	const auto p2 = X + 2;
 	const auto p3 = X + 3;
 	const auto p4 = p1 * p2 + p3;
-	const auto p5 = p4 ^ 2;
+	const auto p5 = p4 * p4;
 	const auto result = 2 * (p5 + p1);
 
 	auto ref = 2 * (X ^ 4) + 16 * (X ^ 3) + 52 * (X ^ 2) + 82 * X + 52;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_2) {
-	auto p1 = (X ^ 2) + X + 1;
-	const auto p2 = p1 ^ 0.7;
-	const auto p3 = 5 * p2;
-
-	for (size_t i = 0; i < 10; ++i) {
-		const double val = 0.31 * i;
-		const MathVector val_vec = { val };
-		const double result = p3(val_vec);
-		const double ref = 5 * (std::pow(val * val + val + 1, 0.7));
-		EXPECT_DOUBLE_EQ(result, ref);
-	}
-}
+//GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_2) {
+//	auto p1 = (X ^ 2) + X + 1;
+//	const auto p2 = p1 ^ 0.7;
+//	const auto p3 = 5 * p2;
+//
+//	for (size_t i = 0; i < 10; ++i) {
+//		const double val = 0.31 * i;
+//		const MathVector val_vec = { val };
+//		const double result = p3(val_vec);
+//		const double ref = 5 * (std::pow(val * val + val + 1, 0.7));
+//		EXPECT_DOUBLE_EQ(result, ref);
+//	}
+//}
 GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_3) {
 	auto p1 = X + 1;
 	const auto p2 = p1 ^ 2;
@@ -546,174 +609,33 @@ GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_3) {
 	const auto ref = 5 * (X ^ 2) + 25 * X + 30;
 	EXPECT_EQ(result, ref);
 }
-GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_4) {
-	auto p1 = ms::sqrt(X + 1) * X + X + 1;
-	auto p2 = ms::sqrt(X + 2) * X;
-	const auto result = p1 * p2;
+//GTEST_TEST(POLYNOMIAL, COMPLEX_OPERATION_4) {
+//	auto p1 = ms::sqrt(X + 1) * X + X + 1;
+//	auto p2 = ms::sqrt(X + 2) * X;
+//	const auto result = p1 * p2;
+//
+//	for (size_t i = 0; i < 10; ++i) {
+//		const double val = 0.31 * i;
+//		const MathVector v = { val };
+//
+//		const double ref = (std::sqrt(val + 1) * val + val + 1) * (std::sqrt(val + 2) * val);
+//		EXPECT_DOUBLE_EQ(result(v), ref);
+//	}
+//}
+GTEST_TEST(CompactPolynomial, complex_operation_5) {
+	auto p1 = X + Y;
+	auto p2 = Y + X;
+	auto p3 = X;
+	const auto result = (p1 * p3) * (p2 * p3);
 
-	for (size_t i = 0; i < 10; ++i) {
-		const double val = 0.31 * i;
-		const MathVector v = { val };
-
-		const double ref = (std::sqrt(val + 1) * val + val + 1) * (std::sqrt(val + 2) * val);
-		EXPECT_DOUBLE_EQ(result(v), ref);
-	}
+	auto ref = (X ^ 4) + 2 * (X ^ 3) * Y + ((X * Y) ^ 2);
+	EXPECT_EQ(result, ref);
 }
 
 
 
 
 
-
-
-
-
-
-
-
-//
-//
-////GTEST_TEST(POLYNOMIAL, POLY_TERM_DIFFERENTIATE_1) {
-////	PolyTerm pt1 = { {1,1}, {X,{0}} };
-////	PolyTerm pt2 = { {1,-1}, {X,{0}} };
-////	const auto pt3 = pt1 * pt2;
-////	
-////	const size_t variable_index = 0;
-////	const auto result = auto::poly_term_differentiate(pt3, variable_index);
-////
-////	const auto ref = 2*X;
-////	EXPECT_EQ(result, ref);
-////}
-////GTEST_TEST(POLYNOMIAL, POLY_TERM_DIFFERENTIATE_2) {
-////	PolyTerm pt1 = { {1,1}, {X,{0}} };
-////	auto pt2 = pt1 ^ 2;
-////
-////	const size_t variable_index = 0;
-////	const auto result = auto::poly_term_differentiate(pt2, variable_index);
-////
-////	const auto ref = 2 * X + 2;
-////	EXPECT_EQ(result, ref);
-////}
-//
-//
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_1) {
-//	auto p1 = (X ^ 2) + X + 1;
-//	
-//	size_t variable_index = 0;
-//	p1.differentiate(variable_index);
-//
-//	auto ref = 2 * X + 1;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_2) {
-//	auto p1 = (X ^ 2) + X + 1;
-//
-//	size_t variable_index = 1;
-//	p1.differentiate(variable_index);	
-//
-//	auto ref;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_3) {
-//	auto p1 = (X ^ 2) + X + 1;
-//	auto p2 = 2 * X + 1;
-//	auto p3 = p1 + p2;
-//
-//	size_t variable_index = 0;
-//	p3.differentiate(variable_index);
-//
-//	auto ref = 2 * X + 3;
-//	EXPECT_EQ(p3, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_4) {
-//	auto p1 = X + 1;
-//	auto p2 = p1 ^ 2;
-//
-//	size_t variable_index = 0;
-//	p2.differentiate(variable_index);
-//
-//	auto ref = 2 * X + 2;
-//	EXPECT_EQ(p2, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_5) {
-//	auto p1 = X + 1;
-//	auto p2 = Y + 1;
-//	auto result = (p1 + p2) * p1;
-//
-//	size_t variable_index = 0;
-//	result.differentiate(variable_index);
-//
-//	auto ref = 2 * X + Y + 3;
-//	EXPECT_EQ(result, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_6) {
-//	auto p1 = X + 1;
-//	auto p2 = Y + 1;
-//	auto result = (p1 + p2) * p1;
-//
-//	size_t variable_index = 1;
-//	result.differentiate(variable_index);
-//
-//	auto ref = X + 1;
-//	EXPECT_EQ(result, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_7) {
-//	auto p1 = X + 1;
-//	auto p2 = Y + 1;
-//	auto result = (p1 * p2) + p1;
-//
-//	size_t variable_index = 0;
-//	result.differentiate(variable_index);
-//
-//	auto ref = Y + 2;
-//	EXPECT_EQ(result, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_8) {
-//	auto p1 = X + 1;
-//	auto p2 = Y + 1;
-//	auto result = (p1 * p2) + p1;
-//
-//	size_t variable_index = 1;
-//	result.differentiate(variable_index);
-//
-//	auto ref = X + 1;
-//	EXPECT_EQ(result, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_9) {
-//	auto p1 = (X ^ 2) + X + 1;
-//	size_t variable_index = 0;
-//	p1.differentiate(variable_index);
-//
-//	auto ref = 2 * X + 1;
-//	EXPECT_EQ(p1, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_10) {
-//	const auto p1 = X + 1;
-//	const auto p2 = X + 2;
-//	auto p3 = p1 * p1 * p2;
-//
-//	constexpr size_t variable_index = 0;
-//	p3.differentiate(variable_index);
-//
-//	auto ref = 3 * (X ^ 2) + 8 * X + 5;
-//	EXPECT_EQ(p3, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_11) {
-//	auto p = (2 * X + 3) ^ 2;
-//	constexpr size_t variable_index = 0;
-//	p.differentiate(variable_index);
-//
-//	auto ref = 8 * X + 12;
-//	EXPECT_EQ(p, ref);
-//}
-//GTEST_TEST(POLYNOMIAL, DIFFERENTIATE_12) {
-//	auto p = ((2 * X + 3) ^ 2) * X;
-//	constexpr size_t variable_index = 0;
-//	p.differentiate(variable_index);
-//
-//	auto ref = 12 * (X ^ 2) + 24 * X + 9;
-//	EXPECT_EQ(p, ref);
-//}
 //
 //
 //GTEST_TEST(POLYNOMIAL, GRADIENT_1) {

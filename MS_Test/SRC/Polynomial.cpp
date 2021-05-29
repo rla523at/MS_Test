@@ -35,19 +35,38 @@ MonoTerm& MonoTerm::operator*=(const MonoTerm& other) {
 	return *this;
 }
 
-//SimplePolynomial MonoTerm::operator+(const MonoTerm& other) const {
-//	SimplePolynomial result = *this;
-//	return result += other;
-//}
-//
-//SimplePolynomial MonoTerm::operator-(const MonoTerm& other) const {
-//	SimplePolynomial result = *this;
-//	return result -= other;
-//}
+SimplePolynomial MonoTerm::operator+(const double& constant) const {
+	SimplePolynomial result = *this;
+	return result += constant;
+}
+
+SimplePolynomial MonoTerm::operator+(const MonoTerm& mono_term) const {
+	SimplePolynomial result = *this;
+	return result += mono_term;
+}
+
+SimplePolynomial MonoTerm::operator+(const SimplePolynomial& simple_polynomial) const {
+	SimplePolynomial result = *this;
+	return result += simple_polynomial;
+}
+
+SimplePolynomial MonoTerm::operator-(const SimplePolynomial& simple_polynomial) const {
+	SimplePolynomial result = *this;
+	return result -= simple_polynomial;
+}
+
+MonoTerm MonoTerm::operator*(const double constant) const {
+	auto result = *this;
+	return result *= constant;
+}
 
 MonoTerm MonoTerm::operator*(const MonoTerm& other) const {
 	MonoTerm result = *this;
 	return result *= other;
+}
+
+PolyTerm MonoTerm::operator*(const SimplePolynomial& simple_polynomial) const {
+	return simple_polynomial * *this;
 }
 
 MonoTerm MonoTerm::operator^(const size_t power_index) const {
@@ -182,39 +201,14 @@ MonoTerm operator* (const double constant, const MonoTerm& mono_term) {
 	return mono_term * constant;
 }
 
-
-
 SimplePolynomial::SimplePolynomial(const MonoTerm& mono_term) {
 	this->added_mono_term_set_.push_back(mono_term);
-}
-
-SimplePolynomial& SimplePolynomial::operator+=(const MonoTerm& mono_term) {
-	bool is_added = false;
-	for (auto& this_mono_term : this->added_mono_term_set_) {
-		if (this_mono_term.has_same_monomial(mono_term)) {
-			this_mono_term.add_assign_with_same_monomial(mono_term);
-			is_added = true;
-		}
-	}
-	if (!is_added)
-		this->added_mono_term_set_.push_back(mono_term);
-
-	constexpr double zero = 0.0;
-	for (;;) {
-		const auto zero_iter = std::find(this->added_mono_term_set_.begin(), this->added_mono_term_set_.end(), zero);
-		if (zero_iter == this->added_mono_term_set_.end())
-			break;
-		else
-			this->added_mono_term_set_.erase(zero_iter);
-	}
-
-	return *this;
 }
 
 SimplePolynomial& SimplePolynomial::operator+=(const SimplePolynomial& other) {
 	this->constant_ += other.constant_;
 	for (const auto& other_mono_term : other.added_mono_term_set_)
-		*this += other_mono_term;	
+		this->add_assign_mono_term(other_mono_term);
 	return *this;
 }
 
@@ -247,6 +241,11 @@ SimplePolynomial SimplePolynomial::operator*(const double constant) const {
 PolyTerm SimplePolynomial::operator*(const SimplePolynomial& other) const {
 	PolyTerm result = *this;
 	return result *= other;
+}
+
+PolyTerm SimplePolynomial::operator^(const size_t power_index) const {
+	PolyTerm result = *this;
+	return result.power(power_index);
 }
 
 double SimplePolynomial::operator()(const MathVector& variable_vector) const {
@@ -300,6 +299,9 @@ SimplePolynomial SimplePolynomial::differentiate(const size_t variable_index) co
 }
 
 size_t SimplePolynomial::domain_dimension(void) const {
+	if (this->is_constant())
+		return 0;
+
 	std::vector<size_t> mono_term_domain_dimension_set;
 	mono_term_domain_dimension_set.reserve(this->added_mono_term_set_.size());
 	for (const auto& mono_term : this->added_mono_term_set_)
@@ -313,6 +315,9 @@ bool SimplePolynomial::is_constant(void) const {
 }
 
 size_t SimplePolynomial::order(void) const {
+	if (this->is_constant())
+		return 0;
+
 	std::vector<size_t> mono_term_order_set;
 	mono_term_order_set.reserve(this->added_mono_term_set_.size());
 	for (const auto& mono_term : this->added_mono_term_set_)
@@ -322,8 +327,10 @@ size_t SimplePolynomial::order(void) const {
 }
 
 std::string SimplePolynomial::to_string(void) const {
-	std::string str = "[";
+	if (this->is_constant())
+		return +"[" + ms::double_to_string(this->constant_) + "]";
 
+	std::string str = "[";
 	auto sorted_set = this->added_mono_term_set_;
 	std::sort(sorted_set.begin(), sorted_set.end());
 	for (auto iter = sorted_set.rbegin(); iter != sorted_set.rend(); iter++)
@@ -343,16 +350,31 @@ std::string SimplePolynomial::to_string(void) const {
 		return str += ms::double_to_string(this->constant_) + "]";
 }
 
+void SimplePolynomial::add_assign_mono_term(const MonoTerm& mono_term) {
+	bool is_added = false;
+	for (auto& this_mono_term : this->added_mono_term_set_) {
+		if (this_mono_term.has_same_monomial(mono_term)) {
+			this_mono_term.add_assign_with_same_monomial(mono_term);
+			is_added = true;
+		}
+	}
+	if (!is_added)
+		this->added_mono_term_set_.push_back(mono_term);
+
+	constexpr double zero = 0.0;
+	for (;;) {
+		const auto zero_iter = std::find(this->added_mono_term_set_.begin(), this->added_mono_term_set_.end(), zero);
+		if (zero_iter == this->added_mono_term_set_.end())
+			break;
+		else
+			this->added_mono_term_set_.erase(zero_iter);
+	}
+
+	return *this;
+}
+
 std::ostream& operator<<(std::ostream& os, const SimplePolynomial& simple_polynomial) {
 	return os << simple_polynomial.to_string();
-}
-
-SimplePolynomial operator+(const MonoTerm& mono_term, const SimplePolynomial& simple_polynomial) {
-	return simple_polynomial + mono_term;
-}
-
-SimplePolynomial operator-(const MonoTerm& mono_term, const SimplePolynomial& simple_polynomial) {
-	return -1 * simple_polynomial + mono_term;
 }
 
 SimplePolynomial operator*(const double constant, const SimplePolynomial& simple_polynomial) {
@@ -390,7 +412,7 @@ PolyTerm PolyTerm::PoweredPolynomial::differentiate(const size_t variable_index)
 	else {
 		auto tmp = *this;	// tmp 이름 바꾸기
 		tmp.exponent_--;
-		return this->exponent_ * tmp * base_derivative;
+		return static_cast<double>(this->exponent_) * tmp * base_derivative;
 	}
 }
 
@@ -406,7 +428,7 @@ size_t PolyTerm::PoweredPolynomial::order(void) const {
 	return this->base_.order() * this->exponent_;
 }
 
-void PolyTerm::PoweredPolynomial::power(const int power_index) {
+void PolyTerm::PoweredPolynomial::power(const size_t power_index) {
 	this->exponent_ *= power_index;
 }
 
@@ -443,12 +465,22 @@ PolyTerm& PolyTerm::operator*=(const PolyTerm& other) {
 	return *this;
 }
 
+CompactPolynomial PolyTerm::operator+(const CompactPolynomial& compact_polynomial) const {
+	CompactPolynomial result(*this);
+	return result += compact_polynomial;
+}
+
+CompactPolynomial PolyTerm::operator-(const CompactPolynomial& compact_polynomial) const {
+	CompactPolynomial result(*this);
+	return result -= compact_polynomial;
+}
+
 PolyTerm PolyTerm::operator*(const PolyTerm& other) const {
 	PolyTerm result(*this);
 	return result *= other;
 }
 
-PolyTerm PolyTerm::operator^(const double power_index) const {
+PolyTerm PolyTerm::operator^(const size_t power_index) const {
 	PolyTerm result(*this);
 	return result.power(power_index);
 }
@@ -520,7 +552,7 @@ bool PolyTerm::has_same_form(const PolyTerm& other) const {
 	return true;
 }
 
-PolyTerm& PolyTerm::power(const int power_index) {
+PolyTerm& PolyTerm::power(const size_t power_index) {
 	if (power_index == 0)
 		return *this = 1;
 
@@ -567,9 +599,15 @@ void PolyTerm::multiply_assign(const PoweredPolynomial& power_poly_term) {
 	this->multiplied_power_poly_term_set_.push_back(power_poly_term);
 }
 
-//PolyTerm operator*(const double constant, const PolyTerm& other) {
-//	return other * constant;
-//}
+std::ostream& operator<<(std::ostream& ostream, const PolyTerm& poly_term) {
+	return ostream << poly_term.to_string();
+}
+
+PolyTerm operator*(const double constant, const PolyTerm& other) {
+	return other * constant;
+}
+
+
 
 //PolyTerm::PolyTerm(const PoweredPolynomial& power_poly_term) {
 //	if (power_poly_term.is_constant())
@@ -766,9 +804,9 @@ std::ostream& operator<<(std::ostream& ostream, const CompactPolynomial& polynom
 	return ostream << polynomial.to_string();
 }
 
-//CompactPolynomial operator*(const double constant, const CompactPolynomial& polynomial) {
-//	return polynomial * constant;
-//}
+CompactPolynomial operator*(const double constant, const CompactPolynomial& compact_polynomial) {
+	return compact_polynomial * constant;
+}
 //
 //CompactPolynomial operator+(const PolyTerm& poly_term, const CompactPolynomial& polynomial) {
 //	return polynomial + poly_term;
