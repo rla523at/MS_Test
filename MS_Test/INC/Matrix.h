@@ -5,12 +5,6 @@
 
 class RowMajorMatrix
 {
-private:	
-	CBLAS_TRANSPOSE transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
-	size_t num_row_ = 0;
-	size_t num_column_ = 0;
-	MathVector value_vector_;
-
 public:
 	explicit RowMajorMatrix(void) = default;
 	explicit RowMajorMatrix(const size_t num_row, const size_t num_column);
@@ -44,6 +38,12 @@ private:
 	bool is_transposed(void) const;
 	void inspect_range(const size_t irow, const size_t jcolumn) const;
 	void inspect_value_size(void) const;	
+
+private:
+	CBLAS_TRANSPOSE transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
+	size_t num_row_ = 0;
+	size_t num_column_ = 0;
+	MathVector value_vector_;
 };
 
 

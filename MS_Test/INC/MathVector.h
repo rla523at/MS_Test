@@ -18,14 +18,12 @@ public:
 	MathVector(const std::vector<double>& vec) :std::vector<double>(vec) {};
 	MathVector(const double) = delete;
 	
-
 	MathVector& operator+=(const MathVector& y);
 	MathVector& operator-=(const MathVector& y);
 	MathVector& operator*=(const double scalar);
 	MathVector operator+(const MathVector& y) const;
 	MathVector operator-(const MathVector& y) const;
 	MathVector operator*(const double scalar) const;
-
 
 	MathVector& abs(void);	
 	bool compare_with_finite_precision(const MathVector& other, const size_t ULP_precision = 4) const;
@@ -36,8 +34,6 @@ public:
 	MathVector& normalize(void);
 	std::string to_string(void) const;
 };
-
-
 std::ostream& operator<<(std::ostream& os, const MathVector& x);
 MathVector operator*(const double scalar, const MathVector& x);
 
