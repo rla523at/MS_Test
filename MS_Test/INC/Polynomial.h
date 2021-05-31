@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+class IrrationalFunction;
 class Polynomial
 {
 	class VariableTerm;
@@ -11,11 +12,11 @@ class Polynomial
 	class PolyTerm;
 
 public:
-	explicit Polynomial(void) = default;
 	Polynomial(const double coeeficient) : simple_poly_term_(coeeficient) {};
 	Polynomial(const std::string& variable) : simple_poly_term_(variable) {};
 
 	Polynomial& operator+=(const Polynomial& other);
+	Polynomial& operator-=(const Polynomial& other);
 	Polynomial& operator*=(const double constant);
 	Polynomial operator+(const Polynomial& other) const;
 	Polynomial operator-(const Polynomial& other) const;
@@ -26,9 +27,11 @@ public:
 	bool operator==(const Polynomial& other) const;
 
 	size_t domain_dimension(void) const;
+	Polynomial& be_derivative(const size_t variable_index);
 	Polynomial differentiate(const size_t variable_index) const;
 	VectorFunction<Polynomial> gradient(void) const;
 	VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
+	IrrationalFunction root(const double root_index) const;
 	size_t order(void) const;
 	std::string to_string(void) const;
 
@@ -134,6 +137,7 @@ private:
 		size_t order(void) const;
 		bool has_same_form(const PolyTerm& other) const;
 		bool is_constant(void) const;
+		bool is_zero(void) const;
 		std::string to_string(void) const;
 
 	private:
@@ -149,7 +153,64 @@ private:
 	SimplePolyTerm simple_poly_term_ = 0.0;
 };
 std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
+Polynomial operator+(const double constant, const Polynomial& compact_polynomial);
 Polynomial operator*(const double constant, const Polynomial& compact_polynomial);
+
+
+class IrrationalFunction
+{
+	class PoweredPolynomial;
+	class Term;
+
+public:
+	IrrationalFunction(const Polynomial& polynomial, const double root_index = 1.0);
+
+	double operator()(const MathVector& value_vector) const;
+	bool operator==(const IrrationalFunction& other) const;
+		
+	size_t domain_dimension(void) const;
+	size_t order(void) const;
+	std::string to_string(void) const;
+
+private:
+	std::vector<Term> added_irrational_term_set_;
+	Polynomial polynomial_term_ = 0.0;
+};
+std::ostream& operator<<(std::ostream& ostream, const IrrationalFunction& irrational_function);
+
+
+class IrrationalFunction::PoweredPolynomial
+{
+public:
+	PoweredPolynomial(const Polynomial& base, const double exponent = 1.0) : base_(base), exponent_(exponent) {};
+
+	double operator()(const MathVector& value_vector) const;
+
+	size_t domain_dimension(void) const;
+	size_t order(void) const;
+	std::string to_string(void) const;
+
+private:
+	Polynomial base_ = 0.0;
+	double exponent_ = 1.0;
+};
+
+
+class IrrationalFunction::Term
+{
+public:
+	Term(const PoweredPolynomial& powered_polynomial);
+
+	double operator()(const MathVector& value_vector) const;
+
+	size_t domain_dimension(void) const;
+	size_t order(void) const;
+	std::string to_string(void) const;
+
+private:
+	double coefficient_ = 1.0;
+	std::vector<PoweredPolynomial> multiplied_powered_polynomial_set_;
+};
 
 
 namespace ms {

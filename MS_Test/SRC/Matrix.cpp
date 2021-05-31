@@ -109,6 +109,36 @@ double RowMajorMatrix::at(const size_t irow, const size_t jcolumn) const {
 		return this->value_vector_[irow * this->num_column_ + jcolumn];
 }
 
+RowMajorMatrix& RowMajorMatrix::be_inverse(void) {
+	if (!this->is_square_matrix())
+		throw std::runtime_error("can not inverse non square matrix");
+
+	const auto ipiv = this->PLU_decomposition();
+
+	const int matrix_layout = LAPACK_ROW_MAJOR;
+	const lapack_int n = static_cast<int>(this->num_row_);
+	const lapack_int lda = n;
+	const lapack_int info = LAPACKE_dgetri(matrix_layout, n, this->value_vector_.data(), lda, ipiv.data());
+
+	if (info > 0)
+		throw std::runtime_error("U is singular matrix in L-U decomposition");
+	else if (info < 0)
+		throw std::runtime_error("fail to inverse the matrix");
+
+	return *this;
+}
+
+RowMajorMatrix& RowMajorMatrix::be_transpose(void) {
+	std::swap(this->num_row_, this->num_column_);
+
+	if (this->is_transposed())
+		this->transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
+	else
+		this->transpose_type_ = CBLAS_TRANSPOSE::CblasTrans;
+
+	return *this;
+}
+
 bool RowMajorMatrix::compare_with_finitie_precision(const RowMajorMatrix& other, const size_t ULP_precision) const {
 	if (this->size() != other.size())
 		return false;
@@ -135,23 +165,21 @@ RowMajorMatrix& RowMajorMatrix::change_column(const size_t column_index, const M
 	return *this;
 }
 
-RowMajorMatrix& RowMajorMatrix::inverse(void) {
-	if (!this->is_square_matrix())
-		throw std::runtime_error("can not inverse non square matrix");
+RowMajorMatrix RowMajorMatrix::inverse(void) const {
+	auto result = *this;
+	return result.be_inverse();
+}
 
-	const auto ipiv = this->PLU_decomposition();
+RowMajorMatrix RowMajorMatrix::part(const size_t row_start_index, const size_t row_end_index, const size_t column_start_index, const size_t column_end_index) const {
+	const auto num_row = row_end_index - row_start_index + 1;
+	const auto num_colmn = column_end_index - column_start_index + 1;
 
-	const int matrix_layout = LAPACK_ROW_MAJOR;
-	const lapack_int n = static_cast<int>(this->num_row_);
-	const lapack_int lda = n;
-	const lapack_int info = LAPACKE_dgetri(matrix_layout, n, this->value_vector_.data(), lda, ipiv.data());
+	RowMajorMatrix result(num_row, num_colmn);
+	for (size_t i = 0; i < num_row; ++i)
+		for (size_t j = 0; j < num_row; ++j)
+			result.at(i, j) = this->at(row_start_index + i, column_start_index + j);
 
-	if (info > 0)
-		throw std::runtime_error("U is singular matrix in L-U decomposition");
-	else if (info < 0)
-		throw std::runtime_error("fail to inverse the matrix");
-
-	return *this;
+	return result;
 }
 
 MathVector RowMajorMatrix::row(const size_t row_index) const {
@@ -169,17 +197,6 @@ std::pair<size_t, size_t> RowMajorMatrix::size(void) const {
 	return { this->num_row_,this->num_column_ };
 }
 
-RowMajorMatrix& RowMajorMatrix::transpose(void) {
-	std::swap(this->num_row_, this->num_column_);
-
-	if (this->is_transposed())
-		this->transpose_type_ = CBLAS_TRANSPOSE::CblasNoTrans;
-	else
-		this->transpose_type_ = CBLAS_TRANSPOSE::CblasTrans;
-
-	return *this;
-}
-
 std::string RowMajorMatrix::to_string(void) const {
 	std::string str;
 	str += "\n";
@@ -189,6 +206,11 @@ std::string RowMajorMatrix::to_string(void) const {
 		str += "\n";
 	}
 	return str;
+}
+
+RowMajorMatrix RowMajorMatrix::transpose(void) const {
+	auto result = *this;
+	return result.be_transpose();
 }
 
 MathVector RowMajorMatrix::multiply_value(const RowMajorMatrix& other) const {
@@ -276,14 +298,6 @@ void RowMajorMatrix::inspect_value_size(void) const {
 std::ostream& operator<<(std::ostream& os, const RowMajorMatrix& x) {
 	return os << x.to_string();
 }
-
-namespace ms {
-	RowMajorMatrix transpose(const RowMajorMatrix& A) {
-		auto result = A;
-		return result.transpose();
-	};
-}
-
 
 
 

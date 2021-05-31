@@ -344,21 +344,33 @@
 
 #include <iostream>
 #include <vector>
-class B;
 class A
 {
 public:
-	A() { std::cout << "constructor\n"; };
+	//A() { std::cout << "constructor\n"; };
 	A(const A& a) { std::cout << "copy constructor \n"; };
 	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
 
 	A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
 	A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
-	B func2(void);
 };
 
-class B
-{};
+template <typename T>
+class B : public std::vector<T>
+{	
+public:
+	template <typename ... Vals>
+	explicit B(Vals&&... values) :std::vector<T>(std::forward<Vals>(values)...) {};
+	B(std::initializer_list<T> list) :std::vector<T>(list) {};
+};
+
+class C
+{
+	B<A> val;
+public:
+	C(void) {
+	}
+};
 
 void func(const A& a) {
 	return;
@@ -368,10 +380,9 @@ int main(void){
 	//std::vector<double> v = { 1,2,3 };
 	//func(v); // implicit inversion을 위해 임시 객체를 생성함!
 
-	A a;
-	a.func2();
+	//A a;
+	//a.func2();
+
+	B<A> v;
 }
 
-B A::func2(void) {
-	return B();
-}

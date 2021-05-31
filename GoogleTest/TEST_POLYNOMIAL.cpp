@@ -331,6 +331,15 @@ GTEST_TEST(Polynomial, operator_call_4) {
 	EXPECT_DOUBLE_EQ(result, ref3);
 }
 
+GTEST_TEST(Polynomial, operator_power_1) {
+	const auto p = -0.125 * X + 0.125 * Y + 0.5;
+	const auto result = p ^ 2;
+
+	const auto ref = 0.015625 * (X ^ 2) - 0.03125 * X * Y + 0.015625 * (Y ^ 2) - 0.125 * X + 0.125 * Y + 0.25;
+	EXPECT_EQ(result, ref);
+}
+
+
 GTEST_TEST(Polynomial, complex_operation_1) {
 	const auto p1 = X + 1;
 	const auto p2 = X + 2;
@@ -361,6 +370,19 @@ GTEST_TEST(Polynomial, complex_operation_3) {
 	auto ref = (X ^ 4) + 2 * (X ^ 3) * Y + ((X * Y) ^ 2);
 	EXPECT_EQ(result, ref);
 }
+GTEST_TEST(Polynomial, complex_operation_4) {
+	auto p1 = 0.25 * Y + 1.25;
+	auto p2 = -0.25 * Y + -0.75;
+	auto p3 = 0.25 * X + 0.25;
+	auto p4 = -0.25 * X + 0.25;
+	const auto result = (p1 * p4) - (p2 * p3);
+	std::cout << result << "\n";
+
+
+	auto ref = -0.125 * X + 0.125 * Y + 0.5;
+	EXPECT_EQ(result, ref);
+}
+
 
 GTEST_TEST(Polynomial, order_1) {
 	Polynomial p = 0;
@@ -573,15 +595,33 @@ GTEST_TEST(Polynomial, gradient_4) {
 
 
 
-////Irrational Function
-//GTEST_TEST(Polynomial, OPERATOR_POWER_4) {
-//	auto p1 = (X ^ 2) + 2 * X + 1;
-//	const auto p2 = p1 ^ 2;
-//	const auto result = ms::sqrt(p2);
-//
-//	auto ref = (X ^ 2) + 2 * X + 1;
-//	EXPECT_EQ(result, ref);
-//}
+//Irrational Function
+GTEST_TEST(IrrationalFunction, operator_call_1) {
+	const auto p = X;
+	const auto ir = p.root(0.5);
+
+	for (size_t i = 0; i < 10; ++i) {
+		const double val = 0.31 * i;
+		const MathVector val_vec = { val };
+		const double result = ir(val_vec);
+		const double ref = std::pow(val, 0.5);
+		EXPECT_DOUBLE_EQ(result, ref);
+	}
+}
+GTEST_TEST(IrrationalFunction, operator_call_2) {
+	const auto p = (X ^ 2) + X + 1;
+	const auto ir = p.root(0.5);
+
+	for (size_t i = 0; i < 10; ++i) {
+		const double val = 0.31 * i;
+		const MathVector val_vec = { val };
+		const double result = ir(val_vec);
+		const double ref = std::pow(val * val + val + 1, 0.5);
+		EXPECT_DOUBLE_EQ(result, ref);
+	}
+}
+
+
 //GTEST_TEST(Polynomial, OPERATOR_MULTIPLICATION_10) {
 //	auto p1 = X + 1;
 //	const auto p2 = p1^(0.5);
@@ -595,12 +635,12 @@ GTEST_TEST(Polynomial, gradient_4) {
 //	const auto p2 = p1 ^ 0.7;
 //	const auto p3 = 5 * p2;
 //
-//	for (size_t i = 0; i < 10; ++i) {
-//		const double val = 0.31 * i;
-//		const MathVector val_vec = { val };
-//		const double result = p3(val_vec);
-//		const double ref = 5 * (std::pow(val * val + val + 1, 0.7));
-//		EXPECT_DOUBLE_EQ(result, ref);
+	//for (size_t i = 0; i < 10; ++i) {
+	//	const double val = 0.31 * i;
+	//	const MathVector val_vec = { val };
+	//	const double result = p3(val_vec);
+	//	const double ref = 5 * (std::pow(val * val + val + 1, 0.7));
+	//	EXPECT_DOUBLE_EQ(result, ref);
 //	}
 //}
 //GTEST_TEST(Polynomial, COMPLEX_OPERATION_4) {

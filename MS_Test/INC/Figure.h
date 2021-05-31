@@ -4,6 +4,8 @@
 #include "Polynomial.h"
 #include "Text.h"
 
+#include <map>
+#include <optional>
 
 enum class FigureType{
 	Point,
@@ -20,23 +22,12 @@ struct QuadratureRule{
 
 class ReferenceFigure
 {
-private:
-	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_transformation_node_set_;
-	static std::map<std::pair<FigureType, size_t>, VectorFunction<Monomial>> key_to_transformation_monomial_vector_;
-	static std::map<std::pair<FigureType, size_t>, RowMajorMatrix> key_to_inverse_transformation_monomial_matrix_;
-	static std::map<std::pair<FigureType, size_t>, QuadratureRule> key_to_quadrature_rule_;
-	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_post_node_set_;
-	static std::map<std::pair<FigureType, size_t>, std::vector<std::vector<size_t>>> key_to_connectivity_;
-
-private:
-	FigureType figure_type_;
-	size_t figure_order_;
-
 public:
 	ReferenceFigure(const FigureType figure_type, const size_t figure_order);
 
-	VectorFunction<CompactPolynomial> calculate_transformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
-	QuadratureRule calculate_quadrature_rule(const VectorFunction<CompactPolynomial>& trasnformation_function, const size_t integrand_order) const;
+	VectorFunction<Polynomial> affine_trasnformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
+	VectorFunction<Polynomial> transformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
+	QuadratureRule quadrature_rule(const VectorFunction<Polynomial>& trasnformation_function, const size_t physical_domain_integrand_order) const;
 
 	MathVector center_node(void) const;
 	std::vector<FigureType> face_figure_type_set(void) const;
@@ -44,68 +35,74 @@ public:
 	MathVector normal_vector(void) const;
 	FigureType simplex_figure_type(void) const;
 
-	//getter style 필요 없음!
-	const std::vector<MathVector>& reference_post_node_set(const size_t post_order);
-	const std::vector<std::vector<size_t>>& reference_connectivity(const size_t post_order);
-
-	// node index set을 받아서 알아서 처리하게 그러면 Reference Figure말고 Indexed Figure에 넣어놓는게 맞지 않나 ?
-	std::map<size_t, std::vector<size_t>> face_index_to_node_index_order_set(void) const;	
-	std::vector<size_t> vertex_node_index_order_set(void) const;
-	std::vector<std::vector<size_t>> vertex_simplex_node_index_order_family(void) const;
-
-//private:
-public: //for test
-	size_t calculate_Required_Order(const size_t integrand_order) const;
-	size_t calculate_Num_Required_Point(const size_t required_order) const;
+//private: //for test
+	size_t required_quadrature_rule_order(const size_t integrand_order) const;
+	size_t required_quadarature_rule_num_point(const size_t required_order) const;
 	size_t support_element_order(void) const;
 
-	CompactPolynomial calculate_trasnformation_scale_function(const VectorFunction<CompactPolynomial>& transformation_function) const;
-
 	std::vector<MathVector> transformation_node_set(void) const;
-	VectorFunction<Monomial> transformation_monomial_vector(void) const;
+	VectorFunction<Polynomial> transformation_monomial_vector(void) const;
+	std::optional<IrrationalFunction> trasnformation_scale_function(const VectorFunction<Polynomial>& transformation_function) const;
 	RowMajorMatrix inverse_transformation_monomial_matrix(void) const;
 	QuadratureRule reference_quadrature_rule(const size_t integrand_order) const;
+
+private:
+	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_transformation_node_set_;
+	static std::map<std::pair<FigureType, size_t>, VectorFunction<Polynomial>> key_to_transformation_monomial_vector_;
+	static std::map<std::pair<FigureType, size_t>, RowMajorMatrix> key_to_inverse_transformation_monomial_matrix_;
+	static std::map<std::pair<FigureType, size_t>, QuadratureRule> key_to_quadrature_rule_;
+	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_post_node_set_;
+	static std::map<std::pair<FigureType, size_t>, std::vector<std::vector<size_t>>> key_to_connectivity_;
+
+	FigureType figure_type_;
+	size_t figure_order_;
 };
 
+////getter style 필요 없음!
+//const std::vector<MathVector>& reference_post_node_set(const size_t post_order);
+//const std::vector<std::vector<size_t>>& reference_connectivity(const size_t post_order);
 
-namespace ms {
-	std::string to_string(const FigureType figure_type);
-}
+//// node index set을 받아서 알아서 처리하게 그러면 Reference Figure말고 Indexed Figure에 넣어놓는게 맞지 않나 ?
+//std::map<size_t, std::vector<size_t>> face_index_to_node_index_order_set(void) const;	
+//std::vector<size_t> vertex_node_index_order_set(void) const;
+//std::vector<std::vector<size_t>> vertex_simplex_node_index_order_family(void) const;
 
 
 class Figure
 {
-private:
-	ReferenceFigure reference_figure_;
-	std::vector<const MathVector*> node_set_;
-	VectorFunction<CompactPolynomial> transformation_function_;
-	//JacobianFunction<Polynomial> transformation_Jacobian_function_;
-
 public:
 	explicit Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set);
 
 	MathVector calculate_center_node(void) const;
-	VectorFunction<CompactPolynomial> calculate_orthonormal_basis_vector(const size_t polynomial_order) const;
+	VectorFunction<Polynomial> calculate_orthonormal_basis_vector(const size_t polynomial_order) const;
 	QuadratureRule calculate_quadrature_rule(const size_t integrand_roder) const;
-//private:
-public: //for test
-	VectorFunction<CompactPolynomial> calculate_initial_basis_vector(const size_t polynomial_order) const;
-	
+//private: //for test
+	VectorFunction<Polynomial> initial_basis_vector(const size_t polynomial_order) const;
+	VectorFunction<Polynomial> initial_basis_vector1(const size_t polynomial_order) const;
+	VectorFunction<Polynomial> initial_basis_vector2(const size_t polynomial_order) const;
+	VectorFunction<Polynomial> initial_basis_vector3(const size_t polynomial_order) const;
+
+//private: //for test
+	ReferenceFigure reference_figure_;
+	std::vector<const MathVector*> node_set_;
+	VectorFunction<Polynomial> transformation_function_;
+	//JacobianFunction<Polynomial> transformation_Jacobian_function_;
 };
 
 
-VectorFunction<CompactPolynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Monomial> vector_function);
+VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Polynomial> vector_function);
 
 
 namespace ms {
-	double integrate(const CompactPolynomial& integrand, const QuadratureRule& quadrature_rule);
-	double integrate(const CompactPolynomial& integrand, const Figure& figure);
-	double inner_product(const CompactPolynomial& f1, const CompactPolynomial& f2, const QuadratureRule& quadrature_rule);
-	double inner_product(const CompactPolynomial& f1, const CompactPolynomial& f2, const Figure& figure);
-	double L2_Norm(const CompactPolynomial& polynomial, const QuadratureRule& quadrature_rule);
-	double L2_Norm(const CompactPolynomial& polynomial, const Figure& figure);
-	std::vector<CompactPolynomial> Gram_Schmidt_Process(const std::vector<CompactPolynomial>& initial_polynomial_set, const QuadratureRule& quadrature_rule);
-	std::vector<CompactPolynomial> Gram_Schmidt_Process(const VectorFunction<CompactPolynomial>& initial_polynomial_set, const Figure& figure);
+	std::string figure_type_to_string(const FigureType figure_type);
+	double integrate(const Polynomial& integrand, const QuadratureRule& quadrature_rule);
+	double integrate(const Polynomial& integrand, const Figure& figure);
+	double inner_product(const Polynomial& f1, const Polynomial& f2, const QuadratureRule& quadrature_rule);
+	double inner_product(const Polynomial& f1, const Polynomial& f2, const Figure& figure);
+	double L2_Norm(const Polynomial& polynomial, const QuadratureRule& quadrature_rule);
+	double L2_Norm(const Polynomial& polynomial, const Figure& figure);
+	VectorFunction<Polynomial> Gram_Schmidt_Process(const VectorFunction<Polynomial>& initial_polynomial_set, const QuadratureRule& quadrature_rule);
+	VectorFunction<Polynomial> Gram_Schmidt_Process(const VectorFunction<Polynomial>& initial_polynomial_set, const Figure& figure);
 }
 
 //

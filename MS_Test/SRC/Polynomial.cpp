@@ -9,7 +9,14 @@ Polynomial& Polynomial::operator+=(const Polynomial& other) {
 	return *this;
 }
 
+Polynomial& Polynomial::operator-=(const Polynomial& other) {
+	return *this += (-1 * other);
+}
+
 Polynomial& Polynomial::operator*=(const double constant) {
+	if (constant == 0.0)
+		return *this = 0.0;
+
 	for (auto& poly_term : this->added_poly_term_set_)
 		poly_term *= constant;
 
@@ -34,7 +41,7 @@ Polynomial Polynomial::operator-(const Polynomial& other) const {
 }
 
 Polynomial Polynomial::operator*(const Polynomial& other) const {
-	Polynomial result;
+	Polynomial result = 0.0;
 
 	const auto num_this_term = this->added_poly_term_set_.size();
 	const auto num_other_term = other.added_poly_term_set_.size();
@@ -67,6 +74,9 @@ Polynomial Polynomial::operator*(const double constant) const {
 }
 
 Polynomial Polynomial::operator^(const size_t power_index) const {
+	if (power_index == 0)
+		return 1;
+
 	auto result = *this;
 	for (size_t i = 1; i < power_index; ++i)
 		result = std::move(result * *this);
@@ -100,8 +110,13 @@ size_t Polynomial::domain_dimension(void) const {
 	return result;
 }
 
+Polynomial& Polynomial::be_derivative(const size_t variable_index) {
+	auto result = this->differentiate(variable_index);
+	return *this = std::move(result);
+}
+
 Polynomial Polynomial::differentiate(const size_t variable_index) const {
-	Polynomial result;
+	Polynomial result = 0.0;
 	result.simple_poly_term_ = this->simple_poly_term_.differentiate(variable_index);
 	for (const auto& poly_term : this->added_poly_term_set_)
 		result += poly_term.differentiate(variable_index);
@@ -123,6 +138,10 @@ VectorFunction<Polynomial> Polynomial::gradient(const size_t domain_dimension) c
 	return result;
 }
 
+IrrationalFunction Polynomial::root(const double root_index) const {
+	return IrrationalFunction(*this, root_index);
+}
+
 size_t Polynomial::order(void) const {
 	size_t result = this->simple_poly_term_.order();
 	for (const auto& term : this->added_poly_term_set_)
@@ -131,15 +150,15 @@ size_t Polynomial::order(void) const {
 }
 
 std::string Polynomial::to_string(void) const {
+	if (this->added_poly_term_set_.empty())
+		return this->simple_poly_term_.to_string();
+
 	std::string str;
 	for (const auto& poly_term : this->added_poly_term_set_)
 		str += poly_term.to_string();
 
 	if (!(this->simple_poly_term_ == 0))
 		str += "+" + this->simple_poly_term_.to_string();
-
-	if (str.empty())
-		return this->simple_poly_term_.to_string();
 
 	if (str.front() == '+')
 		str.erase(str.begin());
@@ -148,9 +167,11 @@ std::string Polynomial::to_string(void) const {
 }
 
 void Polynomial::add_assign_poly_term(const PolyTerm& term) {
-	for (auto& this_poly_term : this->added_poly_term_set_) {
-		if (this_poly_term.has_same_form(term)) {
-			this_poly_term.add_assign_with_same_form(term);
+	for (auto iter = this->added_poly_term_set_.begin(); iter != this->added_poly_term_set_.end(); ++iter) {
+		if (iter->has_same_form(term)) {
+			iter->add_assign_with_same_form(term);
+			if (iter->is_zero())
+				this->added_poly_term_set_.erase(iter);
 			return;
 		}
 	}
@@ -161,8 +182,12 @@ std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial) {
 	return ostream << polynomial.to_string();
 }
 
-Polynomial operator*(const double constant, const Polynomial& compact_polynomial) {
-	return compact_polynomial * constant;
+Polynomial operator+(const double constant, const Polynomial& polynomial) {
+	return polynomial + constant;
+}
+
+Polynomial operator*(const double constant, const Polynomial& polynomial) {
+	return polynomial * constant;
 }
 
 
@@ -513,7 +538,7 @@ size_t Polynomial::PolyTerm::domain_dimension(void) const {
 }
 
 Polynomial Polynomial::PolyTerm::differentiate(const size_t variable_index) const {
-	Polynomial result;
+	Polynomial result = 0.0;
 	const auto num_term = this->multiplied_power_poly_term_set_.size();
 	for (size_t i = 0; i < num_term; ++i) {
 		const auto diff_term = this->multiplied_power_poly_term_set_[i].differentiate(variable_index);
@@ -522,7 +547,11 @@ Polynomial Polynomial::PolyTerm::differentiate(const size_t variable_index) cons
 			derivative.multiplied_power_poly_term_set_.erase(derivative.multiplied_power_poly_term_set_.begin() + i);
 
 			derivative *= diff_term;
-			result.add_assign_poly_term(derivative);
+
+			if (derivative.is_constant())
+				result.simple_poly_term_ += derivative.be_constant();
+			else
+				result.add_assign_poly_term(derivative);
 		}
 	}
 
@@ -553,6 +582,10 @@ bool Polynomial::PolyTerm::is_constant(void) const {
 	return this->multiplied_power_poly_term_set_.empty();
 }
 
+bool Polynomial::PolyTerm::is_zero(void) const {
+	return this->is_constant() && this->coefficient_ == 0.0;
+}
+
 std::string Polynomial::PolyTerm::to_string(void) const {
 	std::string str;
 	if (std::abs(this->coefficient_) != 1.0) {
@@ -580,6 +613,133 @@ void Polynomial::PolyTerm::multiply_assign_powered_poly_term(const PoweredPolyTe
 		}
 	}
 	this->multiplied_power_poly_term_set_.push_back(power_poly_term);
+}
+
+IrrationalFunction::IrrationalFunction(const Polynomial& polynomial, const double root_index) {
+	if (root_index == 1.0)
+		this->polynomial_term_ = polynomial;
+	else
+		this->added_irrational_term_set_.push_back(PoweredPolynomial(polynomial, root_index));	
+}
+
+double IrrationalFunction::operator()(const MathVector& value_vector) const {
+	double result = this->polynomial_term_(value_vector);
+	for (const auto& term : this->added_irrational_term_set_)
+		result += term(value_vector);
+	return result;
+}
+
+bool IrrationalFunction::operator==(const IrrationalFunction& other) const {
+	//temporary
+	const auto max_order = std::max(this->order(), other.order());
+	const auto max_domain_dimension = std::max(this->domain_dimension(), other.domain_dimension());
+	const auto compare_node_set = ms::polynomial_compare_node_set(max_order, max_domain_dimension);
+
+	for (const auto& compare_node : compare_node_set) {
+		if (!ms::compare_double((*this)(compare_node), other(compare_node)))
+			return false;
+	}
+
+	return true;
+}
+
+size_t IrrationalFunction::domain_dimension(void) const {
+	size_t result = this->polynomial_term_.domain_dimension();
+	for (const auto& term : this->added_irrational_term_set_)
+		result = std::max(result, term.domain_dimension());
+	return result;
+}
+
+size_t IrrationalFunction::order(void) const {
+	size_t result = this->polynomial_term_.order();
+	for (const auto& term : this->added_irrational_term_set_)
+		result = std::max(result, term.order());
+	return result;
+}
+
+std::string IrrationalFunction::to_string(void) const {
+	if (this->added_irrational_term_set_.empty())
+		return this->polynomial_term_.to_string();
+
+	std::string str;
+	for (const auto& irrational_term : this->added_irrational_term_set_)
+		str += irrational_term.to_string();
+
+	if (!(this->polynomial_term_ == 0))
+		str += "+" + this->polynomial_term_.to_string();
+
+	if (str.front() == '+')
+		str.erase(str.begin());
+
+	return str;
+}
+
+std::ostream& operator<<(std::ostream& ostream, const IrrationalFunction& irrational_function) {
+	return ostream << irrational_function.to_string();
+}
+
+double IrrationalFunction::PoweredPolynomial::operator()(const MathVector& value_vector) const {
+	return std::pow(this->base_(value_vector), this->exponent_);
+}
+
+size_t IrrationalFunction::PoweredPolynomial::domain_dimension(void) const {
+	return this->base_.domain_dimension();
+}
+
+size_t IrrationalFunction::PoweredPolynomial::order(void) const {
+	return this->base_.order() * static_cast<size_t>(std::ceil(this->exponent_));
+}
+
+std::string IrrationalFunction::PoweredPolynomial::to_string(void) const {
+	auto str = this->base_.to_string();
+	if (this->exponent_ != 1)
+		return  str + "^" + ms::double_to_string(this->exponent_);
+	else
+		return str;
+}
+
+IrrationalFunction::Term::Term(const PoweredPolynomial& powered_polynomial) {
+	this->multiplied_powered_polynomial_set_.push_back(powered_polynomial);
+}
+
+double IrrationalFunction::Term::operator()(const MathVector& value_vector) const {
+	double result = this->coefficient_;
+	for (const auto& powered_polynomial : this->multiplied_powered_polynomial_set_)
+		result *= powered_polynomial(value_vector);
+	return result;
+}
+
+size_t IrrationalFunction::Term::domain_dimension(void) const {
+	size_t result = 0;
+	for (const auto& term : this->multiplied_powered_polynomial_set_)
+		result = std::max(result, term.domain_dimension());
+	return result;
+}
+
+size_t IrrationalFunction::Term::order(void) const {
+	size_t result = 0;
+	for (const auto& term : this->multiplied_powered_polynomial_set_)
+		result += term.order();
+	return result;
+}
+
+std::string IrrationalFunction::Term::to_string(void) const {
+	std::string str;
+	if (std::abs(this->coefficient_) != 1.0) {
+		if (this->coefficient_ > 0)
+			str += "+";
+
+		str += ms::double_to_string(this->coefficient_);
+	}
+	else if (this->coefficient_ == 1.0)
+		str += "+";
+	else
+		str += "-";
+
+	for (const auto& term : this->multiplied_powered_polynomial_set_)
+		str += term.to_string();
+
+	return str;
 }
 
 

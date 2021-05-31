@@ -20,13 +20,16 @@ public:
 
 	double& at(const size_t row, const size_t column);
 	double at(const size_t row, const size_t column) const;
+	RowMajorMatrix& be_inverse(void);
+	RowMajorMatrix& be_transpose(void);
 	bool compare_with_finitie_precision(const RowMajorMatrix& other, const size_t ULP_precision = 4) const;
 	RowMajorMatrix& change_column(const size_t column_index, const MathVector& value);
-	RowMajorMatrix& inverse(void);
+	RowMajorMatrix inverse(void) const;
+	RowMajorMatrix part(const size_t row_start_index, const size_t row_end_index, const size_t column_start_index, const size_t column_end_index) const;
 	MathVector row(const size_t row_index) const;
-	std::pair<size_t, size_t> size(void) const;
-	RowMajorMatrix& transpose(void);
+	std::pair<size_t, size_t> size(void) const;	
 	std::string to_string(void) const;
+	RowMajorMatrix transpose(void) const;
 
 private:
 	size_t leading_dimension(void) const;
@@ -45,14 +48,7 @@ private:
 	size_t num_column_ = 0;
 	MathVector value_vector_;
 };
-
-
 std::ostream& operator<<(std::ostream& os, const RowMajorMatrix& x);
-
-
-namespace ms {
-	RowMajorMatrix transpose(const RowMajorMatrix& A);
-}
 
 
 
