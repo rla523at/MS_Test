@@ -33,8 +33,10 @@ void Profiler::print_Consumed_Time(void){
 }
 
 void Profiler::print_Consumed_Time_nano(void) {
-	std::chrono::nanoseconds consummed_time_nano = std::chrono::steady_clock::now() - time_record_.back();
-	std::cout << "\tconsummed time : " << consummed_time_nano.count() << " s\n";
+	const auto nano_sec = std::chrono::steady_clock::now() - time_record_.back();
+	//const auto consummed_time = std::chrono::duration_cast<std::chrono::milliseconds>(nano_sec);
+	const auto consummed_time = std::chrono::duration<double>(nano_sec);
+	std::cout << "\tconsummed time : " << consummed_time.count() << " s\n";
 
 	time_record_.pop_back();
 }

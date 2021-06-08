@@ -46,11 +46,12 @@ private:
 		VariableTerm(const std::string& variable);
 
 		void add_assign_with_same_variable(const VariableTerm& other);
-		VariableTerm& operator*=(const double constant);
+		//VariableTerm& operator*=(const double constant);
 
-		double operator()(const MathVector& variable_vector) const;
+		double operator()(const MathVector& value_vector) const;
 		bool operator==(const VariableTerm& other) const;
 		bool operator<(const VariableTerm& other) const;
+		bool operator>(const VariableTerm& other) const;
 
 		double be_constant(void) const;
 		size_t domain_dimension(void) const;

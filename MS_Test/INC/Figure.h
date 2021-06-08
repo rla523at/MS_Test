@@ -24,32 +24,32 @@ class ReferenceFigure
 {
 public:
 	ReferenceFigure(const FigureType figure_type, const size_t figure_order);
-
-	VectorFunction<Polynomial> affine_trasnformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
-	VectorFunction<Polynomial> transformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
-	QuadratureRule quadrature_rule(const VectorFunction<Polynomial>& trasnformation_function, const size_t physical_domain_integrand_order) const;
-
+	
 	MathVector center_node(void) const;
 	std::vector<FigureType> face_figure_type_set(void) const;
 	size_t figure_dimension(void) const;
-	MathVector normal_vector(void) const;
-	FigureType simplex_figure_type(void) const;
+	VectorFunction<Polynomial> mapping_function(const std::vector<const MathVector*>& physical_node_set) const;
+	QuadratureRule Cartesian_quadrature_rule(const VectorFunction<Polynomial>& trasnformation_function, const size_t physical_domain_integrand_order) const;
+	
+	//MathVector normal_vector(void) const;
+	//FigureType simplex_figure_type(void) const;
+	VectorFunction<Polynomial> affine_trasnformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
+
 
 //private: //for test
+	RowMajorMatrix inverse_mapping_monomial_matrix(void) const;
+	VectorFunction<Polynomial> mapping_monomial_vector(void) const;
+	std::vector<MathVector> node_set(void) const;
+	QuadratureRule reference_quadrature_rule(const size_t integrand_order) const;
 	size_t required_quadrature_rule_order(const size_t integrand_order) const;
 	size_t required_quadarature_rule_num_point(const size_t required_order) const;
+	std::optional<IrrationalFunction> scale_function(const VectorFunction<Polynomial>& transformation_function) const;	
 	size_t support_element_order(void) const;
 
-	std::vector<MathVector> transformation_node_set(void) const;
-	VectorFunction<Polynomial> transformation_monomial_vector(void) const;
-	std::optional<IrrationalFunction> trasnformation_scale_function(const VectorFunction<Polynomial>& transformation_function) const;
-	RowMajorMatrix inverse_transformation_monomial_matrix(void) const;
-	QuadratureRule reference_quadrature_rule(const size_t integrand_order) const;
-
 private:
-	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_transformation_node_set_;
-	static std::map<std::pair<FigureType, size_t>, VectorFunction<Polynomial>> key_to_transformation_monomial_vector_;
-	static std::map<std::pair<FigureType, size_t>, RowMajorMatrix> key_to_inverse_transformation_monomial_matrix_;
+	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_node_set_;
+	static std::map<std::pair<FigureType, size_t>, VectorFunction<Polynomial>> key_to_mapping_monomial_vector_;
+	static std::map<std::pair<FigureType, size_t>, RowMajorMatrix> key_to_inverse_mapping_monomial_matrix_;
 	static std::map<std::pair<FigureType, size_t>, QuadratureRule> key_to_quadrature_rule_;
 	static std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> key_to_post_node_set_;
 	static std::map<std::pair<FigureType, size_t>, std::vector<std::vector<size_t>>> key_to_connectivity_;
@@ -73,9 +73,10 @@ class Figure
 public:
 	explicit Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set);
 
-	MathVector calculate_center_node(void) const;
-	VectorFunction<Polynomial> calculate_orthonormal_basis_vector(const size_t polynomial_order) const;
-	QuadratureRule calculate_quadrature_rule(const size_t integrand_roder) const;
+	MathVector center_node(void) const;
+	VectorFunction<Polynomial> orthonormal_basis_vector(const size_t polynomial_order) const;
+	QuadratureRule quadrature_rule(const size_t integrand_roder) const;
+
 //private: //for test
 	VectorFunction<Polynomial> initial_basis_vector(const size_t polynomial_order) const;
 	VectorFunction<Polynomial> initial_basis_vector1(const size_t polynomial_order) const;
@@ -85,7 +86,7 @@ public:
 //private: //for test
 	ReferenceFigure reference_figure_;
 	std::vector<const MathVector*> node_set_;
-	VectorFunction<Polynomial> transformation_function_;
+	VectorFunction<Polynomial> mapping_function_;
 	//JacobianFunction<Polynomial> transformation_Jacobian_function_;
 };
 

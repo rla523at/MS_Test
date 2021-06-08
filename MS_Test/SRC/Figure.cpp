@@ -1,8 +1,8 @@
 #include "../INC/Figure.h"
 
-std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> ReferenceFigure::key_to_transformation_node_set_;
-std::map<std::pair<FigureType, size_t>, VectorFunction<Polynomial>> ReferenceFigure::key_to_transformation_monomial_vector_;
-std::map<std::pair<FigureType, size_t>, RowMajorMatrix> ReferenceFigure::key_to_inverse_transformation_monomial_matrix_;
+std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> ReferenceFigure::key_to_node_set_;
+std::map<std::pair<FigureType, size_t>, VectorFunction<Polynomial>> ReferenceFigure::key_to_mapping_monomial_vector_;
+std::map<std::pair<FigureType, size_t>, RowMajorMatrix> ReferenceFigure::key_to_inverse_mapping_monomial_matrix_;
 
 std::map<std::pair<FigureType, size_t>, QuadratureRule> ReferenceFigure::key_to_quadrature_rule_;
 std::map<std::pair<FigureType, size_t>, std::vector<MathVector>> ReferenceFigure::key_to_post_node_set_;
@@ -14,12 +14,119 @@ ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figu
 		throw std::invalid_argument("figure order should be greater than 1");
 
 	auto key = std::make_pair(this->figure_type_, this->figure_order_);
-	if (ReferenceFigure::key_to_transformation_node_set_.find(key) == ReferenceFigure::key_to_transformation_node_set_.end()) {
-		ReferenceFigure::key_to_transformation_node_set_.emplace(key, this->transformation_node_set());
-		ReferenceFigure::key_to_transformation_monomial_vector_.emplace(key, this->transformation_monomial_vector());
-		ReferenceFigure::key_to_inverse_transformation_monomial_matrix_.emplace(std::move(key), this->inverse_transformation_monomial_matrix());
+	if (ReferenceFigure::key_to_node_set_.find(key) == ReferenceFigure::key_to_node_set_.end()) {
+		ReferenceFigure::key_to_node_set_.emplace(key, this->node_set());
+		ReferenceFigure::key_to_mapping_monomial_vector_.emplace(key, this->mapping_monomial_vector());
+		ReferenceFigure::key_to_inverse_mapping_monomial_matrix_.emplace(std::move(key), this->inverse_mapping_monomial_matrix());
 	}
 }
+
+MathVector ReferenceFigure::center_node(void) const {
+	switch (this->figure_type_) {
+	case FigureType::Line:
+		return { 0, 0, 0 };
+
+	case FigureType::Triangle:
+		return { -1.0 / 3.0, -1.0 / 3.0, 0 };
+
+	case FigureType::Quadrilateral:
+		return { 0, 0, 0 };
+
+	default:
+		throw std::runtime_error("wrong figure type");
+		return MathVector();
+	}
+}
+
+std::vector<FigureType> ReferenceFigure::face_figure_type_set(void) const {
+	switch (this->figure_type_) {
+	case FigureType::Line: 
+		// 0 式式式式 1
+		return { FigureType::Point, FigureType::Point };
+	case FigureType::Triangle: 
+		//    / \
+		//	 2   1
+		//	/     \
+		//  式式式0式式式
+		return { FigureType::Line, FigureType::Line, FigureType::Line };
+	case FigureType::Quadrilateral: 
+		//  忙式 2 式忖
+		//  3     1
+		//  戌式 0 式戎
+		return { FigureType::Line, FigureType::Line, FigureType::Line, FigureType::Line };
+	default:
+		throw std::runtime_error("wrong figure type");
+		return { FigureType::Point };
+	}
+}
+
+size_t ReferenceFigure::figure_dimension(void) const {
+	switch (this->figure_type_) {
+	case FigureType::Line:
+		return 1;
+	case FigureType::Triangle:
+	case FigureType::Quadrilateral:
+		return 2;
+	default:
+		throw std::runtime_error("wrong figure type");
+		return NULL;
+	}
+}
+
+VectorFunction<Polynomial> ReferenceFigure::mapping_function(const std::vector<const MathVector*>& Cartesian_node_set) const {
+	const auto key = std::make_pair(this->figure_type_, this->figure_order_);
+	const auto& reference_node_set = ReferenceFigure::key_to_node_set_.at(key);
+
+	const auto num_reference_node = reference_node_set.size();
+	const auto num_Cartesian_node = Cartesian_node_set.size();
+	if (num_reference_node != num_Cartesian_node)
+		throw std::runtime_error("reference node and transformed node does not 1:1 match");
+
+	//	X = CM
+	//	X : Cartesian node matrix			
+	//	C : mapping coefficient matrix	
+	//	M : mapping monomial matrix	=> always same for same figure type
+	constexpr size_t range_dimension = 3;
+	RowMajorMatrix X(range_dimension, num_Cartesian_node);
+	for (size_t i = 0; i < num_Cartesian_node; ++i)
+		X.change_column(i, *Cartesian_node_set[i]);
+
+	const auto& inv_M = ReferenceFigure::key_to_inverse_mapping_monomial_matrix_.at(key);
+	const auto C = X * inv_M;
+
+	const auto& mapping_monomial_vector = ReferenceFigure::key_to_mapping_monomial_vector_.at(key);
+	return C * mapping_monomial_vector;
+}
+
+QuadratureRule ReferenceFigure::Cartesian_quadrature_rule(const VectorFunction<Polynomial>& mapping_function, const size_t Cartesian_integrand_order) const {
+	const auto scale_function = this->scale_function(mapping_function).value();
+
+	const auto reference_integrand_order = Cartesian_integrand_order + scale_function.order();
+	const auto key = std::make_pair(this->figure_type_, reference_integrand_order);
+	if (ReferenceFigure::key_to_quadrature_rule_.find(key) == ReferenceFigure::key_to_quadrature_rule_.end())
+		ReferenceFigure::key_to_quadrature_rule_.emplace(key, this->reference_quadrature_rule(reference_integrand_order));
+
+	const auto& reference_quadrature_rule = ReferenceFigure::key_to_quadrature_rule_.at(key);
+
+	const auto transformed_QP = mapping_function(reference_quadrature_rule.node_set);
+
+	const auto num_QP = transformed_QP.size();
+	std::vector<double> transformed_QW(num_QP);
+	for (size_t ipoint = 0; ipoint < num_QP; ++ipoint) {
+		const auto& node = reference_quadrature_rule.node_set[ipoint];
+		const auto& weight = reference_quadrature_rule.weight_set[ipoint];
+		transformed_QW[ipoint] = scale_function(node) * weight;
+	}
+
+	return { transformed_QP, transformed_QW };
+}
+
+
+
+
+
+
+
 //
 //
 //const std::vector<MathVector>& ReferenceFigure::reference_post_node_set(const size_t post_order) {
@@ -154,78 +261,6 @@ ReferenceFigure::ReferenceFigure(const FigureType figure_type, const size_t figu
 //	return ReferenceFigure::key_to_connectivity_.at(key);
 //}
 
-MathVector ReferenceFigure::center_node(void) const {
-	switch (this->figure_type_) {
-	case FigureType::Line:
-		return { 0, 0, 0 };
-
-	case FigureType::Triangle:
-		return { -1.0 / 3.0, -1.0 / 3.0, 0 };
-
-	case FigureType::Quadrilateral:
-		return { 0, 0, 0 };
-
-	default:
-		throw std::runtime_error("wrong figure type");
-		return MathVector();
-	}
-}
-
-std::vector<FigureType> ReferenceFigure::face_figure_type_set(void) const {
-	std::vector<FigureType> face_figure_type_set;
-	switch (this->figure_type_) {
-
-	case FigureType::Line: {
-		// 0 式式式式 1
-
-		face_figure_type_set.push_back(FigureType::Point);
-		face_figure_type_set.push_back(FigureType::Point);
-		break;
-	}
-
-	case FigureType::Triangle: {
-		//    / \
-		//	 2   1
-		//	/     \
-		//  式式式0式式式
-
-		face_figure_type_set.push_back(FigureType::Line);
-		face_figure_type_set.push_back(FigureType::Line);
-		face_figure_type_set.push_back(FigureType::Line);
-		break;
-	}
-
-	case FigureType::Quadrilateral: {
-		//  忙式 2 式忖
-		//  3     1
-		//  戌式 0 式戎
-
-		face_figure_type_set.push_back(FigureType::Line);
-		face_figure_type_set.push_back(FigureType::Line);
-		face_figure_type_set.push_back(FigureType::Line);
-		face_figure_type_set.push_back(FigureType::Line);
-		break;
-	}
-	default:
-		throw std::runtime_error("wrong figure type");
-	}
-
-	return face_figure_type_set;
-}
-
-size_t ReferenceFigure::figure_dimension(void) const {
-	switch (this->figure_type_) {
-	case FigureType::Line:
-		return 1;
-	case FigureType::Triangle:
-	case FigureType::Quadrilateral:
-		return 2;
-	default:
-		throw std::runtime_error("wrong figure type");
-		return NULL;
-	}
-}
-
 //MathVector ReferenceFigure::normal_vector(void) const {
 //	switch (this->figure_type_) {
 //	case FigureType::Line:
@@ -255,7 +290,7 @@ size_t ReferenceFigure::figure_dimension(void) const {
 
 VectorFunction<Polynomial> ReferenceFigure::affine_trasnformation_function(const std::vector<const MathVector*>& transformed_node_set) const {
 	const auto key = std::make_pair(this->figure_type_, this->figure_order_);
-	const auto& reference_transformation_node_set = ReferenceFigure::key_to_transformation_node_set_.at(key);
+	const auto& reference_transformation_node_set = ReferenceFigure::key_to_node_set_.at(key);
 
 	const auto num_reference_node = reference_transformation_node_set.size();
 	const auto num_transformed_node = transformed_node_set.size();
@@ -269,7 +304,7 @@ VectorFunction<Polynomial> ReferenceFigure::affine_trasnformation_function(const
 		X.change_column(i, *transformed_node_set[i]);
 
 	const auto linear_key = std::make_pair(FigureType::Triangle, this->figure_order_);
-	const auto linear_transformation_monomial_vector = ReferenceFigure::key_to_transformation_monomial_vector_.at(linear_key);
+	const auto linear_transformation_monomial_vector = ReferenceFigure::key_to_mapping_monomial_vector_.at(linear_key);
 	const auto num_row = linear_transformation_monomial_vector.size();
 	const auto num_column = num_reference_node;
 	RowMajorMatrix M(num_row, num_column);
@@ -288,52 +323,139 @@ VectorFunction<Polynomial> ReferenceFigure::affine_trasnformation_function(const
 	return linear_transformation.inverse() * result;
 }
 
-VectorFunction<Polynomial> ReferenceFigure::transformation_function(const std::vector<const MathVector*>& transformed_node_set) const {
-	const auto key = std::make_pair(this->figure_type_, this->figure_order_);	
-	const auto& reference_transformation_node_set = ReferenceFigure::key_to_transformation_node_set_.at(key);
-	
-	const auto num_reference_node = reference_transformation_node_set.size();
-	const auto num_transformed_node = transformed_node_set.size();
-	if (num_reference_node != num_transformed_node)
-		throw std::runtime_error("reference node and transformed node does not 1:1 match");
 
-	//	X = CM
-	//	X : transformed node matrix			
-	//	C : transformation coefficient matrix	
-	//	M : transformation monomial matrix	=> always same for same figure type
-	constexpr size_t range_dimension = 3;
-	RowMajorMatrix X(range_dimension, num_transformed_node);
-	for (size_t i = 0; i < num_transformed_node; ++i)
-		X.change_column(i, *transformed_node_set[i]);
 
-	const auto& inv_M = ReferenceFigure::key_to_inverse_transformation_monomial_matrix_.at(key);
-	const auto C = X * inv_M;
 
-	const auto& transformation_monomial_vector = ReferenceFigure::key_to_transformation_monomial_vector_.at(key);
-	return C * transformation_monomial_vector;
+
+
+
+
+
+
+
+RowMajorMatrix ReferenceFigure::inverse_mapping_monomial_matrix(void) const {
+	const auto key = std::make_pair(this->figure_type_, this->figure_order_);
+	const auto reference_node_set = ReferenceFigure::key_to_node_set_.at(key);
+	const auto mapping_monomial_vector = ReferenceFigure::key_to_mapping_monomial_vector_.at(key);
+
+	const auto matrix_order = mapping_monomial_vector.size();
+	RowMajorMatrix transformation_monomial_matrix(matrix_order);
+	for (size_t i = 0; i < matrix_order; ++i)
+		transformation_monomial_matrix.change_column(i, mapping_monomial_vector(reference_node_set[i]));
+
+	return transformation_monomial_matrix.be_inverse();
 }
 
-QuadratureRule ReferenceFigure::quadrature_rule(const VectorFunction<Polynomial>& transformation_function, const size_t physical_domain_integrand_order) const {
-	const auto TS_function = this->trasnformation_scale_function(transformation_function).value();
+VectorFunction<Polynomial> ReferenceFigure::mapping_monomial_vector(void) const {
+	Polynomial r("x0");
+	Polynomial s("x1");
 
-	const auto reference_domain_integrand_order = physical_domain_integrand_order + TS_function.order();	
-	const auto key = std::make_pair(this->figure_type_, reference_domain_integrand_order);
-	if (ReferenceFigure::key_to_quadrature_rule_.find(key) == ReferenceFigure::key_to_quadrature_rule_.end())
-		ReferenceFigure::key_to_quadrature_rule_.emplace(key, this->reference_quadrature_rule(reference_domain_integrand_order));
-	
-	const auto& reference_quadrature_rule = ReferenceFigure::key_to_quadrature_rule_.at(key);
+	VectorFunction<Polynomial> mapping_monomial_vector;
+	switch (this->figure_type_) {
+	case FigureType::Line: {
+		const size_t num_monomial = this->figure_order_ + 1;
+		mapping_monomial_vector.reserve(num_monomial);
 
-	const auto transformed_QP = transformation_function(reference_quadrature_rule.node_set);
-	
-	const auto num_QP = transformed_QP.size();
-	std::vector<double> transformed_QW(num_QP);
-	for (size_t ipoint = 0; ipoint < num_QP; ++ipoint) {
-		const auto& node = reference_quadrature_rule.node_set[ipoint];
-		const auto& weight = reference_quadrature_rule.weight_set[ipoint];
-		transformed_QW[ipoint] = TS_function(node) * weight;
+		for (size_t a = 0; a <= this->figure_order_; ++a)
+			mapping_monomial_vector.push_back(r ^ a);
+
+		return mapping_monomial_vector;	// 1 r r^2 ...
+	}
+	case FigureType::Triangle: {
+		const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 2) * (this->figure_order_ + 1) * 0.5);
+		mapping_monomial_vector.reserve(num_monomial);
+
+		for (size_t a = 0; a <= this->figure_order_; ++a)
+			for (size_t b = 0; b <= a; ++b)
+				mapping_monomial_vector.push_back((r ^ (a - b)) * (s ^ b));
+
+		return mapping_monomial_vector;	// 1 r s r^2 rs s^2 ...
+	}
+	case FigureType::Quadrilateral: {
+		const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 1) * (this->figure_order_ + 1));
+		mapping_monomial_vector.reserve(num_monomial);
+
+		for (size_t a = 0; a <= this->figure_order_; ++a) {
+			for (size_t b = 0; b <= a; ++b)
+				mapping_monomial_vector.push_back((r ^ a) * (s ^ b));
+
+			if (a == 0)
+				continue;
+
+			size_t index = a;
+			while (true) {
+				mapping_monomial_vector.push_back((r ^ (--index)) * (s ^ a));
+				if (index == 0)
+					break;
+			}
+		}
+		return mapping_monomial_vector;	// 1 r rs s r^2 r^2s r^2s^2 rs^2 s^2...
+	}
+	default:
+		throw std::runtime_error("wrong figure type");
+		return mapping_monomial_vector;
+	}
+}
+
+std::vector<MathVector> ReferenceFigure::node_set(void) const {
+	if (this->figure_order_ > this->support_element_order())
+		throw std::runtime_error("exceed support element order");
+
+	const std::string read_file_path = "RSC/ReferenceFigures/" + ms::figure_type_to_string(this->figure_type_) + "_P" + std::to_string(this->figure_order_) + ".msh";
+
+	Text transformation_node_set_text;
+	transformation_node_set_text.read(read_file_path);
+	transformation_node_set_text.remove_empty_line();
+
+	const auto num_nodes = ms::to_value<size_t>(transformation_node_set_text.front());
+	transformation_node_set_text.erase(transformation_node_set_text.begin());
+
+	std::vector<MathVector> transformation_node_set;
+	transformation_node_set.reserve(num_nodes);
+	for (const auto& sentence : transformation_node_set_text) {
+		const char delimiter = ' ';
+		auto parsed_str = ms::parse(sentence, delimiter);
+		auto point_value = ms::to_value_set<double>(parsed_str);
+
+		point_value.erase(point_value.begin());
+		transformation_node_set.emplace_back(std::move(point_value));
 	}
 
-	return { transformed_QP, transformed_QW };
+	return transformation_node_set;
+}
+
+
+
+
+
+QuadratureRule ReferenceFigure::reference_quadrature_rule(const size_t integrand_order) const {
+	const auto order = this->required_quadrature_rule_order(integrand_order);
+	const auto num_point = this->required_quadarature_rule_num_point(order);
+
+	const std::string read_file_path = "RSC/Quadrature/Standard/" + ms::figure_type_to_string(this->figure_type_) + "/P" + std::to_string(order) + "_n" + std::to_string(num_point) + ".txt";
+
+	Text reference_quadrature_text;
+	reference_quadrature_text.read(read_file_path);
+	reference_quadrature_text.remove_empty_line();
+
+	const auto num_quadrature_point = reference_quadrature_text.size();
+	std::vector<MathVector> node_set;
+	std::vector<double> weight_set;
+	node_set.reserve(num_quadrature_point);
+	weight_set.reserve(num_quadrature_point);
+
+	for (const auto& sentence : reference_quadrature_text) {
+		const char denominator = ' ';
+		const auto parsed_sentence = ms::parse(sentence, denominator);
+
+		auto quadrature_value_set = ms::to_value_set<double>(parsed_sentence);
+
+		weight_set.push_back(quadrature_value_set.back());
+		quadrature_value_set.pop_back();
+		node_set.emplace_back(std::move(quadrature_value_set));
+	}
+
+	return { node_set,weight_set };
 }
 
 size_t ReferenceFigure::required_quadrature_rule_order(const size_t integrand_order) const {
@@ -371,21 +493,7 @@ size_t ReferenceFigure::required_quadarature_rule_num_point(const size_t require
 	}
 }
 
-size_t ReferenceFigure::support_element_order(void) const {
-	switch (this->figure_type_) {
-	case FigureType::Line:
-		return 6;
-	case FigureType::Triangle:
-		return 5;
-	case FigureType::Quadrilateral:
-		return 6;
-	default:
-		throw std::runtime_error("wrong type");
-		return NULL;
-	}
-}
-
-std::optional<IrrationalFunction> ReferenceFigure::trasnformation_scale_function(const VectorFunction<Polynomial>& transformation_function) const {
+std::optional<IrrationalFunction> ReferenceFigure::scale_function(const VectorFunction<Polynomial>& transformation_function) const {
 	switch (this->figure_dimension())
 	{
 	case 1: {
@@ -413,127 +521,19 @@ std::optional<IrrationalFunction> ReferenceFigure::trasnformation_scale_function
 	}
 }
 
-std::vector<MathVector> ReferenceFigure::transformation_node_set(void) const {
-	if (this->figure_order_ > this->support_element_order())
-		throw std::runtime_error("exceed support element order");
-
-	const std::string read_file_path = "RSC/ReferenceFigures/" + ms::figure_type_to_string(this->figure_type_) + "_P" + std::to_string(this->figure_order_) + ".msh";
-
-	Text transformation_node_set_text;
-	transformation_node_set_text.read(read_file_path);
-	transformation_node_set_text.remove_empty_line();
-
-	const auto num_nodes = ms::to_value<size_t>(transformation_node_set_text.front());
-	transformation_node_set_text.erase(transformation_node_set_text.begin());
-
-	std::vector<MathVector> transformation_node_set;
-	transformation_node_set.reserve(num_nodes);
-	for (const auto& sentence : transformation_node_set_text) {
-		const char delimiter = ' ';
-		auto parsed_str = ms::parse(sentence, delimiter);
-		auto point_value = ms::to_value_set<double>(parsed_str);
-
-		point_value.erase(point_value.begin());
-		transformation_node_set.emplace_back(std::move(point_value));
-	}
-
-	return transformation_node_set;
-}
-
-VectorFunction<Polynomial> ReferenceFigure::transformation_monomial_vector(void) const {
-	Polynomial r("x0");
-	Polynomial s("x1");
-
-	VectorFunction<Polynomial> transformation_monomial_vector;
+size_t ReferenceFigure::support_element_order(void) const {
 	switch (this->figure_type_) {
-	case FigureType::Line: {
-		const size_t num_monomial = this->figure_order_ + 1;
-		transformation_monomial_vector.reserve(num_monomial);
-
-		for (size_t a = 0; a <= this->figure_order_; ++a)
-			transformation_monomial_vector.push_back(r ^ a);
-
-		return transformation_monomial_vector;	// 1 r r^2 ...
-	}
-	case FigureType::Triangle: {
-		const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 2) * (this->figure_order_ + 1) * 0.5);
-		transformation_monomial_vector.reserve(num_monomial);
-
-		for (size_t a = 0; a <= this->figure_order_; ++a)
-			for (size_t b = 0; b <= a; ++b)
-				transformation_monomial_vector.push_back((r ^ (a - b)) * (s ^ b));
-
-		return transformation_monomial_vector;	// 1 r s r^2 rs s^2 ...
-	}
-	case FigureType::Quadrilateral: {
-		const size_t num_monomial = static_cast<size_t>((this->figure_order_ + 1) * (this->figure_order_ + 1));
-		transformation_monomial_vector.reserve(num_monomial);
-
-		for (size_t a = 0; a <= this->figure_order_; ++a) {
-			for (size_t b = 0; b <= a; ++b)
-				transformation_monomial_vector.push_back((r ^ a) * (s ^ b));
-
-			if (a == 0)
-				continue;
-
-			size_t index = a;
-			while (true) {
-				transformation_monomial_vector.push_back((r ^ (--index)) * (s ^ a));
-				if (index == 0)
-					break;
-			}
-		}
-		return transformation_monomial_vector;	// 1 r rs s r^2 r^2s r^2s^2 rs^2 s^2...
-	}
+	case FigureType::Line:
+		return 6;
+	case FigureType::Triangle:
+		return 5;
+	case FigureType::Quadrilateral:
+		return 6;
 	default:
-		throw std::runtime_error("wrong figure type");
-		return transformation_monomial_vector;
+		throw std::runtime_error("wrong type");
+		return NULL;
 	}
 }
-
-RowMajorMatrix ReferenceFigure::inverse_transformation_monomial_matrix(void) const {
-	const auto key = std::make_pair(this->figure_type_, this->figure_order_);	
-	const auto transformation_node_set = ReferenceFigure::key_to_transformation_node_set_.at(key);
-	const auto transformation_monomial_vector = ReferenceFigure::key_to_transformation_monomial_vector_.at(key);
-	
-	const auto num_column = transformation_monomial_vector.size();
-	RowMajorMatrix transformation_monomial_matrix(num_column);
-	for (size_t i = 0; i < num_column; ++i)
-		transformation_monomial_matrix.change_column(i, transformation_monomial_vector(transformation_node_set[i]));
-
-	return transformation_monomial_matrix.be_inverse();
-}
-
-QuadratureRule ReferenceFigure::reference_quadrature_rule(const size_t integrand_order) const {
-	const auto order = this->required_quadrature_rule_order(integrand_order);
-	const auto num_point = this->required_quadarature_rule_num_point(order);
-
-	const std::string read_file_path = "RSC/Quadrature/Standard/" + ms::figure_type_to_string(this->figure_type_) + "/P" + std::to_string(order) + "_n" + std::to_string(num_point) + ".txt";
-
-	Text reference_quadrature_text;
-	reference_quadrature_text.read(read_file_path);
-	reference_quadrature_text.remove_empty_line();
-
-	const auto num_quadrature_point = reference_quadrature_text.size();
-	std::vector<MathVector> node_set;
-	std::vector<double> weight_set;
-	node_set.reserve(num_quadrature_point);
-	weight_set.reserve(num_quadrature_point);
-
-	for (const auto& sentence : reference_quadrature_text) {
-		const char denominator = ' ';
-		const auto parsed_sentence = ms::parse(sentence, denominator);
-
-		auto quadrature_value_set = ms::to_value_set<double>(parsed_sentence);
-
-		weight_set.push_back(quadrature_value_set.back());
-		quadrature_value_set.pop_back();
-		node_set.emplace_back(std::move(quadrature_value_set));
-	}
-
-	return { node_set,weight_set };
-}
-
 //std::vector<std::vector<size_t>> ReferenceFigure::vertex_simplex_node_index_order_family(void) const {
 //	//For hMLP_BD Limiter
 //	std::vector<std::vector<size_t>> vertex_simplex_space_node_index_order_family;
@@ -706,7 +706,7 @@ namespace ms {
 Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set)
 	: reference_figure_(figure_type, figure_order), node_set_(std::move(node_set)) {	
 	
-	this->transformation_function_ = this->reference_figure_.transformation_function(this->node_set_);
+	this->mapping_function_ = this->reference_figure_.mapping_function(this->node_set_);
 	//this->transformation_Jacobian_function_ = JacobianFunction(transformation_function_);
 	////linear transformation function
 	//const auto linear_transformation_monomial_set = this->calculate_Linear_Transformation_Monomial_Set();
@@ -736,17 +736,17 @@ Figure::Figure(const FigureType figure_type, const size_t figure_order, std::vec
 	//this->linear_transformation_function_.emplace_back(Polynomial(third_coord_linear_trasnformation_coeffcient_set, linear_transformation_monomial_set));
 };
 
-MathVector Figure::calculate_center_node(void) const {
-	return this->transformation_function_(this->reference_figure_.center_node());
+MathVector Figure::center_node(void) const {
+	return this->mapping_function_(this->reference_figure_.center_node());
 }
 
-VectorFunction<Polynomial> Figure::calculate_orthonormal_basis_vector(const size_t polynomial_order) const {
+VectorFunction<Polynomial> Figure::orthonormal_basis_vector(const size_t polynomial_order) const {
 	const auto initial_basis_set = this->initial_basis_vector(polynomial_order);	
 	return ms::Gram_Schmidt_Process(initial_basis_set, *this);
 }
 
-QuadratureRule Figure::calculate_quadrature_rule(const size_t integrand_roder) const {
-	return this->reference_figure_.quadrature_rule(this->transformation_function_, integrand_roder);
+QuadratureRule Figure::quadrature_rule(const size_t integrand_roder) const {
+	return this->reference_figure_.Cartesian_quadrature_rule(this->mapping_function_, integrand_roder);
 }
 
 VectorFunction<Polynomial> Figure::initial_basis_vector(const size_t polynomial_order) const {
@@ -757,23 +757,10 @@ VectorFunction<Polynomial> Figure::initial_basis_vector(const size_t polynomial_
 	initial_basis_set.reserve(num_basis);
 
 	if (figure_dimension == 2) {
-		//const auto linear_transformation_function = this->reference_figure_.linear_trasnformation_function(this->node_set_);
-		//const auto& f0 = linear_transformation_function[0];
-		//const auto& f1 = linear_transformation_function[1];
-
-		//for (size_t a = 0; a <= polynomial_order; ++a)
-		//	for (size_t b = 0; b <= a; ++b) 
-		//		initial_basis_set.push_back((f0 ^ (a - b)) * (f1 ^ b));
-
-		//// 1 x y x^2 xy y^2
-		//for (size_t a = 0; a <= polynomial_order; ++a)
-		//	for (size_t b = 0; b <= a; ++b)
-		//		initial_basis_set.push_back((X^(a-b))*(Y^b));
-
 		//1 (x - x_c) (y - y_c)  ...
 		Polynomial x("x0");
 		Polynomial y("x1");
-		const auto center_node = this->calculate_center_node();
+		const auto center_node = this->center_node();
 		const auto x_c = center_node[0];
 		const auto y_c = center_node[1];
 		for (size_t a = 0; a <= polynomial_order; ++a)
@@ -829,7 +816,7 @@ VectorFunction<Polynomial> Figure::initial_basis_vector3(const size_t polynomial
 	Polynomial x("x0");
 	Polynomial y("x1");
 	//1 (x - x_c) (y - y_c)  ...
-	const auto center_node = this->calculate_center_node();
+	const auto center_node = this->center_node();
 	const auto x_c = center_node[0];
 	const auto y_c = center_node[1];
 	for (size_t a = 0; a <= polynomial_order; ++a)
@@ -838,6 +825,7 @@ VectorFunction<Polynomial> Figure::initial_basis_vector3(const size_t polynomial
 
 	return initial_basis_set;
 }
+
 VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Polynomial> vector_function) {
 	const auto [num_row, num_column] = m.size();
 
@@ -889,7 +877,7 @@ namespace ms {
 	}
 
 	double integrate(const Polynomial& integrand, const Figure& figure) {
-		const auto quadrature_rule = figure.calculate_quadrature_rule(integrand.order());
+		const auto quadrature_rule = figure.quadrature_rule(integrand.order());
 		return ms::integrate(integrand, quadrature_rule);
 	}
 

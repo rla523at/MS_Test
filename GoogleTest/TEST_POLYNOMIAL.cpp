@@ -80,6 +80,25 @@ GTEST_TEST(Polynomial, operator_addition_9) {
 	const auto ref = X + 4;
 	EXPECT_EQ(result, ref);
 }
+GTEST_TEST(Polynomial, operator_addition_10) {
+	const auto p1 = X + Y + Z + 5;
+	const auto p2 = X + 1;
+	const auto p3 = X + Y + 3;
+	const auto p4 = X + Y + Z - 9;
+	const auto result = p1 + p2 + p3 + p4;
+
+	const auto ref = 4 * X + 3 * Y + 2 * Z;
+	EXPECT_EQ(result, ref);
+}
+GTEST_TEST(Polynomial, operator_addition_11) {
+	const auto p1 = X;
+	const auto p2 = Y;
+	const auto result = p1 + p2;
+
+	const auto ref = X + Y;
+	EXPECT_EQ(result, ref);
+}
+
 
 GTEST_TEST(Polynomial, operator_substraction_1) {
 	const auto p1 = X + Y;
@@ -376,8 +395,6 @@ GTEST_TEST(Polynomial, complex_operation_4) {
 	auto p3 = 0.25 * X + 0.25;
 	auto p4 = -0.25 * X + 0.25;
 	const auto result = (p1 * p4) - (p2 * p3);
-	std::cout << result << "\n";
-
 
 	auto ref = -0.125 * X + 0.125 * Y + 0.5;
 	EXPECT_EQ(result, ref);

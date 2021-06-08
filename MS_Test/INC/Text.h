@@ -14,6 +14,7 @@ public:
 	explicit Text(Vals&&... values) : std::vector<std::string>(std::forward<Vals>(values)...) {};
 	Text(std::initializer_list<std::string> list) : std::vector<std::string>( list ) {};
 
+	void add_write(const std::string& write_file_path) const;
 	Text& read(const std::string& read_file_path);
 	Text& remove_empty_line(void);
 	void write(const std::string& write_file_path) const;

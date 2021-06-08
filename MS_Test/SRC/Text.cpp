@@ -1,5 +1,18 @@
 #include "../INC/Text.h"
 
+void Text::add_write(const std::string& file_path) const {
+	std::ofstream outfile(file_path, std::ios::app);
+	if (!outfile.is_open())
+		throw std::runtime_error("Fail to open file" + file_path);
+
+	const auto num_sentence = this->size();
+	for (auto i = this->begin(); i != this->end() - 1; ++i)
+		outfile << *i << "\n";
+	outfile << this->back();
+
+	outfile.close();
+}
+
 Text& Text::read(const std::string& file_path) {
 	std::ifstream ifs(file_path);
 	if (!ifs.is_open())
@@ -129,16 +142,16 @@ namespace ms {
 //}
 //
 //void Text::add_Write(const std::string& file_path) const{
-//	std::ofstream outfile(file_path, std::ios::app);
-//
-//	if (!outfile.is_open())
-//		FATAL_ERROR("Fail to open" + file_path);
-//
-//	const auto num_sentence = this->sentence_set_.size();
-//	for (size_t i = 0; i < num_sentence - 1; ++i)
-//		outfile << this->sentence_set_[i] << "\n";
-//	outfile << this->sentence_set_[num_sentence - 1];
-//
+	//std::ofstream outfile(file_path, std::ios::app);
+
+	//if (!outfile.is_open())
+	//	FATAL_ERROR("Fail to open" + file_path);
+
+	//const auto num_sentence = this->sentence_set_.size();
+	//for (size_t i = 0; i < num_sentence - 1; ++i)
+	//	outfile << this->sentence_set_[i] << "\n";
+	//outfile << this->sentence_set_[num_sentence - 1];
+
 //	outfile.close();
 //}
 //

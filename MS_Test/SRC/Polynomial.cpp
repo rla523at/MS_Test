@@ -206,22 +206,22 @@ void Polynomial::VariableTerm::add_assign_with_same_variable(const VariableTerm&
 		*this = 0.0;
 }
 
-Polynomial::VariableTerm& Polynomial::VariableTerm::operator*=(const double constant) {
-	if (constant == 0.0)
-		*this = 0.0;
+//Polynomial::VariableTerm& Polynomial::VariableTerm::operator*=(const double constant) {
+//	if (constant == 0.0)
+//		*this = 0.0;
+//
+//	this->coefficient_ *= constant;
+//	return *this;
+//}
 
-	this->coefficient_ *= constant;
-	return *this;
-}
-
-double Polynomial::VariableTerm::operator()(const MathVector& variable_value_vector) const {
+double Polynomial::VariableTerm::operator()(const MathVector& value_vector) const {
 	if (this->is_constant_)
 		return this->coefficient_;
 
-	if (variable_value_vector.size() <= this->variable_index_)
+	if (value_vector.size() <= this->variable_index_)
 		throw std::invalid_argument("too small domain dimension");
 
-	return this->coefficient_ * variable_value_vector[this->variable_index_];
+	return this->coefficient_ * value_vector[this->variable_index_];
 }
 
 bool Polynomial::VariableTerm::operator==(const VariableTerm& other) const {
@@ -232,6 +232,10 @@ bool Polynomial::VariableTerm::operator==(const VariableTerm& other) const {
 
 bool Polynomial::VariableTerm::operator<(const VariableTerm& other) const {
 	return this->variable_index_ < other.variable_index_;
+}
+
+bool Polynomial::VariableTerm::operator>(const VariableTerm& other) const {
+	return this->variable_index_ > other.variable_index_;
 }
 
 double Polynomial::VariableTerm::be_constant(void) const {
@@ -286,26 +290,29 @@ Polynomial::SimplePolyTerm& Polynomial::SimplePolyTerm::operator+=(const SimpleP
 	this->constant_ += other.constant_;
 	for (const auto& other_variable_term : other.added_variable_term_set_)
 		this->add_assign_variable_term(other_variable_term);
+
+	constexpr double zero = 0.0;
+	for (;;) {
+		const auto zero_iter = std::find(this->added_variable_term_set_.begin(), this->added_variable_term_set_.end(), zero);
+		if (zero_iter == this->added_variable_term_set_.end())
+			break;
+		else
+			this->added_variable_term_set_.erase(zero_iter);
+	}
+
 	return *this;
 }
 
-double Polynomial::SimplePolyTerm::operator()(const MathVector& variable_vector) const {
+double Polynomial::SimplePolyTerm::operator()(const MathVector& value_vector) const {
 	double result = this->constant_;
 	for (const auto& term : this->added_variable_term_set_)
-		result += term(variable_vector);
+		result += term(value_vector);
 	return result;
 }
 
 bool Polynomial::SimplePolyTerm::operator==(const SimplePolyTerm& other) const {
-	if (this->constant_ != other.constant_)
-		return false;
-
-	auto this_sorted_set = this->added_variable_term_set_;
-	std::sort(this_sorted_set.begin(), this_sorted_set.end());
-	auto other_sorted_set = other.added_variable_term_set_;
-	std::sort(other_sorted_set.begin(), other_sorted_set.end());
-
-	return this_sorted_set == other_sorted_set;
+	return this->constant_ == other.constant_
+		&& this->added_variable_term_set_ == other.added_variable_term_set_;
 }
 
 bool Polynomial::SimplePolyTerm::operator!=(const SimplePolyTerm& other) const {
@@ -330,6 +337,8 @@ Polynomial::SimplePolyTerm& Polynomial::SimplePolyTerm::be_derivative(const size
 		this->constant_ += constant_iter->be_constant();
 		this->added_variable_term_set_.erase(constant_iter);
 	}
+
+	std::sort(this->added_variable_term_set_.begin(), this->added_variable_term_set_.end(), std::greater<>());
 	return *this;
 }
 
@@ -342,12 +351,7 @@ size_t Polynomial::SimplePolyTerm::domain_dimension(void) const {
 	if (this->is_constant())
 		return 0;
 
-	std::vector<size_t> variable_term_domain_dimension_set;
-	variable_term_domain_dimension_set.reserve(this->added_variable_term_set_.size());
-	for (const auto& variable_term : this->added_variable_term_set_)
-		variable_term_domain_dimension_set.push_back(variable_term.domain_dimension());
-
-	return *std::max_element(variable_term_domain_dimension_set.begin(), variable_term_domain_dimension_set.end());
+	return this->added_variable_term_set_.back().domain_dimension();
 }
 
 size_t Polynomial::SimplePolyTerm::order(void) const {
@@ -366,10 +370,8 @@ std::string Polynomial::SimplePolyTerm::to_string(void) const {
 		return +"[" + ms::double_to_string(this->constant_) + "]";
 
 	std::string str = "[";
-	auto sorted_set = this->added_variable_term_set_;
-	std::sort(sorted_set.begin(), sorted_set.end());
-	for (auto iter = sorted_set.rbegin(); iter != sorted_set.rend(); iter++)
-		str += iter->to_string();
+	for (const auto& variable_term : this->added_variable_term_set_)
+		str += variable_term.to_string();
 
 	constexpr size_t position = 1;
 	constexpr size_t size = 1;
@@ -386,24 +388,14 @@ std::string Polynomial::SimplePolyTerm::to_string(void) const {
 }
 
 void Polynomial::SimplePolyTerm::add_assign_variable_term(const VariableTerm& variable_term) {
-	bool is_added = false;
-	for (auto& this_variable_term : this->added_variable_term_set_) {
-		if (this_variable_term.has_same_variable(variable_term)) {
-			this_variable_term.add_assign_with_same_variable(variable_term);
-			is_added = true;
-		}
-	}
-	if (!is_added)
-		this->added_variable_term_set_.push_back(variable_term);
+	const auto start_iter = this->added_variable_term_set_.begin();
+	const auto end_iter = this->added_variable_term_set_.end();
+	const auto iter = std::lower_bound(start_iter, end_iter, variable_term);
 
-	constexpr double zero = 0.0;
-	for (;;) {
-		const auto zero_iter = std::find(this->added_variable_term_set_.begin(), this->added_variable_term_set_.end(), zero);
-		if (zero_iter == this->added_variable_term_set_.end())
-			break;
-		else
-			this->added_variable_term_set_.erase(zero_iter);
-	}
+	if (iter != end_iter && iter->has_same_variable(variable_term))
+		iter->add_assign_with_same_variable(variable_term);
+	else
+		this->added_variable_term_set_.push_back(variable_term);
 }
 
 void Polynomial::PoweredPolyTerm::multiply_assign_with_same_base(const PoweredPolyTerm& other) {

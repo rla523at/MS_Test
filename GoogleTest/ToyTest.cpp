@@ -90,37 +90,57 @@
 //	}
 //}
 
-//#include "../MS_Test/INC/Profiler.h"
-//#include "../MS_Test/INC/Polynomial.h"
+#include "../MS_Test/INC/Profiler.h"
+#include "../MS_Test/INC/Figure.h"
+
+int main(void) {
+
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	const MathVector p1 = { 0.3635520579711813,		0.2973431147402148,		0 };
+	const MathVector p2 = { 0.3512301560533574,		0.3184608229801218,		0 };
+	const MathVector p3 = { 0.3309655464243111,		0.3010404355350647,		0 };
+	const MathVector p4 = { 0.3359655464243111,		0.2910404355350647,		0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+	const size_t polynomial_order = 5;
+	const size_t integrand_order = 2*polynomial_order;
+	constexpr size_t num_iter = 5;
+
+	std::cout << "polynomial order : " << polynomial_order << "\n";
+	std::cout << "\npre calculate quadrature rule\n";
+	for (size_t i=0; i<num_iter; ++i)
+	{		
+		RECORD_CONSUMED_TIME;
+		const auto quadrature_rule = fig.quadrature_rule(integrand_order);
+		const auto initial_basis = fig.initial_basis_vector(polynomial_order);
+		const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+		PRINT_CONSUMED_TIME_NANO;
+	}
+	std::cout << "\nadaptive quadrature rule\n";
+	for (size_t i = 0; i < num_iter; ++i)
+	{		
+		RECORD_CONSUMED_TIME;
+		const auto initial_basis = fig.initial_basis_vector(polynomial_order);
+		const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, fig);
+		PRINT_CONSUMED_TIME_NANO;
+	}
+	//for (size_t i = 0; i < 100; ++i)
+	//	p3.compare_v1(p4);
+	
+
+	//RECORD_CONSUMED_TIME;
+	//for (size_t i = 0; i < 100; ++i)
+	//	p3.compare_v2(p4);
+	//PRINT_CONSUMED_TIME_NANO;
+}
 //
-//int main(void) {
-//
-//	Polynomial p1 = { {1,1},{{0},{1}} };
-//	Polynomial p2 = { {1,1},{{0},{0,0,0,0,0,0,1}} };
-//	std::cout << p1 << "\n";
-//	std::cout << p2 << "\n";
-//	
-//
-//	Polynomial p3 = p1 * p2;
-//	Polynomial p4 = p2 * p1;
-//	std::cout << p3 << "\n";
-//	std::cout << p4 << "\n";
-//
-//	std::cout << std::boolalpha;
-//	std::cout << p3.compare_v1(p4) << "\n";
-//	std::cout << p3.compare_v2(p4) << "\n";
-//
-//	//RECORD_CONSUMED_TIME;
-//	//for (size_t i = 0; i < 100; ++i)
-//	//	p3.compare_v1(p4);
-//	//PRINT_CONSUMED_TIME_NANO;
-//
-//	//RECORD_CONSUMED_TIME;
-//	//for (size_t i = 0; i < 100; ++i)
-//	//	p3.compare_v2(p4);
-//	//PRINT_CONSUMED_TIME_NANO;
-//}
-//
+// 
+// 
+// 
+// 
 //#include "../MS_Test/INC/Polynomial.h"
 //#include <iostream>
 //
@@ -184,6 +204,9 @@
 //	//	std::cout << node << "\n";	
 //}
 
+
+
+
 //#include <array>
 //#include <vector>
 //#include <iostream>
@@ -202,6 +225,9 @@
 //		for (const auto& val : vec)
 //			std::cout << &val << "\n";
 //}
+
+
+
 
 //#include <numeric>
 //#include <iomanip>
@@ -297,6 +323,10 @@
 //	}
 //}
 
+
+
+
+
 //
 //#include "../MS_Test/INC/Text.h"
 //#include <iostream>
@@ -342,47 +372,47 @@
 
 
 
-#include <iostream>
-#include <vector>
-class A
-{
-public:
-	//A() { std::cout << "constructor\n"; };
-	A(const A& a) { std::cout << "copy constructor \n"; };
-	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
-
-	A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
-	A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
-};
-
-template <typename T>
-class B : public std::vector<T>
-{	
-public:
-	template <typename ... Vals>
-	explicit B(Vals&&... values) :std::vector<T>(std::forward<Vals>(values)...) {};
-	B(std::initializer_list<T> list) :std::vector<T>(list) {};
-};
-
-class C
-{
-	B<A> val;
-public:
-	C(void) {
-	}
-};
-
-void func(const A& a) {
-	return;
-}
-
-int main(void){
-	//std::vector<double> v = { 1,2,3 };
-	//func(v); // implicit inversion을 위해 임시 객체를 생성함!
-
-	//A a;
-	//a.func2();
-
-	B<A> v;
-}
+//#include <iostream>
+//#include <vector>
+//class A
+//{
+//public:
+//	//A() { std::cout << "constructor\n"; };
+//	A(const A& a) { std::cout << "copy constructor \n"; };
+//	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
+//
+//	A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
+//	A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
+//};
+//
+//template <typename T>
+//class B : public std::vector<T>
+//{	
+//public:
+//	template <typename ... Vals>
+//	explicit B(Vals&&... values) :std::vector<T>(std::forward<Vals>(values)...) {};
+//	B(std::initializer_list<T> list) :std::vector<T>(list) {};
+//};
+//
+//class C
+//{
+//	B<A> val;
+//public:
+//	C(void) {
+//	}
+//};
+//
+//void func(const A& a) {
+//	return;
+//}
+//
+//int main(void){
+//	//std::vector<double> v = { 1,2,3 };
+//	//func(v); // implicit inversion을 위해 임시 객체를 생성함!
+//
+//	//A a;
+//	//a.func2();
+//
+//	B<A> v;
+//}
 
