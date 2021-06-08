@@ -191,128 +191,54 @@ Polynomial operator*(const double constant, const Polynomial& polynomial) {
 }
 
 
-Polynomial::VariableTerm::VariableTerm(const std::string& variable) {
+Polynomial::SimplePolyTerm::SimplePolyTerm(const std::string& variable) {
 	if (variable.front() != 'x')
 		throw std::invalid_argument("variable should start with 'x'");
 
 	constexpr size_t position = 1;
-	this->variable_index_ = std::stoull(variable.substr(position));
-	this->is_constant_ = false;
-}
+	const auto variable_index = std::stoull(variable.substr(position));	
+	this->num_coefficient_ = variable_index + 1;
 
-void Polynomial::VariableTerm::add_assign_with_same_variable(const VariableTerm& other) {
-	this->coefficient_ += other.coefficient_;
-	if (this->coefficient_ == 0.0)
-		*this = 0.0;
-}
-
-//Polynomial::VariableTerm& Polynomial::VariableTerm::operator*=(const double constant) {
-//	if (constant == 0.0)
-//		*this = 0.0;
-//
-//	this->coefficient_ *= constant;
-//	return *this;
-//}
-
-double Polynomial::VariableTerm::operator()(const MathVector& value_vector) const {
-	if (this->is_constant_)
-		return this->coefficient_;
-
-	if (value_vector.size() <= this->variable_index_)
-		throw std::invalid_argument("too small domain dimension");
-
-	return this->coefficient_ * value_vector[this->variable_index_];
-}
-
-bool Polynomial::VariableTerm::operator==(const VariableTerm& other) const {
-	return this->coefficient_ == other.coefficient_
-		&& this->variable_index_ == other.variable_index_
-		&& this->is_constant_ == other.is_constant_;
-}
-
-bool Polynomial::VariableTerm::operator<(const VariableTerm& other) const {
-	return this->variable_index_ < other.variable_index_;
-}
-
-bool Polynomial::VariableTerm::operator>(const VariableTerm& other) const {
-	return this->variable_index_ > other.variable_index_;
-}
-
-double Polynomial::VariableTerm::be_constant(void) const {
-	return this->coefficient_;
-}
-
-size_t Polynomial::VariableTerm::domain_dimension(void) const {
-	return this->variable_index_ + 1;
-}
-
-Polynomial::VariableTerm& Polynomial::VariableTerm::be_derivative(const size_t variable_index) {
-	if (this->is_constant_ || this->variable_index_ != variable_index)
-		return *this = 0.0;
-
-	this->variable_index_ = 0;
-	this->is_constant_ = true;
-	return *this;
-}
-
-bool Polynomial::VariableTerm::has_same_variable(const VariableTerm& other) const {
-	return this->variable_index_ == other.variable_index_;
-}
-
-bool Polynomial::VariableTerm::is_constant(void) const {
-	return this->is_constant_;
-}
-
-std::string Polynomial::VariableTerm::to_string(void) const {
-	if (this->is_constant_)
-		return ms::double_to_string(this->coefficient_);
-
-	std::string str;
-	if (this->coefficient_ == 1.0)
-		str += '+';
-	else if (this->coefficient_ == -1.0)
-		str += '-';
-	else if (this->coefficient_ > 0.0)
-		str += '+' + ms::double_to_string(this->coefficient_);
-	else
-		str += ms::double_to_string(this->coefficient_);
-
-	str += "(x" + std::to_string(this->variable_index_) + ")";
-
-	return str;
-}
-
-Polynomial::SimplePolyTerm::SimplePolyTerm(const std::string& variable) {
-	this->added_variable_term_set_.push_back(variable);
-}
-
-Polynomial::SimplePolyTerm& Polynomial::SimplePolyTerm::operator+=(const SimplePolyTerm& other) {
-	this->constant_ += other.constant_;
-	for (const auto& other_variable_term : other.added_variable_term_set_)
-		this->add_assign_variable_term(other_variable_term);
-
-	constexpr double zero = 0.0;
-	for (;;) {
-		const auto zero_iter = std::find(this->added_variable_term_set_.begin(), this->added_variable_term_set_.end(), zero);
-		if (zero_iter == this->added_variable_term_set_.end())
-			break;
-		else
-			this->added_variable_term_set_.erase(zero_iter);
+	constexpr size_t small_size = 3;
+	if (small_size < this->num_coefficient_) {
+		this->coefficient_vector_.resize(this->num_coefficient_);
+		this->data_ptr_ = this->coefficient_vector_.data();
 	}
 
+	this->data_ptr_[variable_index] = 1.0;	
+}
+	
+Polynomial::SimplePolyTerm& Polynomial::SimplePolyTerm::operator+=(const SimplePolyTerm& other) {
+	this->constant_ += other.constant_;
+
+
+
+	
+
+	if (this->domain_dimension() < other.domain_dimension())
+		this->coefficient_vector_.resize(other.domain_dimension());
+
+	for (size_t i = 0; i < other.domain_dimension(); ++i)
+		this->coefficient_vector_[i] += other.coefficient_vector_[i];
+
+	const auto is_zero = [](const double value) {return value == 0; };
+	const auto pos_iter = std::find_if_not(this->coefficient_vector_.rbegin(), this->coefficient_vector_.rend(), is_zero);
+	const auto num_meaningless_zero = pos_iter - this->coefficient_vector_.rbegin();
+	this->coefficient_vector_.erase(this->coefficient_vector_.end() - num_meaningless_zero, this->coefficient_vector_.end());
+
 	return *this;
 }
 
-double Polynomial::SimplePolyTerm::operator()(const MathVector& value_vector) const {
-	double result = this->constant_;
-	for (const auto& term : this->added_variable_term_set_)
-		result += term(value_vector);
+double Polynomial::SimplePolyTerm::operator()(const MathVector& value_vector) const {	
+	auto result = this->constant_;
+	for (size_t i = 0; i < this->domain_dimension(); ++i)
+		result += this->coefficient_vector_[i] * value_vector[i];
 	return result;
 }
 
 bool Polynomial::SimplePolyTerm::operator==(const SimplePolyTerm& other) const {
 	return this->constant_ == other.constant_
-		&& this->added_variable_term_set_ == other.added_variable_term_set_;
+		&& this->coefficient_vector_ == other.coefficient_vector_;
 }
 
 bool Polynomial::SimplePolyTerm::operator!=(const SimplePolyTerm& other) const {
@@ -324,21 +250,14 @@ double Polynomial::SimplePolyTerm::be_constant(void) const {
 }
 
 Polynomial::SimplePolyTerm& Polynomial::SimplePolyTerm::be_derivative(const size_t variable_index) {
-	this->constant_ = 0.0;
-	for (auto& term : this->added_variable_term_set_)
-		term.be_derivative(variable_index);
-
-	const auto is_constant = [](const VariableTerm& variable_term) {return variable_term.is_constant(); };
-	for (;;) {
-		const auto constant_iter = std::find_if(this->added_variable_term_set_.begin(), this->added_variable_term_set_.end(), is_constant);
-		if (constant_iter == this->added_variable_term_set_.end())
-			break;
-
-		this->constant_ += constant_iter->be_constant();
-		this->added_variable_term_set_.erase(constant_iter);
+	if (this->domain_dimension() <= variable_index) {
+		this->coefficient_vector_.clear();
+		this->constant_ = 0.0;
 	}
-
-	std::sort(this->added_variable_term_set_.begin(), this->added_variable_term_set_.end(), std::greater<>());
+	else {
+		this->constant_ = this->coefficient_vector_[variable_index];
+		this->coefficient_vector_.clear();
+	}
 	return *this;
 }
 
@@ -348,10 +267,7 @@ Polynomial::SimplePolyTerm Polynomial::SimplePolyTerm::differentiate(const size_
 }
 
 size_t Polynomial::SimplePolyTerm::domain_dimension(void) const {
-	if (this->is_constant())
-		return 0;
-
-	return this->added_variable_term_set_.back().domain_dimension();
+	return this->coefficient_vector_.size();
 }
 
 size_t Polynomial::SimplePolyTerm::order(void) const {
@@ -362,7 +278,7 @@ size_t Polynomial::SimplePolyTerm::order(void) const {
 }
 
 bool Polynomial::SimplePolyTerm::is_constant(void) const {
-	return this->added_variable_term_set_.empty();
+	return this->coefficient_vector_.empty();
 }
 
 std::string Polynomial::SimplePolyTerm::to_string(void) const {
@@ -370,8 +286,9 @@ std::string Polynomial::SimplePolyTerm::to_string(void) const {
 		return +"[" + ms::double_to_string(this->constant_) + "]";
 
 	std::string str = "[";
-	for (const auto& variable_term : this->added_variable_term_set_)
-		str += variable_term.to_string();
+
+	for (size_t i = 0; i < this->domain_dimension(); ++i)
+		str += "+" + std::to_string(coefficient_vector_[i]) + "x" + std::to_string(i);
 
 	constexpr size_t position = 1;
 	constexpr size_t size = 1;
@@ -387,16 +304,30 @@ std::string Polynomial::SimplePolyTerm::to_string(void) const {
 		return str += ms::double_to_string(this->constant_) + "]";
 }
 
-void Polynomial::SimplePolyTerm::add_assign_variable_term(const VariableTerm& variable_term) {
-	const auto start_iter = this->added_variable_term_set_.begin();
-	const auto end_iter = this->added_variable_term_set_.end();
-	const auto iter = std::lower_bound(start_iter, end_iter, variable_term);
+void Polynomial::SimplePolyTerm::match_size(const SimplePolyTerm& other) {
+	const auto max_num = std::max(this->num_coefficient_, other.num_coefficient_);
 
-	if (iter != end_iter && iter->has_same_variable(variable_term))
-		iter->add_assign_with_same_variable(variable_term);
-	else
-		this->added_variable_term_set_.push_back(variable_term);
+	constexpr size_t small_size = 3;
+	if (max_num <= small_size)
+		return;
+
+	this->coefficient_vector_.resize(max_num);
+
+	if (this->data_ptr_ == this->small_buffer_.data()) {		
+		std::copy(std::begin(this->small_buffer_), std::end(this->small_buffer_), this->coefficient_vector_.begin());
+		this->data_ptr_ = this->coefficient_vector_.data();
+	}
 }
+/////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
 
 void Polynomial::PoweredPolyTerm::multiply_assign_with_same_base(const PoweredPolyTerm& other) {
 	this->exponent_ += other.exponent_;

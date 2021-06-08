@@ -2,6 +2,7 @@
 #include "MathVector.h"
 
 #include <algorithm>
+#include <array>
 
 class IrrationalFunction;
 class Polynomial
@@ -39,33 +40,6 @@ private:
 	void add_assign_poly_term(const PolyTerm& term);
 
 
-	class VariableTerm
-	{
-	public:
-		VariableTerm(const double coefficient) : coefficient_(coefficient) {};
-		VariableTerm(const std::string& variable);
-
-		void add_assign_with_same_variable(const VariableTerm& other);
-		//VariableTerm& operator*=(const double constant);
-
-		double operator()(const MathVector& value_vector) const;
-		bool operator==(const VariableTerm& other) const;
-		bool operator<(const VariableTerm& other) const;
-		bool operator>(const VariableTerm& other) const;
-
-		double be_constant(void) const;
-		size_t domain_dimension(void) const;
-		VariableTerm& be_derivative(const size_t variable_index);
-		bool has_same_variable(const VariableTerm& other) const;
-		bool is_constant(void) const;
-		std::string to_string(void) const;
-
-	private:
-		double coefficient_ = 1.0;
-		size_t variable_index_ = 0;
-		bool is_constant_ = true;
-	};
-
 	class SimplePolyTerm
 	{
 	public:
@@ -87,11 +61,15 @@ private:
 		std::string to_string(void) const;
 
 	private:
-		void add_assign_variable_term(const VariableTerm& other);
+		void match_size(const SimplePolyTerm& other);
 
 	private:
-		std::vector<VariableTerm> added_variable_term_set_;
+		std::array<double, 3> small_buffer_ = { 0 };
+		std::vector<double> coefficient_vector_; //{c_i} mean sum(c_i * x_i)
 		double constant_ = 0.0;
+
+		size_t num_coefficient_ = 0;
+		double* data_ptr_ = small_buffer_.data();
 	};
 
 	class PoweredPolyTerm
