@@ -379,7 +379,7 @@ class A
 public:
 	A() { std::cout << "constructor\n"; };
 	A(const A& a) { std::cout << "copy constructor \n"; };
-	A(A&& a) { std::cout << "move constructor \n"; };
+	//A(A&& a) { std::cout << "move constructor \n"; };
 	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
 
 	//A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
@@ -407,8 +407,10 @@ A func(void) {
 	return A();
 }
 
+#include <array>
 int main(void){
 	A a;
-	A b = func();
+	A b;
+	a = std::move(b);
 }
 

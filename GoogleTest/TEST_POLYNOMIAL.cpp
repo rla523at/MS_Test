@@ -6,6 +6,16 @@
 #define Y Polynomial("x1")
 #define Z Polynomial("x2")
 
+GTEST_TEST(Polynomial, debug) {
+	const auto p = (X + 1) * (X - 1) + 2;
+
+	const size_t variable_index = 0;
+	const auto result = p.differentiate(variable_index);
+
+	const auto ref = 2 * X;
+	EXPECT_EQ(result, ref);
+}
+
 GTEST_TEST(Polynomial, operator_addition_1) {
 	const auto p1 = 3 * X + Y;
 	const auto p2 = 5 * (X ^ 2);
@@ -22,7 +32,7 @@ GTEST_TEST(Polynomial, operator_addition_2) {
 	const auto result = p1 + p2;
 
 	const auto ref = 2 * X + Y + 2;
-	EXPECT_EQ(result, ref);
+	EXPECT_EQ(result, ref);	
 }
 GTEST_TEST(Polynomial, operator_addition_3) {
 	const auto p1 = (X ^ 2) + X;
