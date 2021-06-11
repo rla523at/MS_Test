@@ -745,8 +745,12 @@ VectorFunction<Polynomial> Figure::orthonormal_basis_vector(const size_t polynom
 	return ms::Gram_Schmidt_Process(initial_basis_set, *this);
 }
 
-QuadratureRule Figure::quadrature_rule(const size_t integrand_roder) const {
-	return this->reference_figure_.Cartesian_quadrature_rule(this->mapping_function_, integrand_roder);
+QuadratureRule Figure::quadrature_rule(const size_t integrand_order) const {
+	if (this->integrand_order_to_quadrature_rule_.find(integrand_order) == this->integrand_order_to_quadrature_rule_.end())
+		this->integrand_order_to_quadrature_rule_.emplace(integrand_order, this->reference_figure_.Cartesian_quadrature_rule(this->mapping_function_, integrand_order));
+	return this->integrand_order_to_quadrature_rule_.at(integrand_order);
+
+	//return this->reference_figure_.Cartesian_quadrature_rule(this->mapping_function_, integrand_roder);
 }
 
 VectorFunction<Polynomial> Figure::initial_basis_vector(const size_t polynomial_order) const {

@@ -87,6 +87,7 @@ public:
 	ReferenceFigure reference_figure_;
 	std::vector<const MathVector*> node_set_;
 	VectorFunction<Polynomial> mapping_function_;
+	mutable std::map<size_t, QuadratureRule> integrand_order_to_quadrature_rule_;
 	//JacobianFunction<Polynomial> transformation_Jacobian_function_;
 };
 

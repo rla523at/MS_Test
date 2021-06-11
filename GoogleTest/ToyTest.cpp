@@ -1,4 +1,41 @@
 
+#include "../MS_Test/INC/Figure.h"
+#include "../MS_Test/INC/Profiler.h"
+#include <iostream>
+int main(void)
+{
+	const FigureType figure_type = FigureType::Quadrilateral;
+	const size_t figure_order = 1;
+
+	for (size_t j = 0; j < 1; ++j) {
+		RECORD_CONSUMED_TIME;
+		for (size_t i = 0; i < 1; ++i) {
+			const MathVector delta = { 1.0E-10 * i,1.0E-10 * i ,0 };
+
+			MathVector p1 = { 0.3635520579711813,		0.2973431147402148,		0 };
+			MathVector p2 = { 0.3512301560533574,		0.3184608229801218,		0 };
+			MathVector p3 = { 0.3309655464243111,		0.3010404355350647,		0 };
+			MathVector p4 = { 0.3359655464243111,		0.2910404355350647,		0 };
+
+			p1 += delta;
+			p2 += delta;
+			p3 += delta;
+			p4 += delta;
+
+			std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
+
+			Figure fig(figure_type, figure_order, std::move(pv));
+			const size_t polynomial_order = 2;
+			const auto initial_basis = fig.initial_basis_vector(polynomial_order);
+			const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, fig);
+
+			for (const auto& basis : orthonormal_basis)
+				std::cout << basis << "\n";
+		}
+		PRINT_CONSUMED_TIME_NANO;
+	}
+}
+
 //#include <utility>
 //
 //std::pair<int, int> func(void) {
@@ -371,46 +408,46 @@
 
 
 
-
-#include <iostream>
-#include <vector>
-class A
-{
-public:
-	A() { std::cout << "constructor\n"; };
-	A(const A& a) { std::cout << "copy constructor \n"; };
-	//A(A&& a) { std::cout << "move constructor \n"; };
-	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
-
-	//A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
-	//A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
-};
-
-template <typename T>
-class B : public std::vector<T>
-{	
-public:
-	template <typename ... Vals>
-	explicit B(Vals&&... values) :std::vector<T>(std::forward<Vals>(values)...) {};
-	B(std::initializer_list<T> list) :std::vector<T>(list) {};
-};
-
-class C
-{
-	B<A> val;
-public:
-	C(void) {
-	}
-};
-
-A func(void) {
-	return A();
-}
-
-#include <array>
-int main(void){
-	A a;
-	A b;
-	a = std::move(b);
-}
-
+//
+//#include <iostream>
+//#include <vector>
+//class A
+//{
+//public:
+//	A() { std::cout << "constructor\n"; };
+//	A(const A& a) { std::cout << "copy constructor \n"; };
+//	//A(A&& a) { std::cout << "move constructor \n"; };
+//	A(const std::vector<double>& vec) { std::cout << "construct by vector \n"; };
+//
+//	//A& operator=(const A& a) { std::cout << "copy assignment \n"; return* this; };
+//	//A& operator=(A&& a) { std::cout << "move assignment \n"; return*this; };
+//};
+//
+//template <typename T>
+//class B : public std::vector<T>
+//{	
+//public:
+//	template <typename ... Vals>
+//	explicit B(Vals&&... values) :std::vector<T>(std::forward<Vals>(values)...) {};
+//	B(std::initializer_list<T> list) :std::vector<T>(list) {};
+//};
+//
+//class C
+//{
+//	B<A> val;
+//public:
+//	C(void) {
+//	}
+//};
+//
+//A func(void) {
+//	return A();
+//}
+//
+//#include <array>
+//int main(void){
+//	A a;
+//	A b;
+//	a = std::move(b);
+//}
+//
