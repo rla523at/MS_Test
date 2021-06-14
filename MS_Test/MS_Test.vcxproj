@@ -25,6 +25,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="SRC\main.cpp" />
     <ClCompile Include="SRC\MathVector.cpp" />
     <ClCompile Include="SRC\Matrix.cpp" />
     <ClCompile Include="SRC\Polynomial.cpp" />

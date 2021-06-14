@@ -49,6 +49,8 @@ public:
 		SimplePolyTerm(const SimplePolyTerm& other);
 
 		SimplePolyTerm& operator+=(const SimplePolyTerm& other);
+		SimplePolyTerm& operator*=(const double constant);
+		SimplePolyTerm operator*(const double constant) const;
 		double operator()(const MathVector& variable_vector) const;
 		bool operator==(const SimplePolyTerm& other) const;
 		bool operator!=(const SimplePolyTerm& other) const;
@@ -66,11 +68,11 @@ public:
 		bool is_small(void) const;
 
 	private:
-		std::array<double, 3> small_buffer_ = { 0,0,0 };
 		std::vector<double> coefficient_vector_; //{c_i} mean sum(c_i * x_i)
 		double constant_ = 0.0;
-
+		
 		size_t domain_dimension_ = 0;
+		std::array<double, 3> small_buffer_ = { 0,0,0 };
 		double* data_ptr_ = small_buffer_.data();
 	};
 

@@ -20,12 +20,15 @@ Polynomial& Polynomial::operator*=(const double constant) {
 	for (auto& poly_term : this->added_poly_term_set_)
 		poly_term *= constant;
 
-	if (this->simple_poly_term_.is_constant())
-		this->simple_poly_term_ = this->simple_poly_term_.be_constant() * constant;
-	else {
-		this->add_assign_poly_term(PolyTerm(this->simple_poly_term_) * constant);
-		this->simple_poly_term_ = 0.0;
-	}
+	//if (this->simple_poly_term_.is_constant())
+	//	this->simple_poly_term_ = this->simple_poly_term_.be_constant() * constant;
+	//else {
+	//	this->add_assign_poly_term(PolyTerm(this->simple_poly_term_) * constant);
+	//	this->simple_poly_term_ = 0.0;
+	//}
+
+	//상수 * simple poly term = simple poly term
+	this->simple_poly_term_ *= constant;
 
 	return *this;
 }
@@ -57,13 +60,24 @@ Polynomial Polynomial::operator*(const Polynomial& other) const {
 		for (size_t i = 0; i < num_this_term; ++i)
 			result.add_assign_poly_term(this->added_poly_term_set_[i] * other.simple_poly_term_);
 
+	//if (this->simple_poly_term_ != 0.0 && other.simple_poly_term_ != 0.0) {
+	//	const auto poly_term = PolyTerm(this->simple_poly_term_) * other.simple_poly_term_;
+	//	if (poly_term.is_constant())
+	//		result.simple_poly_term_ = poly_term.be_constant();
+	//	else
+	//		result.add_assign_poly_term(poly_term);
+	//}
+
+	//상수 * simple poly term = simple poly term
 	if (this->simple_poly_term_ != 0.0 && other.simple_poly_term_ != 0.0) {
-		const auto poly_term = PolyTerm(this->simple_poly_term_) * other.simple_poly_term_;
-		if (poly_term.is_constant())
-			result.simple_poly_term_ = poly_term.be_constant();
+		if (this->simple_poly_term_.is_constant())
+			result.simple_poly_term_ = other.simple_poly_term_ * this->simple_poly_term_.be_constant();
+		else if (other.simple_poly_term_.is_constant())
+			result.simple_poly_term_ = this->simple_poly_term_ * other.simple_poly_term_.be_constant();
 		else
-			result.add_assign_poly_term(poly_term);
+			result.add_assign_poly_term(PolyTerm(this->simple_poly_term_) * other.simple_poly_term_);
 	}
+
 
 	return result;
 }
@@ -85,7 +99,7 @@ Polynomial Polynomial::operator^(const size_t power_index) const {
 
 double Polynomial::operator()(const MathVector& variable_vector) const {
 	auto result = this->simple_poly_term_(variable_vector);
-	for (const auto& poly_term : this->added_poly_term_set_)
+	for (const auto& poly_term : this->added_poly_term_set_) 
 		result += poly_term(variable_vector);
 	return result;
 }
@@ -229,6 +243,20 @@ Polynomial::SimplePolyTerm& Polynomial::SimplePolyTerm::operator+=(const SimpleP
 		this->data_ptr_[i] += other.data_ptr_[i];
 
 	return *this;
+}
+
+Polynomial::SimplePolyTerm& Polynomial::SimplePolyTerm::operator*=(const double constant) {
+	this->constant_ *= constant;
+
+	for (size_t i = 0; i < this->domain_dimension_; ++i)
+		this->data_ptr_[i] *= constant;
+
+	return *this;
+}
+
+Polynomial::SimplePolyTerm Polynomial::SimplePolyTerm::operator*(const double constant) const {
+	auto result = *this;
+	return result *= constant;
 }
 
 double Polynomial::SimplePolyTerm::operator()(const MathVector& value_vector) const {
