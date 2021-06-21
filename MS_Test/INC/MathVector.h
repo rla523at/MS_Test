@@ -4,10 +4,11 @@
 #include <iomanip>
 #include <string>
 #include <sstream>
+#include <stdexcept>
 #include <type_traits>
 
-template <size_t Dim>
-class EuclideanVector
+
+template <size_t Dim> class EuclideanVector
 {
 public:
 	template <typename... Args> EuclideanVector(Args... args) : elements_{ static_cast<double>(args)... } {};
@@ -16,6 +17,7 @@ public:
 	EuclideanVector operator-(const EuclideanVector& y) const;
 	EuclideanVector operator*(const double scalar) const;
 	bool operator==(const EuclideanVector& y) const;
+	double operator[](const size_t position) const;
 
 	constexpr size_t dimension(void) const;
 	std::string to_string(void) const;
@@ -23,81 +25,33 @@ public:
 private:
 	std::array<double, Dim> elements_;
 };
-template <size_t Dim> std::ostream& operator<<(std::ostream& os, const EuclideanVector<Dim>& x);
 template <typename... Args> EuclideanVector(Args... args)->EuclideanVector<sizeof...(Args)>;  //user-defined deduction guides
+template <size_t Dim> std::ostream& operator<<(std::ostream& os, const EuclideanVector<Dim>& x);
 
-//template <size_t Dim>
-//class EuclideanVector
-//{
-//public:
-//	template <typename... Args> EuclideanVector(Args... args) : vector_(static_cast<double>(args)...) {};
-//	EuclideanVector(const Vector<double, Dim>& vector) : vector_(vector) {};
-//
-//	EuclideanVector operator+(const EuclideanVector& y) const;
-//	EuclideanVector operator-(const EuclideanVector& y) const;
-//	EuclideanVector operator*(const double scalar) const;
-//	bool operator==(const EuclideanVector& y) const;
-//		
-//	constexpr size_t dimension(void) const;
-//	std::string to_string(void) const;
-//
-//private:
-//	Vector<double, Dim> vector_;
-//};
-//template <typename... Args> EuclideanVector(Args... args)->EuclideanVector<sizeof...(Args)>; //user-defined deduction guides
-//template <size_t Dim> std::ostream& operator<<(std::ostream& os, const EuclideanVector<Dim>& x);
 
+template <typename T, size_t RangeDim> class VectorFunction
+{
+	using Function = T;
+
+public:
+	template <typename... Args> VectorFunction(Args... args) : elements_{ args... } {};
+
+	const Function& operator[](const size_t position) const;
+
+private:
+	std::array<Function, RangeDim> elements_;
+};
+template <class First, class... Rest> struct Enforce_same_callable_type; 
+template <class First, class... Rest> VectorFunction(First, Rest...)->VectorFunction<typename Enforce_same_callable_type<First, Rest...>::type, 1 + sizeof...(Rest)>; // user defined deduction guides
 
 namespace ms {
 	template <typename T> std::string to_string(const T& arg);
+	template <typename T> struct is_callable;
+	template <typename T> inline constexpr bool is_callable_v = is_callable<T>::value;
 }
 
 
-//template <typename T, size_t Dim>
-//class Vector
-//{
-//protected:
-//	template <typename... Args>
-//	Vector(Args... args) : elements_{ args... } {};
-//
-//public:
-//	Vector operator+(const Vector& y) const;
-//	Vector operator-(const Vector& y) const;
-//	Vector operator*(const double scalar) const;
-//	bool operator==(const Vector& y) const;
-//
-//	constexpr size_t dimension(void) const;
-//	std::string to_string(void) const;
-//
-//protected:
-//	std::array<T, Dim> elements_;
-//};
-//template <typename T, size_t Dim>
-//std::ostream& operator<<(std::ostream& os, const Vector<T, Dim>& x);
-//
-//
-//template <size_t Dim>
-//class EuclideanVector : public Vector<double, Dim>
-//{
-//public:
-//	template <typename... Args>
-//	EuclideanVector(Args... args) : Vector<double, sizeof...(Args)>(static_cast<double>(args)...) {};
-//
-//};
-//template <typename... Args> //user-defined deduction guides
-//EuclideanVector(Args... args)->EuclideanVector<sizeof...(Args)>; 
-//template <size_t Dim>
-//std::ostream& operator<<(std::ostream& os, const EuclideanVector<Dim>& x);
-//
-//namespace ms {
-//	template <typename T>
-//	std::string to_string(const T& arg);
-//}
-
-
 // Template Definition Part
-
-
 template <size_t Dim> EuclideanVector<Dim> EuclideanVector<Dim>::operator+(const EuclideanVector& y) const {
 	auto result = *this;
 	for (size_t i = 0; i < this->dimension(); ++i)
@@ -127,6 +81,13 @@ template <size_t Dim> bool EuclideanVector<Dim>::operator==(const EuclideanVecto
 	return true;
 }
 
+template <size_t Dim> double EuclideanVector<Dim>::operator[](const size_t position) const {
+	if (Dim <= position)
+		throw std::out_of_range("Vector Function out of range");
+
+	return this->elements_[position];
+}
+
 template <size_t Dim> constexpr size_t EuclideanVector<Dim>::dimension(void) const {
 	return Dim;
 };
@@ -144,7 +105,65 @@ template <size_t Dim> std::ostream& operator<<(std::ostream& os, const Euclidean
 	return os << x.to_string();
 };
 
-//
+template <typename T, size_t RangeDim> const T& VectorFunction<T, RangeDim>::operator[](const size_t position) const {
+	if (RangeDim <= position)
+		throw std::out_of_range("Vector Function out of range");
+
+	return this->elements_[position];
+}
+
+template<typename T> struct ms::is_callable {
+
+//	//https://stackoverflow.com/questions/15393938/find-out-whether-a-c-object-is-callable
+//	//https://en.wikibooks.org/wiki/More_C++_Idioms/Member_Detector
+private:
+	//typedef char(&yes)[1];
+	//typedef char(&no)[2];
+	using yes = char[1];
+	using no = char[2];
+
+	struct Fallback { void operator()(); };
+	struct Derived : T, Fallback {};
+
+	template<typename U, U> struct Check;
+
+	template<typename>
+	static yes& test(...);
+
+	template<typename C>
+	static no& test(Check<void (Fallback::*)(), &C::operator()>*);	//class 멤버 함수 포인터와 SFINAE idiom을 활용한 문법
+
+	//using yes = char[1];
+	//using no = char[2];
+
+	//struct Fallback { int operator(); };
+	//struct Derived : T, Fallback {};
+
+	//template<typename U>
+	//static yes& test(U*);
+
+	//template<typename U>
+	//static no& test(decltype(U::member)*);
+
+public:
+	static constexpr bool value = sizeof(test<Derived>(nullptr)) == sizeof(yes);
+
+	////https://people.eecs.berkeley.edu/~brock/blog/detection_idiom.php
+	//template <typename U>
+	//static constexpr decltype(std::declval<U>()(), bool()) test(int) { return true; }
+
+	//template <typename U>
+	//static constexpr bool test(...) { return false; }
+
+	//static constexpr bool value = test<T>(int());
+
+};
+
+template <class First, class... Rest> struct Enforce_same_callable_type {
+	static_assert((std::is_same_v<First, Rest>&&...), "Vector Function constructor requires all the arguments should be same type.");
+	static_assert((ms::is_callable_v<First>), "Vector Function constructor requires all the arguments should be callable.");
+	using type = First;
+};
 
 namespace ms {
 	template <typename T>
@@ -319,3 +338,65 @@ namespace ms {
 //std::ostream& operator<<(std::ostream& os, const VectorFunction<T>& x) {
 //	return os << x.to_string();
 //};
+
+//template <size_t Dim>
+//class EuclideanVector
+//{
+//public:
+//	template <typename... Args> EuclideanVector(Args... args) : vector_(static_cast<double>(args)...) {};
+//	EuclideanVector(const Vector<double, Dim>& vector) : vector_(vector) {};
+//
+//	EuclideanVector operator+(const EuclideanVector& y) const;
+//	EuclideanVector operator-(const EuclideanVector& y) const;
+//	EuclideanVector operator*(const double scalar) const;
+//	bool operator==(const EuclideanVector& y) const;
+//		
+//	constexpr size_t dimension(void) const;
+//	std::string to_string(void) const;
+//
+//private:
+//	Vector<double, Dim> vector_;
+//};
+//template <typename... Args> EuclideanVector(Args... args)->EuclideanVector<sizeof...(Args)>; //user-defined deduction guides
+//template <size_t Dim> std::ostream& operator<<(std::ostream& os, const EuclideanVector<Dim>& x);
+
+//template <typename T, size_t Dim>
+//class Vector
+//{
+//protected:
+//	template <typename... Args>
+//	Vector(Args... args) : elements_{ args... } {};
+//
+//public:
+//	Vector operator+(const Vector& y) const;
+//	Vector operator-(const Vector& y) const;
+//	Vector operator*(const double scalar) const;
+//	bool operator==(const Vector& y) const;
+//
+//	constexpr size_t dimension(void) const;
+//	std::string to_string(void) const;
+//
+//protected:
+//	std::array<T, Dim> elements_;
+//};
+//template <typename T, size_t Dim>
+//std::ostream& operator<<(std::ostream& os, const Vector<T, Dim>& x);
+//
+//
+//template <size_t Dim>
+//class EuclideanVector : public Vector<double, Dim>
+//{
+//public:
+//	template <typename... Args>
+//	EuclideanVector(Args... args) : Vector<double, sizeof...(Args)>(static_cast<double>(args)...) {};
+//
+//};
+//template <typename... Args> //user-defined deduction guides
+//EuclideanVector(Args... args)->EuclideanVector<sizeof...(Args)>; 
+//template <size_t Dim>
+//std::ostream& operator<<(std::ostream& os, const EuclideanVector<Dim>& x);
+//
+//namespace ms {
+//	template <typename T>
+//	std::string to_string(const T& arg);
+//}

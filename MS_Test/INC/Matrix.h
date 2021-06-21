@@ -93,8 +93,8 @@ JacobianFunction<T>::JacobianFunction(const VectorFunction<T>& vector_function, 
 	const auto range_dimension = vector_function.size();
 	this->gradient_set_.reserve(range_dimension);
 
-	for (const auto& function : vector_function)
-		gradient_set_.push_back(function.gradient(domain_dimension));
+	for (const auto& Function : vector_function)
+		gradient_set_.push_back(Function.gradient(domain_dimension));
 }
 
 template <typename T>

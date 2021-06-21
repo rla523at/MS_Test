@@ -1,9 +1,46 @@
 #include <iostream>
 #include <type_traits>
 
+using Test1 = int*;
+using Test2 = int&; // https://stackoverflow.com/questions/26631169/why-does-sizeof-a-reference-type-give-you-the-sizeof-the-type
+using Test3 = int;
+using CharArray1 = char[1];
+using CharArray2 = char[2]; //https://stackoverflow.com/questions/8412694/address-of-an-array
+
+CharArray1& func1(void) {
+	static char arr[1] = { 'a' };
+	return arr; 
+};
+CharArray2& func2(void) {
+	static char arr2[2] = { 'a','b' };
+	return arr2;
+};
+char* func3(void) {
+	static char arr3[3] = { 'a' };
+	return arr3;
+};
+char* func4(void) {
+	static char arr4[4] = { 'a','b','c','d' };
+	return arr4;
+};
+
+
 int main(void) {
-	std::cout << std::boolalpha;
-	std::cout << std::is_class_v<double> << "\n";
+	auto return_val = func4();
+	std::cout << return_val[0] << "\n";
+	std::cout << return_val[1] << "\n";
+	std::cout << return_val[2] << "\n";
+	std::cout << return_val[3] << "\n";
+
+	
+	
+	std::cout << sizeof(Test1) << "\n";
+	std::cout << sizeof(Test2) << "\n";
+	std::cout << sizeof(Test3) << "\n";
+	std::cout << sizeof(CharArray1) << "\n";
+	std::cout << sizeof(CharArray2) << "\n";
+	//std::cout << sizeof(a) << "\n";
+	//std::cout << sizeof(func4()) << "\n";
 }
 
 //#include <iostream>
