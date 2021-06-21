@@ -1093,17 +1093,14 @@ GTEST_TEST(MS, Gram_Schmidt_process_1) {
 	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
 
 	Figure fig(figure_type, figure_order, std::move(pv));
-	const size_t polynomial_order = 2;
-	const size_t integrand_order = 4;
 
-	const auto quadrature_rule = fig.quadrature_rule(integrand_order);
-	const auto initial_basis = fig.initial_basis_vector(polynomial_order);
-	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+	const size_t polynomial_order = 2;
+	const auto orthonormal_basis = fig.orthonormal_basis_vector(polynomial_order);
 
 	double max_error = 0.0;
 	for (size_t i = 0; i < orthonormal_basis.size(); ++i) {
 		for (size_t j = 0; j <= i; ++j) {
-			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], quadrature_rule);
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
 
 			if (i == j)
 				max_error = std::max(max_error, std::abs(1 - result));
@@ -1126,17 +1123,14 @@ GTEST_TEST(MS, Gram_Schmidt_process_2) {
 	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
 
 	Figure fig(figure_type, figure_order, std::move(pv));
-	const size_t polynomial_order = 3;
-	const size_t integrand_order = 6;
 
-	const auto quadrature_rule = fig.quadrature_rule(integrand_order);
-	const auto initial_basis = fig.initial_basis_vector(polynomial_order);
-	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+	const size_t polynomial_order = 3;
+	const auto orthonormal_basis = fig.orthonormal_basis_vector(polynomial_order);
 
 	double max_error = 0.0;
 	for (size_t i = 0; i < orthonormal_basis.size(); ++i) {
 		for (size_t j = 0; j <= i; ++j) {
-			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], quadrature_rule);
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
 
 			if (i == j)
 				max_error = std::max(max_error, std::abs(1 - result));
@@ -1159,20 +1153,17 @@ GTEST_TEST(MS, Gram_Schmidt_process_3) {
 	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
 
 	Figure fig(figure_type, figure_order, std::move(pv));
-	const size_t polynomial_order = 5;
-	const size_t integrand_order = 10;
 
-	const auto quadrature_rule = fig.quadrature_rule(integrand_order);
-	const auto initial_basis = fig.initial_basis_vector(polynomial_order);
-	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+	const size_t polynomial_order = 5;
+	const auto orthonormal_basis = fig.orthonormal_basis_vector(polynomial_order);
 
 	double max_error = 0.0;
 	for (size_t i = 0; i < orthonormal_basis.size(); ++i) {
 		for (size_t j = 0; j <= i; ++j) {
-			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], quadrature_rule);
-			
-			if (i==j)
-				max_error = std::max(max_error, std::abs(1-result));
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+
+			if (i == j)
+				max_error = std::max(max_error, std::abs(1 - result));
 			else
 				max_error = std::max(max_error, std::abs(result));
 		}
@@ -1192,17 +1183,14 @@ GTEST_TEST(MS, Gram_Schmidt_process_4) {
 	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
 
 	Figure fig(figure_type, figure_order, std::move(pv));
-	const size_t polynomial_order = 5;
-	const size_t integrand_order = 10;
 
-	const auto quadrature_rule = fig.quadrature_rule(integrand_order);
-	const auto initial_basis = fig.initial_basis_vector(polynomial_order);
-	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+	const size_t polynomial_order = 5;
+	const auto orthonormal_basis = fig.orthonormal_basis_vector(polynomial_order);
 
 	double max_error = 0.0;
 	for (size_t i = 0; i < orthonormal_basis.size(); ++i) {
 		for (size_t j = 0; j <= i; ++j) {
-			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], quadrature_rule);
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
 
 			if (i == j)
 				max_error = std::max(max_error, std::abs(1 - result));
@@ -1225,17 +1213,14 @@ GTEST_TEST(MS, Gram_Schmidt_process_5) {
 	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
 
 	Figure fig(figure_type, figure_order, std::move(pv));
-	const size_t polynomial_order = 5;
-	const size_t integrand_order = 10;
 
-	const auto quadrature_rule = fig.quadrature_rule(integrand_order);
-	const auto initial_basis = fig.initial_basis_vector(polynomial_order);
-	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+	const size_t polynomial_order = 5;
+	const auto orthonormal_basis = fig.orthonormal_basis_vector(polynomial_order);
 
 	double max_error = 0.0;
 	for (size_t i = 0; i < orthonormal_basis.size(); ++i) {
 		for (size_t j = 0; j <= i; ++j) {
-			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], quadrature_rule);
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
 
 			if (i == j)
 				max_error = std::max(max_error, std::abs(1 - result));
@@ -1258,17 +1243,14 @@ GTEST_TEST(MS, Gram_Schmidt_process_6) {
 	std::vector<const MathVector*> pv = { &p1,&p2,&p3,&p4 };
 
 	Figure fig(figure_type, figure_order, std::move(pv));
-	const size_t polynomial_order = 5;
-	const size_t integrand_order = 10;
 
-	const auto quadrature_rule = fig.quadrature_rule(integrand_order);
-	const auto initial_basis = fig.initial_basis_vector(polynomial_order);
-	const auto orthonormal_basis = ms::Gram_Schmidt_Process(initial_basis, quadrature_rule);
+	const size_t polynomial_order = 5;
+	const auto orthonormal_basis = fig.orthonormal_basis_vector(polynomial_order);
 
 	double max_error = 0.0;
 	for (size_t i = 0; i < orthonormal_basis.size(); ++i) {
 		for (size_t j = 0; j <= i; ++j) {
-			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], quadrature_rule);
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
 
 			if (i == j)
 				max_error = std::max(max_error, std::abs(1 - result));
@@ -1280,7 +1262,35 @@ GTEST_TEST(MS, Gram_Schmidt_process_6) {
 	constexpr double allowable_error = 9.0E-13;
 	EXPECT_LE(max_error, allowable_error);
 }
+GTEST_TEST(MS, Gram_Schmidt_process_7) {
+	const FigureType figure_type = FigureType::Triangle;
+	const size_t figure_order = 1;
 
+	const MathVector p1 = { 0.3635520579711813,		0.2973431147402148,		0 };
+	const MathVector p2 = { 0.3512301560533574,		0.3184608229801218,		0 };
+	const MathVector p3 = { 0.3309655464243111,		0.3010404355350647,		0 };
+	std::vector<const MathVector*> pv = { &p1,&p2,&p3 };
+
+	Figure fig(figure_type, figure_order, std::move(pv));
+
+	const size_t polynomial_order = 5;
+	const auto orthonormal_basis = fig.orthonormal_basis_vector(polynomial_order);;
+
+	double max_error = 0.0;
+	for (size_t i = 0; i < orthonormal_basis.size(); ++i) {
+		for (size_t j = 0; j <= i; ++j) {
+			const auto result = ms::inner_product(orthonormal_basis[i], orthonormal_basis[j], fig);
+
+			if (i == j)
+				max_error = std::max(max_error, std::abs(1 - result));
+			else
+				max_error = std::max(max_error, std::abs(result));
+		}
+	}
+
+	constexpr double allowable_error = 9.0E-13;
+	EXPECT_LE(max_error, allowable_error);
+}
 
 
 

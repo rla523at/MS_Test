@@ -115,7 +115,6 @@ public:
 		bool operator!=(const PolyTerm& other) const;
 		PolyTerm& operator=(const PolyTerm& other);
 
-
 		double be_constant(void) const;
 		size_t domain_dimension(void) const;
 		Polynomial differentiate(const size_t variable_index) const;
@@ -132,16 +131,18 @@ public:
 	//private:
 	public:
 		double coefficient_ = 1.0;
-		std::array<PoweredPolyTerm, 3> small_buffer_ = { 0,0,0 };
-		std::vector<PoweredPolyTerm> multiplied_power_poly_term_set_;
+		std::vector<PoweredPolyTerm> multiplied_powered_poly_term_set_;
 
 		size_t num_term_ = 0;
+		std::array<PoweredPolyTerm, 3> small_buffer_ = { 0,0,0 };
 		PoweredPolyTerm* data_ptr_ = small_buffer_.data();
 	};
 
 //private: //for test
 	std::vector<PolyTerm> added_poly_term_set_;
 	SimplePolyTerm simple_poly_term_ = 0.0;
+
+	static size_t num_count_; //test
 };
 std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
 Polynomial operator+(const double constant, const Polynomial& compact_polynomial);

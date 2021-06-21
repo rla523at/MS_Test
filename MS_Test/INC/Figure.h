@@ -25,16 +25,11 @@ class ReferenceFigure
 public:
 	ReferenceFigure(const FigureType figure_type, const size_t figure_order);
 	
+	QuadratureRule Cartesian_quadrature_rule(const VectorFunction<Polynomial>& mapping_function, const size_t physical_domain_integrand_order) const;
 	MathVector center_node(void) const;
 	std::vector<FigureType> face_figure_type_set(void) const;
 	size_t figure_dimension(void) const;
-	VectorFunction<Polynomial> mapping_function(const std::vector<const MathVector*>& physical_node_set) const;
-	QuadratureRule Cartesian_quadrature_rule(const VectorFunction<Polynomial>& trasnformation_function, const size_t physical_domain_integrand_order) const;
-	
-	//MathVector normal_vector(void) const;
-	//FigureType simplex_figure_type(void) const;
-	VectorFunction<Polynomial> affine_trasnformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
-
+	VectorFunction<Polynomial> mapping_function(const std::vector<const MathVector*>& Cartesian_node_set) const;
 
 //private: //for test
 	RowMajorMatrix inverse_mapping_monomial_matrix(void) const;
@@ -58,6 +53,10 @@ private:
 	size_t figure_order_;
 };
 
+//MathVector normal_vector(void) const;
+//FigureType simplex_figure_type(void) const;
+//VectorFunction<Polynomial> affine_trasnformation_function(const std::vector<const MathVector*>& transformed_node_set) const;
+
 ////getter style 필요 없음!
 //const std::vector<MathVector>& reference_post_node_set(const size_t post_order);
 //const std::vector<std::vector<size_t>>& reference_connectivity(const size_t post_order);
@@ -72,6 +71,7 @@ class Figure
 {
 public:
 	explicit Figure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set);
+	explicit Figure(const std::string& figure_type_name, const size_t figure_order, std::vector<const MathVector*>&& node_set);
 
 	MathVector center_node(void) const;
 	VectorFunction<Polynomial> orthonormal_basis_vector(const size_t polynomial_order) const;
@@ -79,24 +79,47 @@ public:
 
 //private: //for test
 	VectorFunction<Polynomial> initial_basis_vector(const size_t polynomial_order) const;
-	VectorFunction<Polynomial> initial_basis_vector1(const size_t polynomial_order) const;
-	VectorFunction<Polynomial> initial_basis_vector2(const size_t polynomial_order) const;
-	VectorFunction<Polynomial> initial_basis_vector3(const size_t polynomial_order) const;
 
 //private: //for test
 	ReferenceFigure reference_figure_;
 	std::vector<const MathVector*> node_set_;
 	VectorFunction<Polynomial> mapping_function_;
 	mutable std::map<size_t, QuadratureRule> integrand_order_to_quadrature_rule_;
-	//JacobianFunction<Polynomial> transformation_Jacobian_function_;
 };
-
-
 VectorFunction<Polynomial> operator*(const RowMajorMatrix& m, const VectorFunction<Polynomial> vector_function);
+
+
+//class IndexedFigure : public Figure
+//{
+//protected:
+//	std::vector<size_t> node_index_set_;
+//
+//public:
+//	explicit IndexedFigure(const FigureType figure_type, const size_t figure_order, std::vector<const MathVector*>&& node_set, std::vector<size_t>&& node_index_set)
+//		:Figure(figure_type, figure_order, std::move(node_set)), node_index_set_(std::move(node_index_set)) {};
+//
+//	explicit IndexedFigure(const std::string& figure_type_name, const size_t figure_order, std::vector<const MathVector*>&& node_set, std::vector<size_t>&& node_index_set)
+//		:Figure(figure_type_name, figure_order, std::move(node_set)), node_index_set_(std::move(node_index_set)) {};
+//
+//	IndexedFigure(IndexedFigureData&& data)
+//		:Figure(data.figure_type_name, data.figure_order, std::move(data.node_set)), node_index_set_(std::move(data.node_index_set)) {};
+//
+//
+//	IndexedFigure build_Face_Figure(const size_t face_index) const;
+//
+//	std::map<size_t, std::vector<size_t>> calculate_Face_Index_to_Node_Index_Set(void) const;
+//
+//	std::vector<size_t> calculate_Vertex_Node_Index_Set(void) const;
+//
+//	std::unordered_map<size_t, std::vector<size_t>> calculate_Vertex_Node_Index_To_Vertex_Simplex_Element_Consisting_Node_Index(void) const;
+//
+//	FigureFaceType examine_Figure_Face_Type(const IndexedFigure& face_figure) const;
+//};
 
 
 namespace ms {
 	std::string figure_type_to_string(const FigureType figure_type);
+	FigureType string_to_figure_type_(const std::string& figure_string);
 	double integrate(const Polynomial& integrand, const QuadratureRule& quadrature_rule);
 	double integrate(const Polynomial& integrand, const Figure& figure);
 	double inner_product(const Polynomial& f1, const Polynomial& f2, const QuadratureRule& quadrature_rule);
