@@ -284,8 +284,8 @@ std::optional<IrrationalFunction> ReferenceFigure::scale_function(const VectorFu
 		constexpr size_t r = 0;
 		const auto T_r = transformation_function.differentiate(r);
 		Polynomial result = 0.0;
-		for (const auto& func : T_r)
-			result += result * (func ^ 2);
+		for (const auto& only_func : T_r)
+			result += result * (only_func ^ 2);
 		return result.root(0.5);
 	}
 	case 2: {
@@ -295,8 +295,8 @@ std::optional<IrrationalFunction> ReferenceFigure::scale_function(const VectorFu
 		const auto T_s = transformation_function.differentiate(s);
 		const auto cross_product = T_r.cross_product(T_s);
 		Polynomial result = 0.0;
-		for (const auto& func : cross_product)
-			result += func ^ 2;
+		for (const auto& only_func : cross_product)
+			result += only_func ^ 2;
 		return result.root(0.5);
 	}
 	default:

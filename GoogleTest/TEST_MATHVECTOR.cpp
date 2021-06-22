@@ -31,7 +31,9 @@ GTEST_TEST(EuclideanVector, operator_substraction_1) {
 struct A {
 	void operator()(const size_t val) {};
 };
-class B {};
+struct B {};
+struct C { double operator()() {}; };
+struct D { double operator()(double) {}; };
 
 GTEST_TEST(VectorFunction, constructor1) {
 	//A a;
@@ -41,6 +43,8 @@ GTEST_TEST(VectorFunction, constructor1) {
 	std::cout << std::boolalpha;
 	std::cout << ms::is_callable_v<A> << "\n";
 	std::cout << ms::is_callable_v<B> << "\n";
+	std::cout << ms::is_callable_v<C> << "\n";
+	std::cout << ms::is_callable_v<D> << "\n";
 	//std::cout << ms::is_callable_v<int> << "\n";
 }
 

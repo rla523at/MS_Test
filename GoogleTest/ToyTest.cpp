@@ -1,46 +1,84 @@
+#include <array>
 #include <iostream>
 #include <type_traits>
 
-using Test1 = int*;
-using Test2 = int&; // https://stackoverflow.com/questions/26631169/why-does-sizeof-a-reference-type-give-you-the-sizeof-the-type
-using Test3 = int;
-using CharArray1 = char[1];
-using CharArray2 = char[2]; //https://stackoverflow.com/questions/8412694/address-of-an-array
+//using Test1 = int*;
+//using Test2 = int&; // https://stackoverflow.com/questions/26631169/why-does-sizeof-a-reference-type-give-you-the-sizeof-the-type
+//using Test3 = int;
 
-CharArray1& func1(void) {
-	static char arr[1] = { 'a' };
-	return arr; 
-};
-CharArray2& func2(void) {
-	static char arr2[2] = { 'a','b' };
-	return arr2;
-};
-char* func3(void) {
-	static char arr3[3] = { 'a' };
-	return arr3;
-};
-char* func4(void) {
-	static char arr4[4] = { 'a','b','c','d' };
-	return arr4;
+#define Static_Require static_assert
+//
+//class B {
+//	B(int val = 0) {};
+//};
+//
+//template<size_t N>
+//class A {
+//public:
+//	template<typename... Args>
+//	A(Args... args);
+//
+//	A();
+//
+//private:
+//	std::array<double, N> ar_;
+//	std::array<B, N> ar2_;
+//};
+//
+//
+//template<size_t N>
+//A<N>::A() {}
+//
+//
+//template<size_t N> template<typename... Args>
+//A<N>::A(Args... args) {
+//	Require(sizeof...(args) <= N, "It is too big");
+//
+//	ar_ = { static_cast<double>(args)... };
+//}
+
+
+struct Func {
+	Func(int a) {};
 };
 
+template <size_t DomainDim, size_t RangeDim> class C {
+public:
+	template <typename... Args>
+	static C<DomainDim, RangeDim> make(const Args&... args) {
+		Static_Require(sizeof...(args) == RangeDim, "num arguments should be same with dimension of range");
+		Static_Require((... && std::is_same_v<Func, Args>), "Every argument should be function");
+		return { args... };
+	}
+
+	//template <typename... Args,
+	//	std::enable_if_t<(... && std::is_same_v<Func, Args>), bool> = true>
+	//	C(const Args&... args) : arr_{args...} {};
+
+private:
+	template <typename... Args>
+	C(Args&... args) : arr_{ args... } {};
+
+private:
+	std::array<Func, RangeDim> arr_;
+};
+
+//make function
+
+
+
+
+
+
+//template <typename... Args,
+//	std::enable_if_t<(... && std::is_same_v<Func, Args>), bool> = true>
+//	void only_func(const Args&... args) { std::cout << "only func\n"; };
 
 int main(void) {
-	auto return_val = func4();
-	std::cout << return_val[0] << "\n";
-	std::cout << return_val[1] << "\n";
-	std::cout << return_val[2] << "\n";
-	std::cout << return_val[3] << "\n";
-
+	Func f1(1), f2(1), f3(1), f4(1);
 	
-	
-	std::cout << sizeof(Test1) << "\n";
-	std::cout << sizeof(Test2) << "\n";
-	std::cout << sizeof(Test3) << "\n";
-	std::cout << sizeof(CharArray1) << "\n";
-	std::cout << sizeof(CharArray2) << "\n";
-	//std::cout << sizeof(a) << "\n";
-	//std::cout << sizeof(func4()) << "\n";
+	auto c = C<2,4>::make(f1, f2, f3, 3);	
+	//C<2, 4> c2(f1, f2, f3, f4);
 }
 
 //#include <iostream>

@@ -1,14 +1,12 @@
 #pragma once
-#include "MathVector.h"
+#include "EuclideanVector.h"
 
 #include <algorithm>
-#include <array>
 
 class IrrationalFunction;
 class Polynomial
 {
 public: // for test
-	class VariableTerm;
 	class SimplePolyTerm;
 	class PoweredPolyTerm;
 	class PolyTerm;
@@ -205,7 +203,28 @@ private:
 };
 
 
+template <size_t DomainDim, size_t RangeDim> class PolynomialVectorFunction
+{
+public:
+	template <typename... Args> VectorFunction(Args... args) : elements_{ args... } {};
+
+	EuclideanVector<RangeDim> operator()(const EuclideanVector < )
+		const Function& operator[](const size_t position) const;
+
+private:
+	std::array<Function, RangeDim> elements_;
+};
+template <typename... Args> struct ms::Enforce_polynomial_type;
+template <size_t DomainDim, size_t RangeDim, typename... Args> PolynomialVectorFunction(Args...)->PolynomialVectorFunction<typename ms::Enforce_polynomial_type<Args>::type, 1 + sizeof...(Rest)>; // user defined deduction guides
+
+
+
 namespace ms {
+	template <typename... Args> struct Enforce_polynomial_type {
+		static_assert((std::is_same_v<Polynomial, Args>&&...), "Polynomial Vector Function constructor requires all the arguments should be polynomial.");
+		using type = First;
+	};
+
 	std::vector<MathVector> polynomial_compare_node_set(const size_t polynomial_order, const size_t domain_dimension);
 	size_t combination(const size_t n, const size_t k);
 	size_t combination_with_repetition(const size_t n, const size_t k);
