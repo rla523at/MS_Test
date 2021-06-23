@@ -2,84 +2,176 @@
 #include <iostream>
 #include <type_traits>
 
-//using Test1 = int*;
-//using Test2 = int&; // https://stackoverflow.com/questions/26631169/why-does-sizeof-a-reference-type-give-you-the-sizeof-the-type
-//using Test3 = int;
+#include <algorithm>
+#include <vector>
 
-#define Static_Require static_assert
-//
-//class B {
-//	B(int val = 0) {};
-//};
-//
-//template<size_t N>
+#include "../MS_Test/INC/Profiler.h"
+
+
+class A
+{
+public:
+	template <typename... Args>
+	A(Args... args) { std::cout << "constuctor\n"; };
+	A(const A& a) { std::cout << "copy\n"; }
+};
+
+int main(void) {
+
+	RECORD_CONSUMED_TIME;
+	for (size_t i = 0; i < 10000000; ++i) {
+		std::array<double, 300> ar1 = { 1 + i * 1.0E-15,5,3 };
+		std::sort(ar1.begin(), ar1.end());
+	}
+	PRINT_CONSUMED_TIME;
+
+	std::array<double, 300> ar2 = { 1,5,3 };
+	RECORD_CONSUMED_TIME;
+	for (size_t i = 0; i < 10000000; ++i) {		
+		if (!std::is_sorted(ar2.begin(),ar2.end()))
+			std::sort(ar2.begin(), ar2.end());
+	}
+	PRINT_CONSUMED_TIME;
+		
+	RECORD_CONSUMED_TIME;
+	for (size_t i = 0; i < 10000000; ++i) {
+		std::array<double, 3> ar3 = { 1,5,3 };
+		std::sort(ar3.begin(), ar3.end());
+	}
+	PRINT_CONSUMED_TIME;
+
+	RECORD_CONSUMED_TIME;
+	for (size_t i = 0; i < 10000000; ++i) {
+		std::vector<double> ar4;
+		std::sort(ar4.begin(), ar4.end());
+	}
+	PRINT_CONSUMED_TIME;
+
+	RECORD_CONSUMED_TIME;
+	for (size_t i = 0; i < 10000000; ++i) {
+		std::vector<double> ar5;
+		if (!ar5.empty())
+			std::sort(ar5.begin(), ar5.end());
+	}
+	PRINT_CONSUMED_TIME;
+
+}
+
+//template <size_t DomainDim>
 //class A {
 //public:
-//	template<typename... Args>
-//	A(Args... args);
-//
-//	A();
+//	A() {
+//		val_.fill(DomainDim);
+//		for (const auto& elem : val_)
+//			std::cout << elem << "\n";
+//	}
 //
 //private:
-//	std::array<double, N> ar_;
-//	std::array<B, N> ar2_;
+//	std::array<double, DomainDim> val_;
+//};
+//
+//template <size_t DomainDim>
+//class B {
+//public:
+//	template <char VariableIndex>
+//	B() {
+//		std::cout << VariableIndex << "\n";
+//	}
 //};
 //
 //
-//template<size_t N>
-//A<N>::A() {}
+//int main(void) {
+//	B<3> b('a');
 //
 //
-//template<size_t N> template<typename... Args>
-//A<N>::A(Args... args) {
-//	Require(sizeof...(args) <= N, "It is too big");
+//	constexpr char ar = '0';
 //
-//	ar_ = { static_cast<double>(args)... };
+//	constexpr size_t dd1 = 2;
+//	constexpr size_t dd2 = 4;
+//	constexpr auto dd_max = std::max(dd1, dd2);
+//
+//	A<dd_max> a;
 //}
 
 
-struct Func {
-	Func(int a) {};
-};
-
-template <size_t DomainDim, size_t RangeDim> class C {
-public:
-	template <typename... Args>
-	static C<DomainDim, RangeDim> make(const Args&... args) {
-		Static_Require(sizeof...(args) == RangeDim, "num arguments should be same with dimension of range");
-		Static_Require((... && std::is_same_v<Func, Args>), "Every argument should be function");
-		return { args... };
-	}
-
-	//template <typename... Args,
-	//	std::enable_if_t<(... && std::is_same_v<Func, Args>), bool> = true>
-	//	C(const Args&... args) : arr_{args...} {};
-
-private:
-	template <typename... Args>
-	C(Args&... args) : arr_{ args... } {};
-
-private:
-	std::array<Func, RangeDim> arr_;
-};
-
-//make function
-
-
-
-
-
-
-//template <typename... Args,
-//	std::enable_if_t<(... && std::is_same_v<Func, Args>), bool> = true>
-//	void only_func(const Args&... args) { std::cout << "only func\n"; };
-
-int main(void) {
-	Func f1(1), f2(1), f3(1), f4(1);
-	
-	auto c = C<2,4>::make(f1, f2, f3, 3);	
-	//C<2, 4> c2(f1, f2, f3, f4);
-}
+////using Test1 = int*;
+////using Test2 = int&; // https://stackoverflow.com/questions/26631169/why-does-sizeof-a-reference-type-give-you-the-sizeof-the-type
+////using Test3 = int;
+//
+//#define Static_Require static_assert
+////
+////class B {
+////	B(int val = 0) {};
+////};
+////
+////template<size_t N>
+////class A {
+////public:
+////	template<typename... Args>
+////	A(Args... args);
+////
+////	A();
+////
+////private:
+////	std::array<double, N> ar_;
+////	std::array<B, N> ar2_;
+////};
+////
+////
+////template<size_t N>
+////A<N>::A() {}
+////
+////
+////template<size_t N> template<typename... Args>
+////A<N>::A(Args... args) {
+////	Require(sizeof...(args) <= N, "It is too big");
+////
+////	ar_ = { static_cast<double>(args)... };
+////}
+//
+//
+//struct Func {
+//	Func(int a) {};
+//};
+//
+//template <size_t DomainDim, size_t RangeDim> class C {
+//public:
+//	template <typename... Args>
+//	static C<DomainDim, RangeDim> make(const Args&... args) {
+//		Static_Require(sizeof...(args) == RangeDim, "num arguments should be same with dimension of range");
+//		Static_Require((... && std::is_same_v<Func, Args>), "Every argument should be function");
+//		return { args... };
+//	}
+//
+//	//template <typename... Args,
+//	//	std::enable_if_t<(... && std::is_same_v<Func, Args>), bool> = true>
+//	//	C(const Args&... args) : arr_{args...} {};
+//
+//private:
+//	template <typename... Args>
+//	C(Args&... args) : arr_{ args... } {};
+//
+//private:
+//	std::array<Func, RangeDim> arr_;
+//};
+//
+////make function
+//
+//
+//
+//
+//
+//
+////template <typename... Args,
+////	std::enable_if_t<(... && std::is_same_v<Func, Args>), bool> = true>
+////	void only_func(const Args&... args) { std::cout << "only func\n"; };
+//
+//int main(void) {
+//	Func f1(1), f2(1), f3(1), f4(1);
+//	
+//	auto c = C<2,4>::make(f1, f2, f3, 3);	
+//	//C<2, 4> c2(f1, f2, f3, f4);
+//}
 
 //#include <iostream>
 //#include <array>
