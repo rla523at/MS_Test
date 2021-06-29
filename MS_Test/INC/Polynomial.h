@@ -7,43 +7,40 @@
 //#define static_require static_assert
 #define dynamic_require(requirement, message)  if (!(requirement)) throw std::runtime_error(message)
 
-
-
-class IrrationalFunction;
-template <size_t DomainDim>
-class Polynomial
+//class IrrationalFunction;
+template <size_t DomainDim>class Polynomial
 {
 public: // for test
 	class SimplePolyTerm;
 	class PoweredPolyTerm;
 	class PolyTerm;
 
-//public:
-//	Polynomial(const double coeeficient) : simple_poly_term_(coeeficient) {};
-//	Polynomial(const std::string& variable) : simple_poly_term_(variable) {};
-//
-//	Polynomial& operator+=(const Polynomial& other);
-//	Polynomial& operator-=(const Polynomial& other);
-//	Polynomial& operator*=(const double constant);
-//	Polynomial operator+(const Polynomial& other) const;
-//	Polynomial operator-(const Polynomial& other) const;
-//	Polynomial operator*(const Polynomial& other) const;
-//	Polynomial operator*(const double constant) const;
-//	Polynomial operator^(const size_t power_index) const;
-//	double operator()(const MathVector& variable_vector) const;
-//	bool operator==(const Polynomial& other) const;
-//
-//	size_t domain_dimension(void) const;
-//	Polynomial& be_derivative(const size_t variable_index);
-//	Polynomial differentiate(const size_t variable_index) const;
-//	VectorFunction<Polynomial> gradient(void) const;
-//	VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
-//	IrrationalFunction root(const double root_index) const;
-//	size_t order(void) const;
-//	std::string to_string(void) const;
-//
-////private: for test
-//	void add_assign_poly_term(const PolyTerm& term);
+public:
+	Polynomial(const double coeeficient) : simple_poly_term_(coeeficient) {};
+	Polynomial(const std::string& variable) : simple_poly_term_(variable) {};
+
+	Polynomial& operator+=(const Polynomial& other);
+	Polynomial& operator-=(const Polynomial& other);
+	Polynomial& operator*=(const double constant);
+	Polynomial operator+(const Polynomial& other) const;
+	Polynomial operator-(const Polynomial& other) const;
+	Polynomial operator*(const Polynomial& other) const;
+	Polynomial operator*(const double constant) const;
+	Polynomial operator^(const size_t power_index) const;
+	double operator()(const EuclideanVector<DomainDim>& domain_vector) const;
+	bool operator==(const Polynomial& other) const;
+
+	template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool> = true>	Polynomial& be_derivative(void);
+	template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool> = true>	Polynomial differentiate(void) const;
+	
+	//VectorFunction<Polynomial> gradient(void) const;
+	//VectorFunction<Polynomial> gradient(const size_t domain_dimension) const;
+	//IrrationalFunction root(const double root_index) const;
+	size_t order(void) const;
+	std::string to_string(void) const;
+
+//private: for test
+	void add_assign_poly_term(const PolyTerm& term);
 
 
 	class SimplePolyTerm
@@ -55,12 +52,15 @@ public: // for test
 		SimplePolyTerm& operator+=(const SimplePolyTerm& other);
 		SimplePolyTerm& operator-=(const SimplePolyTerm& other);
 		SimplePolyTerm& operator*=(const double constant);
+		SimplePolyTerm operator*(const double constant) const;
 		double operator()(const EuclideanVector<DomainDim>& domain_vector) const;
 		bool operator==(const SimplePolyTerm& other) const;
 		bool operator!=(const SimplePolyTerm& other) const;
+		bool operator<(const SimplePolyTerm& other) const;
+		bool operator>(const SimplePolyTerm& other) const;
 
 		double be_constant(void) const;
-		template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool> = true> double differentiate(void) const;
+		template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool> = true>	double differentiate(void) const;
 		size_t order(void) const;
 		bool is_constant(void) const;
 		std::string to_string(void) const;
@@ -68,10 +68,6 @@ public: // for test
 	private:
 		std::array<double, DomainDim> coefficients_ = { 0 };
 		double constant_ = 0.0;		
-
-		//SimplePolyTerm(const SimplePolyTerm& other);
-		//SimplePolyTerm operator*(const double constant) const;
-		//size_t domain_dimension(void) const;
 	};
 
 
@@ -84,9 +80,11 @@ public: // for test
 		void multiply_assign_with_same_base(const PoweredPolyTerm& other);
 		double operator()(const EuclideanVector<DomainDim>& domain_vector) const;
 		bool operator==(const PoweredPolyTerm& other) const;
+		bool operator<(const PoweredPolyTerm& other) const;
+		bool operator>(const PoweredPolyTerm& other) const;
 
 		double be_constant(void) const;
-		template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool> = true> PolyTerm differentiate(void) const;
+		template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool> = true>	PolyTerm differentiate(void) const;
 		bool has_same_base(const PoweredPolyTerm& other) const;
 		bool is_constant(void) const;
 		size_t order(void) const;
@@ -95,8 +93,6 @@ public: // for test
 	private:
 		SimplePolyTerm base_ = 1.0;
 		size_t exponent_ = 1;
-
-		//size_t domain_dimension(void) const;
 	};
 
 	class PolyTerm
@@ -111,12 +107,12 @@ public: // for test
 		PolyTerm& operator*=(const PolyTerm& other);
 		PolyTerm operator*(const PolyTerm& other) const;
 		double operator()(const EuclideanVector<DomainDim>& domain_vector) const;
-		bool operator==(const PolyTerm& other) const; // compare node set 생성에 문제가 있다. compare node set을 생성하는게 잘못된것인가? 아니면 compare node를 dynamic하게 생성하지 못하는게 잘못된 것인가? // domain dimension이 dynamic인게 잘못된것인가?
+		bool operator==(const PolyTerm& other) const; 
 		bool operator!=(const PolyTerm& other) const;
 		PolyTerm& operator=(const PolyTerm& other);
 
 		double be_constant(void) const;
-		Polynomial differentiate(const size_t variable_index) const;
+		template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool> = true>	Polynomial differentiate(void) const;
 		size_t order(void) const;
 		bool has_same_form(const PolyTerm& other) const;
 		bool is_constant(void) const;
@@ -135,19 +131,216 @@ public: // for test
 		size_t num_term_ = 0;
 		std::array<PoweredPolyTerm, 3> small_buffer_ = { 0,0,0 };
 		PoweredPolyTerm* data_ptr_ = small_buffer_.data();
-
-		//size_t domain_dimension(void) const;
 	};
-//
-////private: //for test
-//	std::vector<PolyTerm> added_poly_term_set_;
-//	SimplePolyTerm simple_poly_term_ = 0.0;
-//
-//	static size_t num_count_; //test
+
+//private: //for test
+	std::vector<PolyTerm> added_poly_term_set_;
+	SimplePolyTerm simple_poly_term_ = 0.0;
+
+	static size_t num_count_; //test
 };
-//std::ostream& operator<<(std::ostream& ostream, const Polynomial& polynomial);
-//Polynomial operator+(const double constant, const Polynomial& compact_polynomial);
-//Polynomial operator*(const double constant, const Polynomial& compact_polynomial);
+template <size_t DomainDim> std::ostream& operator<<(std::ostream& ostream, const Polynomial<DomainDim>& polynomial);
+template <size_t DomainDim> Polynomial<DomainDim> operator+(const double constant, const Polynomial<DomainDim>& compact_polynomial);
+template <size_t DomainDim> Polynomial<DomainDim> operator*(const double constant, const Polynomial<DomainDim>& compact_polynomial);
+
+namespace ms {
+	template <size_t DomainDim> std::vector<EuclideanVector<DomainDim>> polynomial_compare_node_set(const size_t polynomial_order);
+	size_t combination(const size_t n, const size_t k);
+	size_t combination_with_repetition(const size_t n, const size_t k);
+	bool is_positive_odd_number(const double val);
+	bool is_natural_number(const double val);
+}
+
+
+template <size_t DomainDim, size_t RangeDim>
+class PolynomialVectorFunction 
+{
+	PolynomialVectorFunction(const std::array<Polynomial<DomainDim>, RangeDim>& polynomial_vector) : polynomial_vector_(polynomial_vector) {};
+
+private:
+	std::array<Polynomial<DomainDim>, RangeDim> polynomial_vector_;
+};
+
+//template definition part
+template <size_t DomainDim> Polynomial<DomainDim>& Polynomial<DomainDim>::operator+=(const Polynomial& other) {
+	this->simple_poly_term_ += other.simple_poly_term_;
+	for (const auto& poly_term : other.added_poly_term_set_)
+		this->add_assign_poly_term(poly_term);
+
+	return *this;
+}
+
+template <size_t DomainDim> Polynomial<DomainDim>& Polynomial<DomainDim>::operator-=(const Polynomial& other) {
+	return *this += (-1 * other);
+}
+
+template <size_t DomainDim> Polynomial<DomainDim>& Polynomial<DomainDim>::operator*=(const double constant) {
+	if (constant == 0.0)
+		return *this = 0.0;
+
+	for (auto& poly_term : this->added_poly_term_set_)
+		poly_term *= constant;
+
+	this->simple_poly_term_ *= constant;
+
+	return *this;
+}
+
+template <size_t DomainDim> Polynomial<DomainDim> Polynomial<DomainDim>::operator+(const Polynomial& other) const {
+	Polynomial result(*this);
+	return result += other;
+}
+
+template <size_t DomainDim> Polynomial<DomainDim> Polynomial<DomainDim>::operator-(const Polynomial& other) const {
+	Polynomial result(*this);
+	return result += -1 * other;
+}
+
+template <size_t DomainDim> Polynomial<DomainDim> Polynomial<DomainDim>::operator*(const Polynomial& other) const {
+	Polynomial result = 0.0;
+
+	const auto num_this_term = this->added_poly_term_set_.size();
+	const auto num_other_term = other.added_poly_term_set_.size();
+	for (size_t i = 0; i < num_this_term; ++i)
+		for (size_t j = 0; j < num_other_term; ++j)
+			result.add_assign_poly_term(this->added_poly_term_set_[i] * other.added_poly_term_set_[j]);
+
+	if (this->simple_poly_term_ != 0.0)
+		for (size_t j = 0; j < num_other_term; ++j)
+			result.add_assign_poly_term(other.added_poly_term_set_[j] * this->simple_poly_term_);
+
+	if (other.simple_poly_term_ != 0.0)
+		for (size_t i = 0; i < num_this_term; ++i) 
+			result.add_assign_poly_term(this->added_poly_term_set_[i] * other.simple_poly_term_);
+
+	if (this->simple_poly_term_ != 0.0 && other.simple_poly_term_ != 0.0) {
+		if (this->simple_poly_term_.is_constant())
+			result.simple_poly_term_ = other.simple_poly_term_ * this->simple_poly_term_.be_constant();
+		else if (other.simple_poly_term_.is_constant())
+			result.simple_poly_term_ = this->simple_poly_term_ * other.simple_poly_term_.be_constant();
+		else
+			result.add_assign_poly_term(PolyTerm(this->simple_poly_term_) * other.simple_poly_term_);
+	}
+
+	return result;
+}
+
+template <size_t DomainDim> Polynomial<DomainDim> Polynomial<DomainDim>::operator*(const double constant) const {
+	Polynomial result(*this);
+	return result *= constant;
+}
+
+template <size_t DomainDim> Polynomial<DomainDim> Polynomial<DomainDim>::operator^(const size_t power_index) const {
+	if (power_index == 0)
+		return 1;
+
+	auto result = *this;
+	for (size_t i = 1; i < power_index; ++i)
+		result = std::move(result * *this);
+	return result;
+}
+
+template <size_t DomainDim> double Polynomial<DomainDim>::operator()(const EuclideanVector<DomainDim>& domain_vector) const {
+	auto result = this->simple_poly_term_(domain_vector);
+	for (const auto& poly_term : this->added_poly_term_set_)
+		result += poly_term(domain_vector);
+	return result;
+}
+
+template <size_t DomainDim>
+bool Polynomial<DomainDim>::operator==(const Polynomial& other) const {
+	const auto max_order = std::max(this->order(), other.order());
+	const auto compare_node_set = ms::polynomial_compare_node_set<DomainDim>(max_order);
+
+	for (const auto& compare_node : compare_node_set) {
+		if (!ms::compare_double((*this)(compare_node), other(compare_node)))
+			return false;
+	}
+
+	return true;
+}
+
+template <size_t DomainDim>
+template <size_t VariableIndex, std::enable_if_t<VariableIndex <DomainDim, bool>>
+	Polynomial<DomainDim>& Polynomial<DomainDim>::be_derivative(void) {
+		auto result = this->differentiate<VariableIndex>();
+		return *this = std::move(result);
+	};
+
+template <size_t DomainDim>
+template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool>>
+	Polynomial<DomainDim> Polynomial<DomainDim>::differentiate(void) const {
+		Polynomial result = 0.0;
+		result.simple_poly_term_ = this->simple_poly_term_.differentiate<VariableIndex>();
+		for (const auto& poly_term : this->added_poly_term_set_)
+			result += poly_term.differentiate<VariableIndex>();
+
+		return result;
+	}
+
+//VectorFunction<Polynomial> Polynomial::gradient(void) const {
+//	const auto domain_dimension = this->domain_dimension();
+//	return this->gradient(domain_dimension);
+//}
+//
+//VectorFunction<Polynomial> Polynomial::gradient(const size_t domain_dimension) const {
+//	VectorFunction<Polynomial> result;
+//	result.reserve(domain_dimension);
+//	for (size_t i = 0; i < domain_dimension; ++i)
+//		result.push_back(this->differentiate(i));
+//
+//	return result;
+//}
+//
+//IrrationalFunction Polynomial::root(const double root_index) const {
+//	return IrrationalFunction(*this, root_index);
+//}
+
+template <size_t DomainDim> size_t Polynomial<DomainDim>::order(void) const {
+	size_t result = this->simple_poly_term_.order();
+	for (const auto& term : this->added_poly_term_set_)
+		result = std::max(result, term.order());
+	return result;
+}
+
+template <size_t DomainDim> std::string Polynomial<DomainDim>::to_string(void) const {
+	if (this->added_poly_term_set_.empty())
+		return this->simple_poly_term_.to_string();
+
+	std::string str;
+	for (const auto& poly_term : this->added_poly_term_set_)
+		str += poly_term.to_string();
+
+	if (!(this->simple_poly_term_ == 0))
+		str += "+" + this->simple_poly_term_.to_string();
+
+	if (str.front() == '+')
+		str.erase(str.begin());
+
+	return str;
+}
+
+template <size_t DomainDim> void Polynomial<DomainDim>::add_assign_poly_term(const PolyTerm& term) {
+	for (auto iter = this->added_poly_term_set_.begin(); iter != this->added_poly_term_set_.end(); ++iter) {
+		if (iter->has_same_form(term)) {
+			iter->add_assign_with_same_form(term);
+			if (iter->is_zero())
+				this->added_poly_term_set_.erase(iter);
+			return;
+		}
+	}
+	this->added_poly_term_set_.push_back(term);
+}
+
+template <size_t DomainDim> std::ostream& operator<<(std::ostream& ostream, const Polynomial<DomainDim>& polynomial) {
+	return ostream << polynomial.to_string();
+};
+template <size_t DomainDim> Polynomial<DomainDim> operator+(const double constant, const Polynomial<DomainDim>& polynomial) {
+	return polynomial + constant;
+};
+template <size_t DomainDim> Polynomial<DomainDim> operator*(const double constant, const Polynomial<DomainDim>& polynomial) {
+	return polynomial * constant;
+};
 
 
 template <size_t DomainDim> Polynomial<DomainDim>::SimplePolyTerm::SimplePolyTerm(const std::string& variable) {
@@ -174,34 +367,62 @@ template <size_t DomainDim> typename Polynomial<DomainDim>::SimplePolyTerm& Poly
 	return *this;
 }
 
-template <size_t DomainDim> typename Polynomial<DomainDim>::SimplePolyTerm& Polynomial<DomainDim>::SimplePolyTerm::operator*=(const double constant) {
+template <size_t DomainDim> 
+typename Polynomial<DomainDim>::SimplePolyTerm& Polynomial<DomainDim>::SimplePolyTerm::operator*=(const double constant) {
 	this->constant_ *= constant;
 	for (size_t i = 0; i < DomainDim; ++i)
 		this->coefficients_[i] *= constant;
 	return *this;
 }
 
-template <size_t DomainDim> double Polynomial<DomainDim>::SimplePolyTerm::operator()(const EuclideanVector<DomainDim>& domain_vector) const {
+template <size_t DomainDim>
+typename Polynomial<DomainDim>::SimplePolyTerm Polynomial<DomainDim>::SimplePolyTerm::operator*(const double constant) const {
+	auto result = *this;
+	return result *= constant;
+}
+
+template <size_t DomainDim> 
+double Polynomial<DomainDim>::SimplePolyTerm::operator()(const EuclideanVector<DomainDim>& domain_vector) const {
 	auto result = this->constant_;
 	for (size_t i = 0; i < DomainDim; ++i)
 		result += this->coefficients_[i] * domain_vector[i];
 	return result;
 }
 
-template <size_t DomainDim> bool Polynomial<DomainDim>::SimplePolyTerm::operator==(const SimplePolyTerm& other) const {
+template <size_t DomainDim>
+bool Polynomial<DomainDim>::SimplePolyTerm::operator==(const SimplePolyTerm& other) const {
 	return this->constant_ == other.constant_ && this->coefficients_ == other.coefficients_;
 }
 
-template <size_t DomainDim> bool Polynomial<DomainDim>::SimplePolyTerm::operator!=(const SimplePolyTerm& other) const {
+template <size_t DomainDim> 
+bool Polynomial<DomainDim>::SimplePolyTerm::operator!=(const SimplePolyTerm& other) const {
 	return !(*this == other);
 }
 
-template <size_t DomainDim> double Polynomial<DomainDim>::SimplePolyTerm::be_constant(void) const {
+template <size_t DomainDim>
+bool Polynomial<DomainDim>::SimplePolyTerm::operator<(const SimplePolyTerm& other) const {
+	if (this->coefficients_ == other.coefficients_)
+		return this->constant_ < other.constant_;
+	else
+		return this->coefficients_ < other.coefficients_;
+}
+
+template <size_t DomainDim>
+bool Polynomial<DomainDim>::SimplePolyTerm::operator>(const SimplePolyTerm& other) const {
+	if (this->coefficients_ == other.coefficients_)
+		return this->constant_ > other.constant_;
+	else
+		return this->coefficients_ > other.coefficients_;
+}
+
+template <size_t DomainDim> 
+double Polynomial<DomainDim>::SimplePolyTerm::be_constant(void) const {
 	return this->constant_;
 }
 
-template <size_t DomainDim> template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool>> 
-	double Polynomial<DomainDim>::SimplePolyTerm::differentiate() const {
+template <size_t DomainDim> 
+template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool>> 
+double Polynomial<DomainDim>::SimplePolyTerm::differentiate() const {
 	return this->coefficients_[VariableIndex];
 }
 
@@ -237,11 +458,11 @@ template <size_t DomainDim> std::string Polynomial<DomainDim>::SimplePolyTerm::t
 		else if (this->coefficients_[i] == 1.0)
 			str += "+x" + std::to_string(i);
 		else if (this->coefficients_[i] > 0)
-			str += "+" + ms::double_to_string(this->coefficients_[i]) + "x" + std::to_string(i);
+			str += "+" + ms::double_to_string(this->coefficients_[i]) + "(x" + std::to_string(i) + ")";
 		else if (this->coefficients_[i] == -1.0)
 			str += "-x" + std::to_string(i);
 		else
-			str += ms::double_to_string(this->coefficients_[i]) + "x" + std::to_string(i);
+			str += ms::double_to_string(this->coefficients_[i]) + "(x" + std::to_string(i) + ")";
 	}
 
 	constexpr size_t position = 1;
@@ -257,28 +478,45 @@ template <size_t DomainDim> std::string Polynomial<DomainDim>::SimplePolyTerm::t
 		return str += ms::double_to_string(this->constant_) + "]";
 }
 
-template <size_t DomainDim> void Polynomial<DomainDim>::PoweredPolyTerm::multiply_assign_with_same_base(const PoweredPolyTerm& other) {
+template <size_t DomainDim>
+void Polynomial<DomainDim>::PoweredPolyTerm::multiply_assign_with_same_base(const PoweredPolyTerm& other) {
 	this->exponent_ += other.exponent_;
 }
 
-template <size_t DomainDim> double Polynomial<DomainDim>::PoweredPolyTerm::operator()(const EuclideanVector<DomainDim>& domain_vector) const {
+template <size_t DomainDim> 
+double Polynomial<DomainDim>::PoweredPolyTerm::operator()(const EuclideanVector<DomainDim>& domain_vector) const {
 	return std::pow(this->base_(domain_vector), this->exponent_);
 }
 
-template <size_t DomainDim> bool Polynomial<DomainDim>::PoweredPolyTerm::operator==(const PoweredPolyTerm& other) const {
+template <size_t DomainDim>
+bool Polynomial<DomainDim>::PoweredPolyTerm::operator==(const PoweredPolyTerm& other) const {
 	return this->base_ == other.base_ && this->exponent_ == other.exponent_;
 }
 
-template <size_t DomainDim> double Polynomial<DomainDim>::PoweredPolyTerm::be_constant(void) const {
+template <size_t DomainDim>
+bool Polynomial<DomainDim>::PoweredPolyTerm::operator<(const PoweredPolyTerm& other) const {
+	if (this->exponent_ == other.exponent_)
+		return this->base_ < other.base_;
+	else
+		return this->exponent_ < other.exponent_;
+}
+
+template <size_t DomainDim>
+bool Polynomial<DomainDim>::PoweredPolyTerm::operator>(const PoweredPolyTerm& other) const {
+	if (this->exponent_ == other.exponent_)
+		return this->base_ > other.base_;
+	else
+		return this->exponent_ > other.exponent_;
+}
+
+template <size_t DomainDim>
+double Polynomial<DomainDim>::PoweredPolyTerm::be_constant(void) const {
 	return std::pow(this->base_.be_constant(), this->exponent_);
 }
 
-//template <size_t DomainDim> size_t Polynomial<DomainDim>::PoweredPolyTerm::domain_dimension(void) const {
-//	return DomainDim;
-//}
-
-template <size_t DomainDim> template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool>>
-	typename Polynomial<DomainDim>::PolyTerm Polynomial<DomainDim>::PoweredPolyTerm::differentiate(void) const {
+template <size_t DomainDim> 
+template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool>>
+typename Polynomial<DomainDim>::PolyTerm Polynomial<DomainDim>::PoweredPolyTerm::differentiate(void) const {
 	const auto base_derivative = this->base_.differentiate<VariableIndex>();
 	if (base_derivative == 0.0)
 		return 0.0;
@@ -293,7 +531,8 @@ template <size_t DomainDim> template <size_t VariableIndex, std::enable_if_t<Var
 	}
 }
 
-template <size_t DomainDim> bool Polynomial<DomainDim>::PoweredPolyTerm::has_same_base(const PoweredPolyTerm& other) const {
+template <size_t DomainDim> 
+bool Polynomial<DomainDim>::PoweredPolyTerm::has_same_base(const PoweredPolyTerm& other) const {
 	return this->base_ == other.base_;
 }
 
@@ -317,7 +556,8 @@ template <size_t DomainDim> std::string Polynomial<DomainDim>::PoweredPolyTerm::
 }
 
 
-template <size_t DomainDim> Polynomial<DomainDim>::PolyTerm::PolyTerm(const SimplePolyTerm& simple_poly_term) {
+template <size_t DomainDim> 
+Polynomial<DomainDim>::PolyTerm::PolyTerm(const SimplePolyTerm& simple_poly_term) {
 	if (simple_poly_term.is_constant())
 		this->coefficient_ = simple_poly_term.be_constant();
 	else
@@ -350,7 +590,8 @@ template <size_t DomainDim> void Polynomial<DomainDim>::PolyTerm::add_assign_wit
 		*this = 0;
 }
 
-template <size_t DomainDim> typename Polynomial<DomainDim>::PolyTerm& Polynomial<DomainDim>::PolyTerm::operator*=(const PolyTerm& other) {
+template <size_t DomainDim> 
+typename Polynomial<DomainDim>::PolyTerm& Polynomial<DomainDim>::PolyTerm::operator*=(const PolyTerm& other) {
 	this->coefficient_ *= other.coefficient_;
 	if (this->coefficient_ == 0.0)
 		return *this = 0.0;
@@ -358,32 +599,40 @@ template <size_t DomainDim> typename Polynomial<DomainDim>::PolyTerm& Polynomial
 	for (size_t i = 0; i < other.num_term_; ++i)
 		this->multiply_assign_powered_poly_term(other.data_ptr_[i]);
 
-	if (!this->coefficient_.empty())
-		std::sort(this->coefficient_.begin(), this->coefficient_.end());
-	std::sort(this->small_buffer_.begin(), this->small_buffer_.end());
+	if(this->is_small())
+		std::sort(this->small_buffer_.begin(), this->small_buffer_.begin() + this->num_term_);
+	else
+		std::sort(this->multiplied_powered_poly_term_set_.begin(), this->multiplied_powered_poly_term_set_.end());
+
 	return *this;
 }
 
-template <size_t DomainDim> bool Polynomial<DomainDim>::PolyTerm::operator==(const PolyTerm& other) const {
-	return this->coefficient_ == other.coefficient_ && this->coefficient_ == other.coefficient_ && this->small_buffer_ && other.small_buffer_;
-	//
-	//const auto max_order = std::max(this->order(), other.order());
-	//const auto max_domain_dimension = std::max(this->domain_dimension(), other.domain_dimension());
-	//const auto compare_node_set = ms::polynomial_compare_node_set(max_order, max_domain_dimension);
-
-	//for (const auto& compare_node : compare_node_set) {
-	//	if (!ms::compare_double((*this)(compare_node), other(compare_node)))
-	//		return false;
-	//}
-
-	//return true;	
+template <size_t DomainDim> 
+typename Polynomial<DomainDim>::PolyTerm Polynomial<DomainDim>::PolyTerm::operator*(const PolyTerm& other) const {
+	auto result = *this;
+	return result *= other;
 }
 
-template <size_t DomainDim> bool Polynomial<DomainDim>::PolyTerm::operator!=(const PolyTerm& other) const {
+template <size_t DomainDim> 
+double Polynomial<DomainDim>::PolyTerm::operator()(const EuclideanVector<DomainDim>& domain_vector) const {
+	auto result = this->coefficient_;
+	for (size_t i = 0; i < this->num_term_; ++i)
+		result *= this->data_ptr_[i](domain_vector);
+	return result;
+}
+
+template <size_t DomainDim> 
+bool Polynomial<DomainDim>::PolyTerm::operator==(const PolyTerm& other) const {
+	return this->coefficient_ == other.coefficient_ && this->coefficient_ == other.coefficient_ && this->small_buffer_ && other.small_buffer_;
+}
+
+template <size_t DomainDim> 
+bool Polynomial<DomainDim>::PolyTerm::operator!=(const PolyTerm& other) const {
 	return !(*this == other);
 }
 
-template <size_t DomainDim> typename Polynomial<DomainDim>::PolyTerm& Polynomial<DomainDim>::PolyTerm::operator=(const PolyTerm& other) {
+template <size_t DomainDim> 
+typename Polynomial<DomainDim>::PolyTerm& Polynomial<DomainDim>::PolyTerm::operator=(const PolyTerm& other) {
 	this->coefficient_ = other.coefficient_;
 	this->num_term_ = other.num_term_;
 	if (other.is_small()) {
@@ -398,81 +647,73 @@ template <size_t DomainDim> typename Polynomial<DomainDim>::PolyTerm& Polynomial
 	return *this;
 }
 
-template <size_t DomainDim> double Polynomial<DomainDim>::PolyTerm::be_constant(void) const {
+template <size_t DomainDim> 
+double Polynomial<DomainDim>::PolyTerm::be_constant(void) const {
 	return this->coefficient_;
 }
 
-template <size_t DomainDim> typename Polynomial<DomainDim> Polynomial<DomainDim>::PolyTerm::differentiate(const size_t variable_index) const {
-	Polynomial result = 0.0;
-	
-	for (size_t i = 0; i < this->num_term_; ++i) {
-		const auto diff_term = this->data_ptr_[i].differentiate(variable_index);
-		
-		if (!diff_term.is_zero()) {
-			PolyTerm derivative = this->coefficient_;
-			if (this->is_small()) {
-				size_t index = 0;
-				for (size_t j = 0; j < this->num_term_; ++j) {
-					if (j == i)
-						continue;
-					else {
-						derivative.small_buffer_[index++] = this->data_ptr_[j];
-						derivative.num_term_++;
+template <size_t DomainDim>
+template <size_t VariableIndex, std::enable_if_t<VariableIndex < DomainDim, bool>>
+	Polynomial<DomainDim> Polynomial<DomainDim>::PolyTerm::differentiate(void) const {
+		Polynomial<DomainDim> result = 0.0;
+		for (size_t i = 0; i < this->num_term_; ++i) {
+			const auto diff_term = this->data_ptr_[i].differentiate<VariableIndex>();
+
+			if (!diff_term.is_zero()) {
+				PolyTerm derivative = this->coefficient_;
+				if (this->is_small()) {
+					size_t index = 0;
+					for (size_t j = 0; j < this->num_term_; ++j) {
+						if (j == i)
+							continue;
+						else {
+							derivative.small_buffer_[index++] = this->data_ptr_[j];
+							derivative.num_term_++;
+						}
 					}
 				}
-			}
-			else {
-				derivative = *this;
-				derivative.multiplied_powered_poly_term_set_.erase(derivative.multiplied_powered_poly_term_set_.begin() + i);
-			}
+				else {
+					derivative = *this;
+					derivative.multiplied_powered_poly_term_set_.erase(derivative.multiplied_powered_poly_term_set_.begin() + i);
+				}
 
-			derivative *= diff_term;
+				derivative *= diff_term;
 
-			if (derivative.is_constant())
-				result.simple_poly_term_ += derivative.be_constant();
-			else
-				result.add_assign_poly_term(derivative);
+				if (derivative.is_constant())
+					result.simple_poly_term_ += derivative.be_constant();
+				else
+					result.add_assign_poly_term(derivative);
+			}
 		}
+
+		return result;
 	}
 
-	return result;
-}
-
-template <size_t DomainDim> size_t Polynomial<DomainDim>::PolyTerm::order(void) const {
+template <size_t DomainDim> 
+size_t Polynomial<DomainDim>::PolyTerm::order(void) const {
 	size_t result = 0;
 	for (size_t i = 0; i < this->num_term_; ++i)
 		result += this->data_ptr_[i].order();
 	return result;
 }
 
-template <size_t DomainDim> bool Polynomial<DomainDim>::PolyTerm::has_same_form(const PolyTerm& other) const {
-	return this->coefficient_ == other.coefficient_ && this->small_buffer_ && other.small_buffer_;
-
-	//
-	//if (this->num_term_ != other.num_term_)
-	//	return false;
-
-	//for (size_t i = 0; i < this->num_term_; ++i) {
-	//	bool is_here = false;
-	//	for (size_t j = 0; j < other.num_term_; ++j) {
-	//		if (this->data_ptr_[i] == other.data_ptr_[j])
-	//			is_here = true;
-	//	}
-	//	if (!is_here)
-	//		return false;
-	//}
-	//return true;
+template <size_t DomainDim> 
+bool Polynomial<DomainDim>::PolyTerm::has_same_form(const PolyTerm& other) const {
+	return this->coefficient_ == other.coefficient_ && this->small_buffer_ == other.small_buffer_;
 }
 
-template <size_t DomainDim> bool Polynomial<DomainDim>::PolyTerm::is_constant(void) const {
+template <size_t DomainDim>
+bool Polynomial<DomainDim>::PolyTerm::is_constant(void) const {
 	return this->num_term_ == 0;
 }
 
-template <size_t DomainDim> bool Polynomial<DomainDim>::PolyTerm::is_zero(void) const {
+template <size_t DomainDim>
+bool Polynomial<DomainDim>::PolyTerm::is_zero(void) const {
 	return this->coefficient_ == 0.0;
 }
 
-template <size_t DomainDim> std::string Polynomial<DomainDim>::PolyTerm::to_string(void) const {
+template <size_t DomainDim>
+std::string Polynomial<DomainDim>::PolyTerm::to_string(void) const {
 	std::string str;
 	if (std::abs(this->coefficient_) != 1.0) {
 		if (this->coefficient_ > 0)
@@ -491,7 +732,8 @@ template <size_t DomainDim> std::string Polynomial<DomainDim>::PolyTerm::to_stri
 	return str;
 }
 
-template <size_t DomainDim> void Polynomial<DomainDim>::PolyTerm::multiply_assign_powered_poly_term(const PoweredPolyTerm& power_poly_term) {
+template <size_t DomainDim> 
+void Polynomial<DomainDim>::PolyTerm::multiply_assign_powered_poly_term(const PoweredPolyTerm& power_poly_term) {
 	for (size_t i = 0; i < this->num_term_; ++i) {
 		if (this->data_ptr_[i].has_same_base(power_poly_term)) {
 			this->data_ptr_[i].multiply_assign_with_same_base(power_poly_term);
@@ -512,13 +754,11 @@ template <size_t DomainDim> void Polynomial<DomainDim>::PolyTerm::multiply_assig
 	this->data_ptr_[position] = power_poly_term;
 }
 
-//
-//template <size_t DomainDim> double Polynomial<DomainDim>::PolyTerm::operator()(const EuclideanVector<DomainDim>& domain_vector) const {
-//	auto result = this->coefficient_;
-//	for (size_t i = 0; i < this->num_term_; ++i)
-//		result *= this->data_ptr_[i](domain_vector);
-//	return result;
-//}
+template <size_t DomainDim> bool Polynomial<DomainDim>::PolyTerm::is_small(void) const {
+	return this->multiplied_powered_poly_term_set_.empty();
+}
+
+
 
 //class IrrationalFunction
 //{
@@ -592,15 +832,57 @@ template <size_t DomainDim> void Polynomial<DomainDim>::PolyTerm::multiply_assig
 //
 //
 //
-//namespace ms {
-//	template <typename... Args> struct Enforce_polynomial_type {
-//		static_assert((std::is_same_v<Polynomial, Args>&&...), "Polynomial Vector Function constructor requires all the arguments should be polynomial.");
-//		using type = First;
-//	};
-//
-//	std::vector<MathVector> polynomial_compare_node_set(const size_t polynomial_order, const size_t domain_dimension);
-//	size_t combination(const size_t n, const size_t k);
-//	size_t combination_with_repetition(const size_t n, const size_t k);
-//	bool is_positive_odd_number(const double val);
-//	bool is_natural_number(const double val);
-//}
+
+
+namespace ms {
+	template <size_t DomainDim> 
+	std::vector<EuclideanVector<DomainDim>> polynomial_compare_node_set(const size_t polynomial_order) {
+		const auto num_node = ms::combination_with_repetition(polynomial_order + 1, DomainDim);
+
+		std::vector<EuclideanVector<DomainDim>> compare_node_set;
+		compare_node_set.reserve(num_node);
+
+		std::array<double, DomainDim> compare_node = { 0 };
+		if constexpr (DomainDim == 0) {
+			compare_node_set.push_back(compare_node);
+			return compare_node_set;
+		}
+
+		while (true) {
+			auto iter = std::find(compare_node.begin(), compare_node.end(), polynomial_order);
+			if (iter != compare_node.end()) {
+				compare_node_set.push_back(compare_node);
+
+				if (iter == compare_node.begin())
+					break;
+
+				std::fill(compare_node.begin(), compare_node.end(), 0);
+				(*(--iter))++;
+
+				if (compare_node.front() == polynomial_order) {
+					compare_node_set.push_back(compare_node);
+					break;
+				}
+
+			}
+
+			double component_sum = 0;
+			for (const auto& val : compare_node)
+				component_sum += val;
+
+			if (component_sum == polynomial_order) {
+				compare_node_set.push_back(compare_node);
+				const auto is_zero = [](const double i) {return i == 0; };
+				auto iter = std::find_if_not(compare_node.rbegin(), compare_node.rend(), is_zero);
+				*iter = 0;
+				(*(++iter))++;
+				continue;
+			}
+
+			compare_node_set.push_back(compare_node);
+			compare_node.back()++;
+		}
+
+		return compare_node_set;
+	}
+}

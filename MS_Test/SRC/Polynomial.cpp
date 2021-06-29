@@ -739,90 +739,90 @@
 //
 //
 
-//namespace ms {
-//	std::vector<MathVector> polynomial_compare_node_set(const size_t polynomial_order, const size_t domain_dimension) {
-//		const auto num_node = ms::combination_with_repetition(polynomial_order + 1, domain_dimension);
-//
-//		std::vector<MathVector> compare_node_set;
-//		compare_node_set.reserve(num_node);
-//
-//		MathVector compare_node(domain_dimension);
-//		if (domain_dimension == 0) {
-//			compare_node_set.push_back(compare_node);
-//			return compare_node_set;
-//		}
-//
-//		while (true) {
-//			auto iter = std::find(compare_node.begin(), compare_node.end(), polynomial_order);
-//			if (iter != compare_node.end()) {
-//				compare_node_set.push_back(compare_node);
-//
-//				if (iter == compare_node.begin())
-//					break;
-//
-//				std::fill(compare_node.begin(), compare_node.end(), 0);
-//				(*(--iter))++;
-//
-//				if (compare_node.front() == polynomial_order) {
-//					compare_node_set.push_back(compare_node);
-//					break;
-//				}
-//
-//			}
-//
-//			double component_sum = 0;
-//			for (const auto& val : compare_node)
-//				component_sum += val;
-//
-//			if (component_sum == polynomial_order) {
-//				compare_node_set.push_back(compare_node);
-//				const auto is_zero = [](const double i) {return i == 0; };
-//				auto iter = std::find_if_not(compare_node.rbegin(), compare_node.rend(), is_zero);
-//				*iter = 0;
-//				(*(++iter))++;
-//				continue;
-//			}
-//
-//			compare_node_set.push_back(compare_node);
-//			compare_node.back()++;
-//		}
-//
-//		return compare_node_set;
-//	}
-//
-//	size_t combination(const size_t n, const size_t k) {
-//		//calculate nCk
-//		//the combination of n things taken k at a time without repetition.
-//		if (n == k || k == 0)
-//			return 1;
-//		else
-//			return combination(n - 1, k - 1) + combination(n - 1, k);
-//	}
-//
-//	size_t ms::combination_with_repetition(const size_t n, const size_t k) {
-//		//calculate nHk
-//		//the combination of n things taken k at a time with repetition.
-//		return combination(n + k - 1, k);
-//	}
-//
-//	bool is_positive_odd_number(const double val) {
-//		if (val < 0)
-//			return false;
-//
-//		if (val - std::floor(val) == 0)
-//			return static_cast<size_t>(val) % 2 == 0;
-//		else
-//			return false;
-//	}
-//
-//	bool is_natural_number(const double val) {
-//		if (val < 0)
-//			return false;
-//
-//		if (val - std::floor(val) == 0)
-//			return true;
-//		else
-//			return false;
-//	}
-//}
+namespace ms {
+	//template <size_t DomainDim> std::vector<EuclideanVector<DomainDim>> polynomial_compare_node_set(const size_t polynomial_order){
+	//	const auto num_node = ms::combination_with_repetition(polynomial_order + 1, DomainDim);
+
+	//	std::vector<EuclideanVector<DomainDim>> compare_node_set;
+	//	compare_node_set.reserve(num_node);
+
+	//	std::array<double, DomainDim> compare_node(DomainDim);
+	//	if constexpr (DomainDim == 0) {
+	//		compare_node_set.push_back(compare_node);
+	//		return compare_node_set;
+	//	}
+
+	//	while (true) {
+	//		auto iter = std::find(compare_node.begin(), compare_node.end(), polynomial_order);
+	//		if (iter != compare_node.end()) {
+	//			compare_node_set.push_back(compare_node);
+
+	//			if (iter == compare_node.begin())
+	//				break;
+
+	//			std::fill(compare_node.begin(), compare_node.end(), 0);
+	//			(*(--iter))++;
+
+	//			if (compare_node.front() == polynomial_order) {
+	//				compare_node_set.push_back(compare_node);
+	//				break;
+	//			}
+
+	//		}
+
+	//		double component_sum = 0;
+	//		for (const auto& val : compare_node)
+	//			component_sum += val;
+
+	//		if (component_sum == polynomial_order) {
+	//			compare_node_set.push_back(compare_node);
+	//			const auto is_zero = [](const double i) {return i == 0; };
+	//			auto iter = std::find_if_not(compare_node.rbegin(), compare_node.rend(), is_zero);
+	//			*iter = 0;
+	//			(*(++iter))++;
+	//			continue;
+	//		}
+
+	//		compare_node_set.push_back(compare_node);
+	//		compare_node.back()++;
+	//	}
+
+	//	return compare_node_set;
+	//}
+
+	size_t combination(const size_t n, const size_t k) {
+		//calculate nCk
+		//the combination of n things taken k at a time without repetition.
+		if (n == k || k == 0)
+			return 1;
+		else
+			return combination(n - 1, k - 1) + combination(n - 1, k);
+	}
+
+	size_t ms::combination_with_repetition(const size_t n, const size_t k) {
+		//calculate nHk
+		//the combination of n things taken k at a time with repetition.
+		return combination(n + k - 1, k);
+	}
+
+	bool is_positive_odd_number(const double val) {
+		if (val < 0)
+			return false;
+
+		if (val - std::floor(val) == 0)
+			return static_cast<size_t>(val) % 2 == 0;
+		else
+			return false;
+	}
+
+	bool is_natural_number(const double val) {
+		if (val < 0)
+			return false;
+
+		if (val - std::floor(val) == 0)
+			return true;
+		else
+			return false;
+	}
+}
 

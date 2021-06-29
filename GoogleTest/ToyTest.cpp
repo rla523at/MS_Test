@@ -1,5 +1,6 @@
 #include <array>
 #include <iostream>
+#include <iomanip>
 #include <type_traits>
 
 #include <algorithm>
@@ -8,54 +9,235 @@
 #include "../MS_Test/INC/Profiler.h"
 
 
-class A
+class PolynomialVectorFunction
 {
-public:
-	template <typename... Args>
-	A(Args... args) { std::cout << "constuctor\n"; };
-	A(const A& a) { std::cout << "copy\n"; }
+
+private:
+    template <size_t DomainDim>
+    std::array<double, DomainDim> arr_;
+    
+    //std::array<double, 3> arr_;
+
 };
 
-int main(void) {
 
-	RECORD_CONSUMED_TIME;
-	for (size_t i = 0; i < 10000000; ++i) {
-		std::array<double, 300> ar1 = { 1 + i * 1.0E-15,5,3 };
-		std::sort(ar1.begin(), ar1.end());
-	}
-	PRINT_CONSUMED_TIME;
 
-	std::array<double, 300> ar2 = { 1,5,3 };
-	RECORD_CONSUMED_TIME;
-	for (size_t i = 0; i < 10000000; ++i) {		
-		if (!std::is_sorted(ar2.begin(),ar2.end()))
-			std::sort(ar2.begin(), ar2.end());
-	}
-	PRINT_CONSUMED_TIME;
-		
-	RECORD_CONSUMED_TIME;
-	for (size_t i = 0; i < 10000000; ++i) {
-		std::array<double, 3> ar3 = { 1,5,3 };
-		std::sort(ar3.begin(), ar3.end());
-	}
-	PRINT_CONSUMED_TIME;
+//template <int val>
+//int differentiate() {
+//    return val;
+//}
+//
+//template <size_t... indexes>
+//std::array<int, sizeof...(indexes)> make_gradient(std::index_sequence<indexes...> int_seq) {
+//    std::array<int, sizeof...(indexes)> ar;
+//    ((ar[indexes] = differentiate<indexes>()),...);
+//    return ar;
+//}
+//
+//template <size_t DomainDim>
+//std::array<int, DomainDim> gradient() {
+//    return make_gradient(std::make_index_sequence<DomainDim>{});
+//}
+//
+//int main(void) {
+//    auto ar = gradient<5>();
+//    for (const auto& elem : ar) std::cout << elem;
+//}
 
-	RECORD_CONSUMED_TIME;
-	for (size_t i = 0; i < 10000000; ++i) {
-		std::vector<double> ar4;
-		std::sort(ar4.begin(), ar4.end());
-	}
-	PRINT_CONSUMED_TIME;
 
-	RECORD_CONSUMED_TIME;
-	for (size_t i = 0; i < 10000000; ++i) {
-		std::vector<double> ar5;
-		if (!ar5.empty())
-			std::sort(ar5.begin(), ar5.end());
-	}
-	PRINT_CONSUMED_TIME;
 
-}
+
+//
+//template <typename... T, std::enable_if_t<std::is_arithmetic_v<T...>, bool> = true>
+//void A(T... t) {
+//    std::cout << "Yes!";
+//}
+//
+//template <typename... T, std::enable_if_t<(... && std::is_arithmetic_v<T>), bool> = true>
+//void B(T... t) {
+//    std::cout << "Yes!";
+//}
+//
+//struct C {
+//    template <typename... Args, std::enable_if_t<std::is_arithmetic_v<Args...>, bool> = true>
+//    C(Args... args) {};
+//};
+//
+//int main(void) {
+//    A(1, 2, 3);
+//    B(1, 2, 3);
+//    C c(1, 2, 3);
+//}
+
+
+
+
+
+
+//
+//template <typename Args, typename = void>
+//inline constexpr bool is_arithmatic_v = false;
+//
+//template <typename Args>
+//inline constexpr bool is_arithmatic_v<Args, std::enable_if_t<std::is_arithmetic_v<Args>>> = true;
+//
+//template <typename = void, typename... Args>
+//inline constexpr bool is_all_arithmatic_v = false;
+//
+//template <typename... Args>
+//inline constexpr bool is_all_arithmatic_v<std::enable_if_t<(...&&is_arithmatic_v<Args>)>, Args...> = true;
+
+
+
+
+
+
+
+
+
+
+//template <typename Enable, typename... Args> struct impl {
+//    using type = bool;
+//};
+//template <typename... Args> struct impl<std::enable_if_t<(... && std::is_same_v<Args, double>),bool>, Args...> {}; 
+//template <typename... Args> using Impl = typename impl<Args...>::type;
+//
+//struct A {
+//    template<typename... Args, Impl<Args...> = true>
+//    A(Args... args) { (std::cout << ... << args); };
+//};
+
+//template <typename... TYPES>
+//struct Test {
+//    template <std::enable_if_t<(sizeof...(TYPES) != 2), bool> = true>
+//    Test() {
+//        std::cout << "A\n";
+//    }
+//
+//    template <std::enable_if_t<(sizeof...(TYPES) == 2), bool> = true>
+//    Test() {
+//        std::cout << "B\n";
+//    }
+//};
+
+//template <typename... TYPES>
+//struct Test {
+//    template <std::size_t i = sizeof...(TYPES), std::enable_if_t<i != 2, int> = 0>
+//    Test() {
+//        std::cout << "A\n";
+//    }
+//
+//    template <std::size_t i = sizeof...(TYPES), std::enable_if_t<i == 2, int> = 0>
+//    Test() {
+//        std::cout << "B\n";
+//    }
+//};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//
+//struct B {
+//    template<typename... Args, std::enable_if_t<(... && std::is_same_v<Args, double>), bool> = true>
+//    B(Args... args) { (std::cout << ... << args); };
+//};
+//
+//template<typename... Args, Impl<Args...> = true>
+//void function(Args... args) {
+//    (std::cout << ... << args);
+//}
+//
+//template<typename... Args, std::enable_if_t<(... && std::is_same_v<Args, double>), bool> = true>
+//void function2(Args... args) {
+//    (std::cout << ... << args);
+//}
+//
+//template<typename... Args, std::enable_if_t<sizeof...(Args) == 3, bool> = true>
+//void function3(Args... args) {
+//    (std::cout << ... << args);
+//}
+//
+////template <size_t N>
+////struct B {
+////    template <typename... Args, std::enable_if_t<(... && std::is_integral_v<Args>), bool> = true>
+////    B(Args... args) { (std::cout << ... << args); };
+////};
+////template <typename... Args> B(Args... args)->B<sizeof...(Args)>;
+//
+//int main(void) {
+//    A a = { 1,2,3 };
+//    //B b = { 1,2,3 };
+//    //function(1, 2, 3);
+//    //function2(1, 2, 3);
+//    //function3(1, 2, 3);
+//    //B b = { 1,2,3 }; // (... && std::is ~) => fail but i don't know
+//}
+
+//class A
+//{
+//public:
+//	template <typename... Args>
+//	A(Args... args) { std::cout << "constuctor\n"; };
+//	A(const A& a) { std::cout << "copy\n"; }
+//};
+//
+//int main(void) {
+//
+//	RECORD_CONSUMED_TIME;
+//	for (size_t i = 0; i < 10000000; ++i) {
+//		std::array<double, 300> ar1 = { 1 + i * 1.0E-15,5,3 };
+//		std::sort(ar1.begin(), ar1.end());
+//	}
+//	PRINT_CONSUMED_TIME;
+//
+//	std::array<double, 300> ar2 = { 1,5,3 };
+//	RECORD_CONSUMED_TIME;
+//	for (size_t i = 0; i < 10000000; ++i) {		
+//		if (!std::is_sorted(ar2.begin(),ar2.end()))
+//			std::sort(ar2.begin(), ar2.end());
+//	}
+//	PRINT_CONSUMED_TIME;
+//		
+//	RECORD_CONSUMED_TIME;
+//	for (size_t i = 0; i < 10000000; ++i) {
+//		std::array<double, 3> ar3 = { 1,5,3 };
+//		std::sort(ar3.begin(), ar3.end());
+//	}
+//	PRINT_CONSUMED_TIME;
+//
+//	RECORD_CONSUMED_TIME;
+//	for (size_t i = 0; i < 10000000; ++i) {
+//		std::vector<double> ar4;
+//		std::sort(ar4.begin(), ar4.end());
+//	}
+//	PRINT_CONSUMED_TIME;
+//
+//	RECORD_CONSUMED_TIME;
+//	for (size_t i = 0; i < 10000000; ++i) {
+//		std::vector<double> ar5;
+//		if (!ar5.empty())
+//			std::sort(ar5.begin(), ar5.end());
+//	}
+//	PRINT_CONSUMED_TIME;
+//
+//}
 
 //template <size_t DomainDim>
 //class A {
